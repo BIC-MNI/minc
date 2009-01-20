@@ -1,6 +1,8 @@
 #include "ecat_write.h"
 #include "machine_indep.h"
 
+#include "string.h"
+
 #define	MatBLKSIZE 512
 #define	MatFirstDirBlk 2
 #define NameLen 32

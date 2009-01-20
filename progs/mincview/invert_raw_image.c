@@ -33,7 +33,7 @@ ArgvInfo argTable[] = {
 
 int main(int argc, char *argv[])
 {
-   int i,j,k,oi,image_size,offset,bytes_per_pixel,row_size,nread;
+   int i,j,k,oi,image_size,offset,bytes_per_pixel,row_size,nread,nwritten;
    int xsize,ysize,xstart,ystart,xstop,ystop,xstep,ystep;
    char *pname;
    char *buffer,*outbuf;
@@ -88,14 +88,19 @@ int main(int argc, char *argv[])
                   buffer[(offset+i)*bytes_per_pixel+k];
             }
          }
-         (void) fwrite(outbuf, bytes_per_pixel, row_size, stdout);
+         nwritten = fwrite(outbuf, bytes_per_pixel, row_size, stdout);
+         
+         if(nwritten != row_size){
+            (void) fprintf(stderr, "%s : Not enough data written (%d) should be: %d\n",
+               pname, nwritten, row_size);
+         }
       }
 
    }
 
    /* Check that input corresponds to complete images */
    if (nread>0) {
-      (void) fprintf(stderr,"%s : Insufficient data\n",pname);
+      (void) fprintf(stderr,"%s : Insufficient data\n", pname);
       exit(ERROR_STATUS);
    }
 

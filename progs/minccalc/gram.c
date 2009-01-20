@@ -150,7 +150,7 @@
 
 
 /* Copy the first part of user declarations.  */
-#line 1 "minccalc/gram.y"
+#line 1 "gram.y"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -185,7 +185,7 @@ void yyerror(const char *msg);
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 15 "minccalc/gram.y"
+#line 15 "gram.y"
 {
 int      pos;
 node_t   node;
@@ -193,7 +193,7 @@ double   real;
 ident_t  ident;
 }
 /* Line 187 of yacc.c.  */
-#line 197 "minccalc/gram.c"
+#line 197 "progs/minccalc/gram.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -206,7 +206,7 @@ ident_t  ident;
 
 
 /* Line 216 of yacc.c.  */
-#line 210 "minccalc/gram.c"
+#line 210 "progs/minccalc/gram.c"
 
 #ifdef short
 # undef short
@@ -1107,6 +1107,7 @@ int yydebug;
 # define YYMAXDEPTH 10000
 #endif
 
+
 
 #if YYERROR_VERBOSE
 
@@ -1317,6 +1318,7 @@ yysyntax_error (char *yyresult, int yystate, int yychar)
     }
 }
 #endif /* YYERROR_VERBOSE */
+
 
 /*-----------------------------------------------.
 | Release the memory associated to this symbol.  |
@@ -1348,6 +1350,7 @@ yydestruct (yymsg, yytype, yyvaluep)
 	break;
     }
 }
+
 
 /* Prevent warnings from -Wmissing-prototypes.  */
 
@@ -1649,116 +1652,116 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 54 "minccalc/gram.y"
-    { root = (yyvsp[(1) - (1)].node); ;}
+#line 54 "gram.y"
+    { root = (yyvsp[(1) - (1)].node); }
     break;
 
   case 3:
-#line 58 "minccalc/gram.y"
+#line 58 "gram.y"
     { (yyval.node) = new_node(2, node_is_scalar((yyvsp[(3) - (3)].node)));
         (yyval.node)->type = NODETYPE_EXPRLIST;
         (yyval.node)->pos = (yyvsp[(2) - (3)].pos);
         (yyval.node)->expr[0] = (yyvsp[(1) - (3)].node);
-        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); }
     break;
 
   case 4:
-#line 65 "minccalc/gram.y"
-    { (yyval.node) = (yyvsp[(1) - (2)].node); ;}
+#line 65 "gram.y"
+    { (yyval.node) = (yyvsp[(1) - (2)].node); }
     break;
 
   case 5:
-#line 68 "minccalc/gram.y"
-    { (yyval.node) = (yyvsp[(1) - (1)].node); ;}
+#line 68 "gram.y"
+    { (yyval.node) = (yyvsp[(1) - (1)].node); }
     break;
 
   case 6:
-#line 72 "minccalc/gram.y"
-    { (yyval.node) = (yyvsp[(2) - (3)].node); ;}
+#line 72 "gram.y"
+    { (yyval.node) = (yyvsp[(2) - (3)].node); }
     break;
 
   case 7:
-#line 75 "minccalc/gram.y"
-    { (yyval.node) = (yyvsp[(2) - (3)].node); ;}
+#line 75 "gram.y"
+    { (yyval.node) = (yyvsp[(2) - (3)].node); }
     break;
 
   case 8:
-#line 78 "minccalc/gram.y"
-    { (yyval.node) = (yyvsp[(2) - (3)].node); ;}
+#line 78 "gram.y"
+    { (yyval.node) = (yyvsp[(2) - (3)].node); }
     break;
 
   case 9:
-#line 81 "minccalc/gram.y"
+#line 81 "gram.y"
     { (yyval.node) = new_vector_node(2);
         (yyval.node)->type = NODETYPE_GEN;
         (yyval.node)->pos = (yyvsp[(7) - (7)].pos);
         (yyval.node)->ident = (yyvsp[(2) - (7)].ident);
         (yyval.node)->expr[0] = (yyvsp[(4) - (7)].node);
-        (yyval.node)->expr[1] = (yyvsp[(6) - (7)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(6) - (7)].node); }
     break;
 
   case 10:
-#line 89 "minccalc/gram.y"
+#line 89 "gram.y"
     { (yyval.node) = new_vector_node(2);
         (yyval.node)->type = NODETYPE_RANGE;
         (yyval.node)->flags = 0;
         (yyval.node)->pos = (yyvsp[(5) - (5)].pos);
         (yyval.node)->expr[0] = (yyvsp[(2) - (5)].node);
-        (yyval.node)->expr[1] = (yyvsp[(4) - (5)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(4) - (5)].node); }
     break;
 
   case 11:
-#line 97 "minccalc/gram.y"
+#line 97 "gram.y"
     { (yyval.node) = new_vector_node(2);
         (yyval.node)->type = NODETYPE_RANGE;
         (yyval.node)->flags = RANGE_EXACT_UPPER;
         (yyval.node)->pos = (yyvsp[(5) - (5)].pos);
         (yyval.node)->expr[0] = (yyvsp[(2) - (5)].node);
-        (yyval.node)->expr[1] = (yyvsp[(4) - (5)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(4) - (5)].node); }
     break;
 
   case 12:
-#line 105 "minccalc/gram.y"
+#line 105 "gram.y"
     { (yyval.node) = new_vector_node(2);
         (yyval.node)->type = NODETYPE_RANGE;
         (yyval.node)->flags = RANGE_EXACT_LOWER;
         (yyval.node)->pos = (yyvsp[(5) - (5)].pos);
         (yyval.node)->expr[0] = (yyvsp[(2) - (5)].node);
-        (yyval.node)->expr[1] = (yyvsp[(4) - (5)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(4) - (5)].node); }
     break;
 
   case 13:
-#line 113 "minccalc/gram.y"
+#line 113 "gram.y"
     { (yyval.node) = new_vector_node(2);
         (yyval.node)->type = NODETYPE_RANGE;
         (yyval.node)->flags = RANGE_EXACT_UPPER | RANGE_EXACT_LOWER;
         (yyval.node)->pos = (yyvsp[(5) - (5)].pos);
         (yyval.node)->expr[0] = (yyvsp[(2) - (5)].node);
-        (yyval.node)->expr[1] = (yyvsp[(4) - (5)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(4) - (5)].node); }
     break;
 
   case 14:
-#line 121 "minccalc/gram.y"
+#line 121 "gram.y"
     { (yyval.node) = new_scalar_node(2);
         (yyval.node)->type = NODETYPE_ADD;
         (yyval.node)->flags |= ALLARGS_SCALAR;
         (yyval.node)->pos = (yyvsp[(2) - (3)].pos);
         (yyval.node)->expr[0] = (yyvsp[(1) - (3)].node);
-        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); }
     break;
 
   case 15:
-#line 129 "minccalc/gram.y"
+#line 129 "gram.y"
     { (yyval.node) = new_scalar_node(2);
         (yyval.node)->type = NODETYPE_SUB;
         (yyval.node)->flags |= ALLARGS_SCALAR;
         (yyval.node)->pos = (yyvsp[(2) - (3)].pos);
         (yyval.node)->expr[0] = (yyvsp[(1) - (3)].node);
-        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); }
     break;
 
   case 16:
-#line 137 "minccalc/gram.y"
+#line 137 "gram.y"
     { (yyval.node) = new_scalar_node(2);
         (yyval.node)->type = NODETYPE_SUB;
         (yyval.node)->pos = (yyvsp[(1) - (2)].pos);
@@ -1766,423 +1769,423 @@ yyreduce:
         (yyval.node)->expr[0] = new_scalar_node(0);
         (yyval.node)->expr[0]->type = NODETYPE_REAL;
         (yyval.node)->expr[0]->real = 0.0;
-        (yyval.node)->expr[1] = (yyvsp[(2) - (2)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(2) - (2)].node); }
     break;
 
   case 17:
-#line 147 "minccalc/gram.y"
+#line 147 "gram.y"
     { (yyval.node) = new_scalar_node(2);
         (yyval.node)->pos = (yyvsp[(2) - (3)].pos);
         (yyval.node)->type = NODETYPE_MUL;
         (yyval.node)->flags |= ALLARGS_SCALAR;
         (yyval.node)->expr[0] = (yyvsp[(1) - (3)].node);
-        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); }
     break;
 
   case 18:
-#line 155 "minccalc/gram.y"
+#line 155 "gram.y"
     { (yyval.node) = new_scalar_node(2);
         (yyval.node)->pos = (yyvsp[(2) - (3)].pos);
         (yyval.node)->type = NODETYPE_DIV;
         (yyval.node)->flags |= ALLARGS_SCALAR;
         (yyval.node)->expr[0] = (yyvsp[(1) - (3)].node);
-        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); }
     break;
 
   case 19:
-#line 163 "minccalc/gram.y"
+#line 163 "gram.y"
     { (yyval.node) = new_scalar_node(2);
         (yyval.node)->pos = (yyvsp[(2) - (3)].pos);
         (yyval.node)->type = NODETYPE_POW;
         (yyval.node)->flags |= ALLARGS_SCALAR;
         (yyval.node)->expr[0] = (yyvsp[(1) - (3)].node);
-        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); }
     break;
 
   case 20:
-#line 171 "minccalc/gram.y"
+#line 171 "gram.y"
     { (yyval.node) = new_scalar_node(2);
         (yyval.node)->type = NODETYPE_LT;
         (yyval.node)->flags |= ALLARGS_SCALAR;
         (yyval.node)->pos = (yyvsp[(2) - (3)].pos);
         (yyval.node)->expr[0] = (yyvsp[(1) - (3)].node);
-        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); }
     break;
 
   case 21:
-#line 179 "minccalc/gram.y"
+#line 179 "gram.y"
     { (yyval.node) = new_scalar_node(2);
         (yyval.node)->type = NODETYPE_LE;
         (yyval.node)->flags |= ALLARGS_SCALAR;
         (yyval.node)->pos = (yyvsp[(2) - (3)].pos);
         (yyval.node)->expr[0] = (yyvsp[(1) - (3)].node);
-        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); }
     break;
 
   case 22:
-#line 187 "minccalc/gram.y"
+#line 187 "gram.y"
     { (yyval.node) = new_scalar_node(2);
         (yyval.node)->type = NODETYPE_GT;
         (yyval.node)->flags |= ALLARGS_SCALAR;
         (yyval.node)->pos = (yyvsp[(2) - (3)].pos);
         (yyval.node)->expr[0] = (yyvsp[(1) - (3)].node);
-        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); }
     break;
 
   case 23:
-#line 195 "minccalc/gram.y"
+#line 195 "gram.y"
     { (yyval.node) = new_scalar_node(2);
         (yyval.node)->type = NODETYPE_GE;
         (yyval.node)->flags |= ALLARGS_SCALAR;
         (yyval.node)->pos = (yyvsp[(2) - (3)].pos);
         (yyval.node)->expr[0] = (yyvsp[(1) - (3)].node);
-        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); }
     break;
 
   case 24:
-#line 203 "minccalc/gram.y"
+#line 203 "gram.y"
     { (yyval.node) = new_scalar_node(2);
         (yyval.node)->type = NODETYPE_EQ;
         (yyval.node)->flags |= ALLARGS_SCALAR;
         (yyval.node)->pos = (yyvsp[(2) - (3)].pos);
         (yyval.node)->expr[0] = (yyvsp[(1) - (3)].node);
-        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); }
     break;
 
   case 25:
-#line 211 "minccalc/gram.y"
+#line 211 "gram.y"
     { (yyval.node) = new_scalar_node(2);
         (yyval.node)->type = NODETYPE_NE;
         (yyval.node)->flags |= ALLARGS_SCALAR;
         (yyval.node)->pos = (yyvsp[(2) - (3)].pos);
         (yyval.node)->expr[0] = (yyvsp[(1) - (3)].node);
-        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); }
     break;
 
   case 26:
-#line 219 "minccalc/gram.y"
+#line 219 "gram.y"
     { (yyval.node) = new_scalar_node(2);
         (yyval.node)->type = NODETYPE_AND;
         (yyval.node)->flags |= ALLARGS_SCALAR;
         (yyval.node)->pos = (yyvsp[(2) - (3)].pos);
         (yyval.node)->expr[0] = (yyvsp[(1) - (3)].node);
-        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); }
     break;
 
   case 27:
-#line 227 "minccalc/gram.y"
+#line 227 "gram.y"
     { (yyval.node) = new_scalar_node(2);
         (yyval.node)->type = NODETYPE_OR;
         (yyval.node)->flags |= ALLARGS_SCALAR;
         (yyval.node)->pos = (yyvsp[(2) - (3)].pos);
         (yyval.node)->expr[0] = (yyvsp[(1) - (3)].node);
-        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); }
     break;
 
   case 28:
-#line 235 "minccalc/gram.y"
+#line 235 "gram.y"
     { (yyval.node) = new_scalar_node(2);
         (yyval.node)->type = NODETYPE_INDEX;
         (yyval.node)->pos = (yyvsp[(4) - (4)].pos);
         (yyval.node)->expr[0] = (yyvsp[(1) - (4)].node);
-        (yyval.node)->expr[1] = (yyvsp[(3) - (4)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(3) - (4)].node); }
     break;
 
   case 29:
-#line 242 "minccalc/gram.y"
+#line 242 "gram.y"
     { (yyval.node) = new_node(1, node_is_scalar((yyvsp[(3) - (3)].node)));
         (yyval.node)->type = NODETYPE_ASSIGN;
         (yyval.node)->pos = (yyvsp[(2) - (3)].pos);
         (yyval.node)->ident = (yyvsp[(1) - (3)].ident);
-        (yyval.node)->expr[0] = (yyvsp[(3) - (3)].node); ;}
+        (yyval.node)->expr[0] = (yyvsp[(3) - (3)].node); }
     break;
 
   case 30:
-#line 249 "minccalc/gram.y"
-    { (yyval.node) = (yyvsp[(2) - (2)].node); ;}
+#line 249 "gram.y"
+    { (yyval.node) = (yyvsp[(2) - (2)].node); }
     break;
 
   case 31:
-#line 252 "minccalc/gram.y"
+#line 252 "gram.y"
     { (yyval.node) = new_scalar_node(1);
         (yyval.node)->pos = (yyvsp[(1) - (2)].pos);
         (yyval.node)->type = NODETYPE_NOT;
         (yyval.node)->flags |= ALLARGS_SCALAR;
-        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); ;}
+        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); }
     break;
 
   case 32:
-#line 259 "minccalc/gram.y"
+#line 259 "gram.y"
     { (yyval.node) = new_scalar_node(1);
         (yyval.node)->pos = (yyvsp[(1) - (2)].pos);
         (yyval.node)->type = NODETYPE_SUM;
-        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); ;}
+        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); }
     break;
 
   case 33:
-#line 265 "minccalc/gram.y"
+#line 265 "gram.y"
     { (yyval.node) = new_scalar_node(1);
         (yyval.node)->pos = (yyvsp[(1) - (2)].pos);
         (yyval.node)->type = NODETYPE_PROD;
-        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); ;}
+        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); }
     break;
 
   case 34:
-#line 271 "minccalc/gram.y"
+#line 271 "gram.y"
     { (yyval.node) = new_scalar_node(1);
         (yyval.node)->pos = (yyvsp[(1) - (2)].pos);
         (yyval.node)->type = NODETYPE_AVG;
-        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); ;}
+        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); }
     break;
 
   case 35:
-#line 277 "minccalc/gram.y"
+#line 277 "gram.y"
     { (yyval.node) = new_scalar_node(1);
         (yyval.node)->pos = (yyvsp[(1) - (2)].pos);
         (yyval.node)->type = NODETYPE_LEN;
-        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); ;}
+        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); }
     break;
 
   case 36:
-#line 283 "minccalc/gram.y"
+#line 283 "gram.y"
     { (yyval.node) = new_scalar_node(1);
         (yyval.node)->pos = (yyvsp[(1) - (2)].pos);
         (yyval.node)->type = NODETYPE_MAX;
-        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); ;}
+        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); }
     break;
 
   case 37:
-#line 289 "minccalc/gram.y"
+#line 289 "gram.y"
     { (yyval.node) = new_scalar_node(1);
         (yyval.node)->pos = (yyvsp[(1) - (2)].pos);
         (yyval.node)->type = NODETYPE_MIN;
-        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); ;}
+        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); }
     break;
 
   case 38:
-#line 295 "minccalc/gram.y"
+#line 295 "gram.y"
     { (yyval.node) = new_scalar_node(1);
         (yyval.node)->pos = (yyvsp[(1) - (2)].pos);
         (yyval.node)->type = NODETYPE_ISNAN;
         (yyval.node)->flags |= ALLARGS_SCALAR;
-        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); ;}
+        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); }
     break;
 
   case 39:
-#line 302 "minccalc/gram.y"
+#line 302 "gram.y"
     { (yyval.node) = new_scalar_node(1);
         (yyval.node)->pos = (yyvsp[(1) - (2)].pos);
         (yyval.node)->type = NODETYPE_SQRT;
         (yyval.node)->flags |= ALLARGS_SCALAR;
-        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); ;}
+        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); }
     break;
 
   case 40:
-#line 309 "minccalc/gram.y"
+#line 309 "gram.y"
     { (yyval.node) = new_scalar_node(1);
         (yyval.node)->pos = (yyvsp[(1) - (2)].pos);
         (yyval.node)->type = NODETYPE_ABS;
         (yyval.node)->flags |= ALLARGS_SCALAR;
-        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); ;}
+        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); }
     break;
 
   case 41:
-#line 316 "minccalc/gram.y"
+#line 316 "gram.y"
     { (yyval.node) = new_scalar_node(1);
         (yyval.node)->pos = (yyvsp[(1) - (2)].pos);
         (yyval.node)->type = NODETYPE_EXP;
         (yyval.node)->flags |= ALLARGS_SCALAR;
-        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); ;}
+        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); }
     break;
 
   case 42:
-#line 323 "minccalc/gram.y"
+#line 323 "gram.y"
     { (yyval.node) = new_scalar_node(1);
         (yyval.node)->pos = (yyvsp[(1) - (2)].pos);
         (yyval.node)->type = NODETYPE_LOG;
         (yyval.node)->flags |= ALLARGS_SCALAR;
-        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); ;}
+        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); }
     break;
 
   case 43:
-#line 330 "minccalc/gram.y"
+#line 330 "gram.y"
     { (yyval.node) = new_scalar_node(1);
         (yyval.node)->pos = (yyvsp[(1) - (2)].pos);
         (yyval.node)->type = NODETYPE_SIN;
         (yyval.node)->flags |= ALLARGS_SCALAR;
-        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); ;}
+        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); }
     break;
 
   case 44:
-#line 337 "minccalc/gram.y"
+#line 337 "gram.y"
     { (yyval.node) = new_scalar_node(1);
         (yyval.node)->pos = (yyvsp[(1) - (2)].pos);
         (yyval.node)->type = NODETYPE_COS;
         (yyval.node)->flags |= ALLARGS_SCALAR;
-        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); ;}
+        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); }
     break;
 
   case 45:
-#line 344 "minccalc/gram.y"
+#line 344 "gram.y"
     { (yyval.node) = new_scalar_node(1);
         (yyval.node)->pos = (yyvsp[(1) - (2)].pos);
         (yyval.node)->type = NODETYPE_TAN;
         (yyval.node)->flags |= ALLARGS_SCALAR;
-        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); ;}
+        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); }
     break;
 
   case 46:
-#line 351 "minccalc/gram.y"
+#line 351 "gram.y"
     { (yyval.node) = new_scalar_node(1);
         (yyval.node)->pos = (yyvsp[(1) - (2)].pos);
         (yyval.node)->type = NODETYPE_ASIN;
         (yyval.node)->flags |= ALLARGS_SCALAR;
-        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); ;}
+        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); }
     break;
 
   case 47:
-#line 358 "minccalc/gram.y"
+#line 358 "gram.y"
     { (yyval.node) = new_scalar_node(1);
         (yyval.node)->pos = (yyvsp[(1) - (2)].pos);
         (yyval.node)->type = NODETYPE_ACOS;
         (yyval.node)->flags |= ALLARGS_SCALAR;
-        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); ;}
+        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); }
     break;
 
   case 48:
-#line 365 "minccalc/gram.y"
+#line 365 "gram.y"
     { (yyval.node) = new_scalar_node(1);
         (yyval.node)->pos = (yyvsp[(1) - (2)].pos);
         (yyval.node)->type = NODETYPE_ATAN;
         (yyval.node)->flags |= ALLARGS_SCALAR;
-        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); ;}
+        (yyval.node)->expr[0] = (yyvsp[(2) - (2)].node); }
     break;
 
   case 49:
-#line 372 "minccalc/gram.y"
+#line 372 "gram.y"
     { (yyval.node) = new_scalar_node(3);
         (yyval.node)->pos = (yyvsp[(1) - (8)].pos);
         (yyval.node)->type = NODETYPE_CLAMP;
         (yyval.node)->flags |= ALLARGS_SCALAR;
         (yyval.node)->expr[0] = (yyvsp[(3) - (8)].node);
         (yyval.node)->expr[1] = (yyvsp[(5) - (8)].node);
-        (yyval.node)->expr[2] = (yyvsp[(7) - (8)].node); ;}
+        (yyval.node)->expr[2] = (yyvsp[(7) - (8)].node); }
     break;
 
   case 50:
-#line 381 "minccalc/gram.y"
+#line 381 "gram.y"
     { (yyval.node) = new_scalar_node(3);
         (yyval.node)->pos = (yyvsp[(1) - (8)].pos);
         (yyval.node)->type = NODETYPE_SEGMENT;
         (yyval.node)->flags |= ALLARGS_SCALAR;
         (yyval.node)->expr[0] = (yyvsp[(3) - (8)].node);
         (yyval.node)->expr[1] = (yyvsp[(5) - (8)].node);
-        (yyval.node)->expr[2] = (yyvsp[(7) - (8)].node); ;}
+        (yyval.node)->expr[2] = (yyvsp[(7) - (8)].node); }
     break;
 
   case 51:
-#line 390 "minccalc/gram.y"
+#line 390 "gram.y"
     { (yyval.node) = new_node(3, node_is_scalar((yyvsp[(3) - (5)].node)));
         (yyval.node)->pos = (yyvsp[(2) - (5)].pos);
         (yyval.node)->type = NODETYPE_IFELSE;
         (yyval.node)->expr[0] = (yyvsp[(1) - (5)].node);
         (yyval.node)->expr[1] = (yyvsp[(3) - (5)].node);
-        (yyval.node)->expr[2] = (yyvsp[(5) - (5)].node); ;}
+        (yyval.node)->expr[2] = (yyvsp[(5) - (5)].node); }
     break;
 
   case 52:
-#line 398 "minccalc/gram.y"
+#line 398 "gram.y"
     { (yyval.node) = new_node(3, node_is_scalar((yyvsp[(5) - (7)].node)));
         (yyval.node)->pos = (yyvsp[(1) - (7)].pos);
         (yyval.node)->type = NODETYPE_IFELSE;
         (yyval.node)->expr[0] = (yyvsp[(3) - (7)].node);
         (yyval.node)->expr[1] = (yyvsp[(5) - (7)].node);
-        (yyval.node)->expr[2] = (yyvsp[(7) - (7)].node); ;}
+        (yyval.node)->expr[2] = (yyvsp[(7) - (7)].node); }
     break;
 
   case 53:
-#line 406 "minccalc/gram.y"
+#line 406 "gram.y"
     { (yyval.node) = new_node(2, node_is_scalar((yyvsp[(5) - (5)].node)));
         (yyval.node)->pos = (yyvsp[(1) - (5)].pos);
         (yyval.node)->type = NODETYPE_IFELSE;
         (yyval.node)->expr[0] = (yyvsp[(3) - (5)].node);
-        (yyval.node)->expr[1] = (yyvsp[(5) - (5)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(5) - (5)].node); }
     break;
 
   case 54:
-#line 413 "minccalc/gram.y"
+#line 413 "gram.y"
     { (yyval.node) = new_scalar_node(2);
         (yyval.node)->pos = (yyvsp[(1) - (7)].pos);
         (yyval.node)->type = NODETYPE_FOR;
         (yyval.node)->ident = (yyvsp[(3) - (7)].ident);
         (yyval.node)->expr[0] = (yyvsp[(5) - (7)].node);
-        (yyval.node)->expr[1] = (yyvsp[(7) - (7)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(7) - (7)].node); }
     break;
 
   case 55:
-#line 421 "minccalc/gram.y"
+#line 421 "gram.y"
     { (yyval.node) = new_node(0, ident_is_scalar((yyvsp[(1) - (1)].ident)));
         (yyval.node)->type = NODETYPE_IDENT;
         (yyval.node)->pos = -1;
-        (yyval.node)->ident = (yyvsp[(1) - (1)].ident); ;}
+        (yyval.node)->ident = (yyvsp[(1) - (1)].ident); }
     break;
 
   case 56:
-#line 427 "minccalc/gram.y"
+#line 427 "gram.y"
     { (yyval.node) = new_scalar_node(0);
         (yyval.node)->pos = -1;
         (yyval.node)->type = NODETYPE_REAL;
-        (yyval.node)->real = (yyvsp[(1) - (1)].real); ;}
+        (yyval.node)->real = (yyvsp[(1) - (1)].real); }
     break;
 
   case 57:
-#line 433 "minccalc/gram.y"
+#line 433 "gram.y"
     { (yyval.node) = new_scalar_node(0);
         (yyval.node)->pos = -1;
         (yyval.node)->type = NODETYPE_REAL;
-        (yyval.node)->real = INVALID_VALUE; ;}
+        (yyval.node)->real = INVALID_VALUE; }
     break;
 
   case 58:
-#line 442 "minccalc/gram.y"
+#line 442 "gram.y"
     { (yyval.node) = new_scalar_node(2);
         (yyval.node)->type = NODETYPE_LET;
         (yyval.node)->pos = (yyvsp[(2) - (5)].pos);
         (yyval.node)->ident = (yyvsp[(1) - (5)].ident);
         (yyval.node)->expr[0] = (yyvsp[(3) - (5)].node);
-        (yyval.node)->expr[1] = (yyvsp[(5) - (5)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(5) - (5)].node); }
     break;
 
   case 59:
-#line 449 "minccalc/gram.y"
+#line 449 "gram.y"
     { (yyval.node) = new_scalar_node(2);
         (yyval.node)->pos = (yyvsp[(2) - (5)].pos);
         (yyval.node)->type = NODETYPE_LET;
         (yyval.node)->ident = (yyvsp[(1) - (5)].ident);
         (yyval.node)->expr[0] = (yyvsp[(3) - (5)].node);
-        (yyval.node)->expr[1] = (yyvsp[(5) - (5)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(5) - (5)].node); }
     break;
 
   case 60:
-#line 458 "minccalc/gram.y"
+#line 458 "gram.y"
     { (yyval.node) = new_vector_node(1);
         (yyval.node)->pos = (yyvsp[(1) - (1)].node)->pos;
         (yyval.node)->type = NODETYPE_VEC1;
-        (yyval.node)->expr[0] = (yyvsp[(1) - (1)].node); ;}
+        (yyval.node)->expr[0] = (yyvsp[(1) - (1)].node); }
     break;
 
   case 61:
-#line 463 "minccalc/gram.y"
+#line 463 "gram.y"
     { (yyval.node) = new_vector_node(2);
         (yyval.node)->pos = (yyvsp[(2) - (3)].pos);
         (yyval.node)->type = NODETYPE_VEC2;
         (yyval.node)->expr[0] = (yyvsp[(1) - (3)].node);
-        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); ;}
+        (yyval.node)->expr[1] = (yyvsp[(3) - (3)].node); }
     break;
 
 
 /* Line 1267 of yacc.c.  */
-#line 2189 "minccalc/gram.c"
+#line 2189 "progs/minccalc/gram.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -2396,7 +2399,7 @@ yyreturn:
 }
 
 
-#line 470 "minccalc/gram.y"
+#line 470 "gram.y"
 
 
 node_t root;

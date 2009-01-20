@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef _WIN32
 unsigned short ntohs(unsigned short us) {
@@ -33,7 +34,21 @@ void get_long_value(const void *from, void *to) {
 @CREATED    : December 10, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: machine_indep.c,v $
- * Revision 6.4  2008-01-17 02:33:01  rotor
+ * Revision 6.5  2009-01-20 11:58:13  rotor
+ *  * CMakeLists.txt: updated version
+ *  * Updated Changelog to include releases
+ *  * Warning cleanups below
+ *  * conversion/dcm2mnc/minc_file.c: fixed printf type
+ *  * conversion/dcm2mnc/siemens_to_dicom.c: fixed printf type
+ *  * conversion/ecattominc/machine_indep.c: added string.h and fixed
+ *      2 fprintf missing format args
+ *  * conversion/micropet/upet2mnc.c: fixed two fprintf format args
+ *  * conversion/minctoecat/ecat_write.c: added string.h
+ *  * conversion/minctoecat/minctoecat.c: added missing argument to fprintf
+ *  * conversion/nifti1/mnc2nii.c: fixed incorrect printf type
+ *  * progs/mincview/invert_raw_image.c: added fwrite checking
+ *
+ * Revision 6.4  2008/01/17 02:33:01  rotor
  *  * removed all rcsids
  *  * removed a bunch of ^L's that somehow crept in
  *  * removed old (and outdated) BUGS file

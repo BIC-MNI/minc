@@ -6,7 +6,21 @@
 @GLOBALS    : 
 @CREATED    : July 8, 1997 (Peter Neelin)
 @MODIFIED   : $Log: siemens_to_dicom.c,v $
-@MODIFIED   : Revision 1.10  2008-08-12 05:00:23  rotor
+@MODIFIED   : Revision 1.11  2009-01-20 11:58:13  rotor
+@MODIFIED   :  * CMakeLists.txt: updated version
+@MODIFIED   :  * Updated Changelog to include releases
+@MODIFIED   :  * Warning cleanups below
+@MODIFIED   :  * conversion/dcm2mnc/minc_file.c: fixed printf type
+@MODIFIED   :  * conversion/dcm2mnc/siemens_to_dicom.c: fixed printf type
+@MODIFIED   :  * conversion/ecattominc/machine_indep.c: added string.h and fixed
+@MODIFIED   :      2 fprintf missing format args
+@MODIFIED   :  * conversion/micropet/upet2mnc.c: fixed two fprintf format args
+@MODIFIED   :  * conversion/minctoecat/ecat_write.c: added string.h
+@MODIFIED   :  * conversion/minctoecat/minctoecat.c: added missing argument to fprintf
+@MODIFIED   :  * conversion/nifti1/mnc2nii.c: fixed incorrect printf type
+@MODIFIED   :  * progs/mincview/invert_raw_image.c: added fwrite checking
+@MODIFIED   :
+@MODIFIED   : Revision 1.10  2008/08/12 05:00:23  rotor
 @MODIFIED   :  * large number of changes from Claude (64 bit and updates)
 @MODIFIED   :
 @MODIFIED   : Revision 1.9  2008/01/17 02:33:01  rotor
@@ -792,7 +806,9 @@ DEFINE_ELEMENT_FUNC(create_window_t_element)
     acr_get_long(ACR_BIG_ENDIAN, 1, &ptr->x, &x); 
     acr_get_long(ACR_BIG_ENDIAN, 1, &ptr->y, &y); 
     
-    sprintf(string, "%ld\\%ld", (double)x, (double)y);
+    /* Surely this isn't right? - AJ - (found while chasing warnings) */
+    /* sprintf(string, "%ld\\%ld", (double)x, (double)y); */
+    sprintf(string, "%g\\%g", (double)x, (double)y);
 
     return acr_create_element_string(get_elid(grp_id, elm_id, ACR_VR_IS), 
                                      (Acr_String)string);

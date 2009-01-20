@@ -7,7 +7,21 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: minc_file.c,v $
-   * Revision 1.17  2008-01-17 02:33:01  rotor
+   * Revision 1.18  2009-01-20 11:58:13  rotor
+   *  * CMakeLists.txt: updated version
+   *  * Updated Changelog to include releases
+   *  * Warning cleanups below
+   *  * conversion/dcm2mnc/minc_file.c: fixed printf type
+   *  * conversion/dcm2mnc/siemens_to_dicom.c: fixed printf type
+   *  * conversion/ecattominc/machine_indep.c: added string.h and fixed
+   *      2 fprintf missing format args
+   *  * conversion/micropet/upet2mnc.c: fixed two fprintf format args
+   *  * conversion/minctoecat/ecat_write.c: added string.h
+   *  * conversion/minctoecat/minctoecat.c: added missing argument to fprintf
+   *  * conversion/nifti1/mnc2nii.c: fixed incorrect printf type
+   *  * progs/mincview/invert_raw_image.c: added fwrite checking
+   *
+   * Revision 1.17  2008/01/17 02:33:01  rotor
    *  * removed all rcsids
    *  * removed a bunch of ^L's that somehow crept in
    *  * removed old (and outdated) BUGS file
@@ -1304,7 +1318,7 @@ save_minc_image(int icvid, General_Info *gi_ptr,
     if (G.Debug >= HI_LOGGING) {
         printf("2. scale %.2f offset %.2f min %.2f max %.2f\n", scale, offset,
                minimum, maximum);
-        printf("3. position %d,%d,%d\n", start[0], start[1], start[2]);
+        printf("3. position %ld,%ld,%ld\n", start[0], start[1], start[2]);
     }
 
     /* Write out the max and min values */

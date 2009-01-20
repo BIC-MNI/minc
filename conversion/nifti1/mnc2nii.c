@@ -635,7 +635,7 @@ main(int argc, char **argv)
                    i, nii_lens[i], nii_map[i], nii_dir[i]);
         }
         printf("bytes per voxel %d\n", nii_ptr->nbyper);
-        printf("# of voxels %ld\n", nii_ptr->nvox);
+        printf("# of voxels %d\n", nii_ptr->nvox);
     }
 
     /* Rearrange the data to correspond to the NIfTI dimension ordering.

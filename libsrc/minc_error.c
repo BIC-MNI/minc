@@ -7,7 +7,21 @@
 @CREATED    : August 7, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_error.c,v $
- * Revision 6.7  2008-04-11 05:15:00  rotor
+ * Revision 6.8  2009-01-20 11:58:13  rotor
+ *  * CMakeLists.txt: updated version
+ *  * Updated Changelog to include releases
+ *  * Warning cleanups below
+ *  * conversion/dcm2mnc/minc_file.c: fixed printf type
+ *  * conversion/dcm2mnc/siemens_to_dicom.c: fixed printf type
+ *  * conversion/ecattominc/machine_indep.c: added string.h and fixed
+ *      2 fprintf missing format args
+ *  * conversion/micropet/upet2mnc.c: fixed two fprintf format args
+ *  * conversion/minctoecat/ecat_write.c: added string.h
+ *  * conversion/minctoecat/minctoecat.c: added missing argument to fprintf
+ *  * conversion/nifti1/mnc2nii.c: fixed incorrect printf type
+ *  * progs/mincview/invert_raw_image.c: added fwrite checking
+ *
+ * Revision 6.7  2008/04/11 05:15:00  rotor
  *  * rewrote error code  (Claude) to remove global defs that were
  *     causing build problems with DYLIB on OSX
  *
@@ -174,7 +188,7 @@ SEMIPRIVATE int MI_return_error(void)
 SEMIPRIVATE void MI_log_pkg_error2(int p1, char *p2)
 {
   (void) fprintf(stderr, "%s: ", minc_routine_name);
-  (void) fprintf(stderr, p2);
+  (void) fprintf(stderr, "%s", p2);
   (void) fputc('\n', stderr);
   (void) fflush(stderr);
 }
@@ -191,7 +205,7 @@ SEMIPRIVATE void MI_log_sys_error1(char *p1)
    int errnum = errno;
 
    (void) fprintf(stderr, "%s", minc_routine_name);
-   (void) fprintf(stderr, p1);
+   (void) fprintf(stderr, "%s", p1);
    if (errnum == 0) {
      (void) fputc('\n', stderr);
    }

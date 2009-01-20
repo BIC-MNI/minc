@@ -1,7 +1,7 @@
 /*********************************************************************
  *   Copyright 1993, UCAR/Unidata
  *   See netcdf/COPYRIGHT file for copying and redistribution conditions.
- *   $Header: /private-cvsroot/minc/progs/mincdump/vardata.c,v 1.4 2008-01-12 19:08:15 stever Exp $
+ *   $Header: /private-cvsroot/minc/progs/mincdump/vardata.c,v 1.5 2009-01-20 11:58:13 rotor Exp $
  *********************************************************************/
 
 #if HAVE_CONFIG_H
@@ -459,7 +459,7 @@ pr_bvals(
     for (iel = 0; iel < len-1; iel++) {
 	printbval(sout, fmt, vp, *vals++);
 	if (fsp->full_data_cmnts) {
-	    Printf(sout);
+	    Printf("%s", sout);
 	    Printf(",");
 	    annotate (vp, fsp, cor, iel);
 	} else {
@@ -469,7 +469,7 @@ pr_bvals(
     }
     printbval(sout, fmt, vp, *vals++);
     if (fsp->full_data_cmnts) {
-	Printf(sout);
+	Printf("%s", sout);
 	lastdelim (more, lastrow);
 	annotate (vp, fsp, cor, iel);
     } else {
@@ -507,7 +507,7 @@ pr_svals(
     for (iel = 0; iel < len-1; iel++) {
 	printsval(sout, fmt, vp, *vals++);
 	if (fsp->full_data_cmnts) {
-	    Printf(sout);
+	    Printf("%s", sout);
 	    Printf(",");
 	    annotate (vp, fsp, cor, iel);
 	} else {
@@ -517,7 +517,7 @@ pr_svals(
     }
     printsval(sout, fmt, vp, *vals++);
     if (fsp->full_data_cmnts) {
-	Printf(sout);
+	Printf("%s", sout);
 	lastdelim (more, lastrow);
 	annotate (vp, fsp, cor, iel);
     } else {
@@ -557,7 +557,7 @@ pr_ivals(
     for (iel = 0; iel < len-1; iel++) {
 	printival(sout, fmt, vp, *vals++);
 	if (fsp->full_data_cmnts) {
-	    Printf(sout);
+	    Printf("%s", sout);
 	    Printf(",");
 	    annotate (vp, fsp, cor, iel);
 	} else {
@@ -567,7 +567,7 @@ pr_ivals(
     }
     printival(sout, fmt, vp, *vals++);
     if (fsp->full_data_cmnts) {
-	Printf(sout);
+	Printf("%s", sout);
 	lastdelim (more, lastrow);
 	annotate (vp, fsp, cor, iel);
     } else {
@@ -605,7 +605,7 @@ pr_fvals(
     for (iel = 0; iel < len-1; iel++) {
 	printfval(sout, fmt, vp, *vals++);
 	if (fsp->full_data_cmnts) {
-	    Printf(sout);
+	    Printf("%s", sout);
 	    Printf(",");
 	    annotate (vp, fsp, cor, iel);
 	} else {
@@ -615,7 +615,7 @@ pr_fvals(
     }
     printfval(sout, fmt, vp, *vals++);
     if (fsp->full_data_cmnts) {
-	Printf(sout);
+	Printf("%s", sout);
 	lastdelim (more, lastrow);
 	annotate (vp, fsp, cor, iel);
     } else {
@@ -653,7 +653,7 @@ pr_dvals(
     for (iel = 0; iel < len-1; iel++) {
 	printdval(sout, fmt, vp, *vals++);
 	if (fsp->full_data_cmnts) {
-	    Printf(sout);
+	    Printf("%s", sout);
 	    Printf(",");
 	    annotate (vp, fsp, cor, iel);
 	} else {
@@ -663,7 +663,7 @@ pr_dvals(
     }
     printdval(sout, fmt, vp, *vals++);
     if (fsp->full_data_cmnts) {
-	Printf(sout);
+	Printf("%s", sout);
 	lastdelim (more, lastrow);
 	annotate (vp, fsp, cor, iel);
     } else {

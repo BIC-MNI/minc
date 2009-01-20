@@ -145,7 +145,7 @@ int main ( int argc, char **argv) {
 
   /*checking the number of dimension*/
   if((mi->dim != 3) && (mi->dim != 4)) {
-    fprintf(stderr, "input file has not a valid number of dimension (%d), should be either 3 (static file) or 4 (dynamic file)");
+    (void)fprintf(stderr, "input file has not a valid number of dimensions (%d), should be either 3 (static file) or 4 (dynamic file)", mi->dim);
     return (-1);
   }
 

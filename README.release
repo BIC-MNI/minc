@@ -1,20 +1,12 @@
-This recipe was adapted from libtool's release procedure.
-
 We are using libtool to (possibly) generate a shared library
 for libminc and libvolume_io.
 
-Each library has a three-component version string, written
+Each library has a three-component version string, in Makefile.am
 
 	CURRENT[:REVISION[:AGE]]
 
-The version started at 0:0:0.
 
-
-
-
-================================================================
 = Release procedure
-================================================================
 
 * Update NEWS.
 
@@ -51,4 +43,3 @@ The version started at 0:0:0.
 * Update version number in configure.in.
 
 * Commit.
-

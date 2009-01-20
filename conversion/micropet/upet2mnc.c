@@ -450,12 +450,12 @@ message(msg_level_t level, char *fmt, ...)
     if (_verbose_flag || level != MSG_INFO) {
         if (level != MSG_INFO) {
             if (prefix_str != NULL) {
-                fprintf(stderr, prefix_str);
+                fprintf(stderr, "%s", prefix_str);
             }
             vfprintf(stderr, fmt, ap);
         }
         if (prefix_str != NULL) {
-            fprintf(stdout, prefix_str);
+            fprintf(stdout, "%s", prefix_str);
         }
         vfprintf(stdout, fmt, ap);
     }
