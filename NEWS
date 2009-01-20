@@ -4,6 +4,7 @@ New in Release 2.0.17
    arguments could cause some arguments to be missed.
 * New tests for argument parsing, mincheader and mincdiff
 * Cosmetic fixes for a lot of manpages
+* Fixed a bunch of warnings for cleaner Debian and Ubuntu builds
 
 New in Release 2.0.16
 ---------------------
