@@ -1351,11 +1351,11 @@ hdf_vardef(int fd, const char *varnm, nc_type vartype, int ndims,
             for( i = ndims-1; i >= 0; i-- ) {
                 if( MI_MAX_VAR_BUFFER_SIZE > dims[i] * val * unit_size ) {
                     chkdims[i] = dims[i];
-                    val *= dims[i];
                 } else {
                     chkdims[i] = MIN( dims[i], 
                                       (hsize_t)( MI_MAX_VAR_BUFFER_SIZE / ( val * unit_size ) ) );
                 }
+                val *= chkdims[i];
             }
 
 	    for (i = 0; i < ndims; i++) {

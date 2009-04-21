@@ -1,7 +1,12 @@
+New in Release 2.0.18
+---------------------
+* Fixed bug with chunking for internal file compression using hdf5
+  (now makes the code faster for large files)
+
 New in Release 2.0.17
 ---------------------
 * Fix for argument handling on 64 bit systems, previously the order of
-   arguments could cause some arguments to be missed.
+  arguments could cause some arguments to be missed.
 * New tests for argument parsing, mincheader and mincdiff
 * Cosmetic fixes for a lot of manpages
 * Fixed a bunch of warnings for cleaner Debian and Ubuntu builds

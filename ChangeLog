@@ -1,5 +1,7 @@
 
-
+2009-04-21 Claude Lepage <claude@bic.mni.mcgill.ca>
+   * Fixed bug with chunking for internal file compression using hdf5
+     (now makes the code faster for large files)
 
 -- Release of minc 2.0.17 --
 
