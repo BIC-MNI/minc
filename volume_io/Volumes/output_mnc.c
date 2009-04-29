@@ -13,12 +13,9 @@
 ---------------------------------------------------------------------------- */
 
 #include  <internal_volume_io.h>
-#include  <minc.h>
+#include  <minc_basic.h>
 
 #define  INVALID_AXIS   -1
-
-#define  MIN_SLAB_SIZE   10000      /* at least 10000 entries per read */
-#define  MAX_SLAB_SIZE   200000     /* no more than 200 K at a time */
 
 #define  UNITS           "mm"
 
@@ -1418,81 +1415,67 @@ static  Status  output_the_volume(
 
     file->n_slab_dims = 0;
     slab_size = 1;
-    d = file->n_file_dimensions-1;
+    n_steps = 1;
+    int unit_size = get_type_size( get_volume_data_type(volume) );
 
-    do
-    {
-        if( to_volume_index[d] != INVALID_AXIS )
-        {
-            ++file->n_slab_dims;
-            slab_size *= volume_count[to_volume_index[d]];
+    for( d = file->n_file_dimensions-1; d >= 0; d-- ) {
+      count[d] = 1;
+      file_indices[d] = file_start[d];
+      if( to_volume_index[d] != INVALID_AXIS ) {
+        if( MI_MAX_VAR_BUFFER_SIZE > volume_count[to_volume_index[d]] * slab_size * unit_size ) {
+          count[d] = volume_count[to_volume_index[d]];
+          ++file->n_slab_dims;  // number of complete dimensions
+        } else {
+          count[d] = MIN( volume_count[to_volume_index[d]], 
+                          (hsize_t)( MI_MAX_VAR_BUFFER_SIZE / ( slab_size * unit_size ) ) );
+          n_steps *= (int)( ( volume_count[to_volume_index[d]] + count[d] - 1 ) / count[d] );
         }
-        --d;
+        slab_size *= count[d];
+      }
     }
-    while( d >= 0 && slab_size < MIN_SLAB_SIZE );
 
-    if( slab_size > MAX_SLAB_SIZE && file->n_slab_dims > 1 )
-        --file->n_slab_dims;
+    if( file->n_slab_dims == 0 ) {
+      fprintf( stderr, "Error: You seem to be processing a minc file\n" );
+      fprintf( stderr, "with no valid axes. Please check your volume.\n" );
+      exit(1);
+    }
 
     /*--- now write entire volume in contiguous chunks (possibly only 1 req'd)*/
-
-    n_slab = 0;
-    n_steps = 1;
-
-    for( d = file->n_file_dimensions-1;  d >= 0;  --d )
-    {
-        vol_index = to_volume_index[d];
-        if( vol_index != INVALID_AXIS && n_slab >= file->n_slab_dims )
-            n_steps *= volume_count[vol_index];
-        if( vol_index != INVALID_AXIS )
-            ++n_slab;
-        file_indices[d] = file_start[d];
-    }
 
     step = 0;
 
     initialize_progress_report( &progress, FALSE, n_steps,"Outputting Volume" );
 
     increment = FALSE;
-    while( !increment )
-    {
+    while( !increment ) {
+
         /*--- set the indices of the file array to write */
 
-        n_slab = 0;
-        for( d = file->n_file_dimensions-1;  d >= 0;  --d )
-        {
-            vol_index = to_volume_index[d];
-
-            if( vol_index == INVALID_AXIS || n_slab >= file->n_slab_dims )
-                count[d] = 1;
-            else
-                count[d] = (long) volume_count[vol_index];
-
-            if( vol_index != INVALID_AXIS )
-                ++n_slab;
+        long local_count[MAX_VAR_DIMS];
+        for( d = 0; d < file->n_file_dimensions; d++ ) {
+          vol_index = to_volume_index[d];
+          local_count[d] = MIN( volume_count[vol_index] - file_indices[d], count[d] );
         }
 
-        output_slab( file, volume, to_volume_index, file_indices, count );
-
-        increment = TRUE;
+        output_slab( file, volume, to_volume_index, file_indices, local_count );
 
         /*--- increment the file index dimensions which correspond
               to volume dimensions not output */
 
+        increment = TRUE;
+
         d = file->n_file_dimensions-1;
         n_slab = 0;
-        while( increment && d >= 0 )
-        {
+        while( increment && d >= 0 ) {
             vol_index = to_volume_index[d];
 
-            if( vol_index != INVALID_AXIS && n_slab >= file->n_slab_dims )
-            {
-                ++file_indices[d];
-                if( file_indices[d] <
-                    file_start[d] + (long) volume_count[vol_index] )
+            if( vol_index != INVALID_AXIS && n_slab >= file->n_slab_dims ) {
+                file_indices[d] += local_count[d];
+                if( file_indices[d] < file_start[d] + (long) volume_count[vol_index] ) {
                     increment = FALSE;
-                else
+                } else {
                     file_indices[d] = file_start[d];
+                }
             }
 
             if( vol_index != INVALID_AXIS )

@@ -13,12 +13,9 @@
 ---------------------------------------------------------------------------- */
 
 #include  <internal_volume_io.h>
-#include  <minc.h>
+#include  <minc_basic.h>
 
 #define  INVALID_AXIS   -1
-
-#define  MIN_SLAB_SIZE    10000     /* at least 10000 entries per read */
-#define  MAX_SLAB_SIZE   400000     /* no more than 200 K at a time */
 
 static  BOOLEAN  match_dimension_names(
     int               n_volume_dims,
@@ -589,22 +586,18 @@ VIOAPI  Minc_file  initialize_minc_input_from_minc_id(
 
     file->n_slab_dims = 0;
     slab_size = 1;
-    d = file->n_file_dimensions-1;
-    
-    do
-    {
-        if( file->to_volume_index[d] != INVALID_AXIS )
-        {
-            ++file->n_slab_dims;
-            slab_size *= (int) file->sizes_in_file[d];
-        }
-        --d;
-    }
-    while( d >= 0 && slab_size < MIN_SLAB_SIZE );
+    int unit_size = get_type_size( get_volume_data_type(volume) );
 
-    if( slab_size > MAX_SLAB_SIZE && file->n_slab_dims > 1 )
-    {
-        --file->n_slab_dims;
+    for( d = file->n_file_dimensions-1; d >= 0; d-- ) {
+      if( file->to_volume_index[d] != INVALID_AXIS ) {
+        if( MI_MAX_VAR_BUFFER_SIZE > file->sizes_in_file[d] * slab_size * unit_size ) {
+          slab_size *= file->sizes_in_file[d];
+          ++file->n_slab_dims;  // number of complete dimensions
+        } else {
+          slab_size *= MIN( file->sizes_in_file[d],
+                            (hsize_t)( MI_MAX_VAR_BUFFER_SIZE / ( slab_size * unit_size ) ) );
+        }
+      }
     }
 
     /* --- decide whether the volume data must be freed (if it changed size) */

@@ -2,6 +2,7 @@ New in Release 2.0.18
 ---------------------
 * Fixed bug with chunking for internal file compression using hdf5
   (now makes the code faster for large files)
+* Smarter utilization of buffer in input_mnc.c and output_mnc.c
 
 New in Release 2.0.17
 ---------------------
