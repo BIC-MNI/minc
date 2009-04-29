@@ -10,7 +10,10 @@
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincinfo.c,v $
- * Revision 6.12  2008-01-17 02:33:02  rotor
+ * Revision 6.13  2009-04-29 13:58:46  rotor
+ *  * fixed a stack smash in mincinfo.c
+ *
+ * Revision 6.12  2008/01/17 02:33:02  rotor
  *  * removed all rcsids
  *  * removed a bunch of ^L's that somehow crept in
  *  * removed old (and outdated) BUGS file
@@ -574,7 +577,7 @@ static int get_attname(int mincid, char *string, int *varid, char *name)
       return MI_ERROR;
    }
    (void) strncpy(name, attname, MAX_NC_NAME-1);
-   name[MAX_NC_NAME] = '\0';
+   name[MAX_NC_NAME-1] = '\0';
 
    return MI_NOERROR;
 
