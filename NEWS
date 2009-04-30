@@ -21,7 +21,7 @@ New in Release 2.0.16
 
 New in Release 2.0.15
 ---------------------
-* MINC2 is now built by default (or disabled with --diable-minc2).
+* MINC2 is now built by default (or disabled with --disable-minc2).
 * Began to aggregate and update all docs for a clean(er) 2.1 release
 * Added cubic interpoation in mincresample for x-y slices
 * Fixed a seg-fault with null history strings
