@@ -1411,7 +1411,9 @@ static  Status  output_the_volume(
         FREE( image_range );
     }
 
-    /*--- determine which contiguous blocks of volume to output */
+    /* --- determine which contiguous blocks of volume to output
+       to max out the read/write buffer and make it like the
+       chunking dimensions for compression (for efficiency) */
 
     file->n_slab_dims = 0;
     slab_size = 1;
@@ -1424,7 +1426,7 @@ static  Status  output_the_volume(
       if( to_volume_index[d] != INVALID_AXIS ) {
         if( MI_MAX_VAR_BUFFER_SIZE > volume_count[to_volume_index[d]] * slab_size * unit_size ) {
           count[d] = volume_count[to_volume_index[d]];
-          ++file->n_slab_dims;  // number of complete dimensions
+          file->n_slab_dims++;  /* integral number of complete dimensions */
         } else {
           count[d] = MIN( volume_count[to_volume_index[d]], 
                           (hsize_t)( MI_MAX_VAR_BUFFER_SIZE / ( slab_size * unit_size ) ) );
@@ -1449,7 +1451,7 @@ static  Status  output_the_volume(
     increment = FALSE;
     while( !increment ) {
 
-        /*--- set the indices of the file array to write */
+        /*--- set the indices of the file slab to write */
 
         long local_count[MAX_VAR_DIMS];
         for( d = 0; d < file->n_file_dimensions; d++ ) {
@@ -1460,7 +1462,7 @@ static  Status  output_the_volume(
         output_slab( file, volume, to_volume_index, file_indices, local_count );
 
         /*--- increment the file index dimensions which correspond
-              to volume dimensions not output */
+              for the next slab to write to output */
 
         increment = TRUE;
 

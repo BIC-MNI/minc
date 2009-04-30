@@ -582,7 +582,9 @@ VIOAPI  Minc_file  initialize_minc_input_from_minc_id(
 
     ncopts = NC_VERBOSE | NC_FATAL;
 
-    /* --- decide how many dimensions to read in at a time */
+    /* --- decide how many full dimensions to read in at a time 
+       to max out the read/write buffer and make it like the 
+       chunking dimensions for compression */
 
     file->n_slab_dims = 0;
     slab_size = 1;
@@ -592,7 +594,7 @@ VIOAPI  Minc_file  initialize_minc_input_from_minc_id(
       if( file->to_volume_index[d] != INVALID_AXIS ) {
         if( MI_MAX_VAR_BUFFER_SIZE > file->sizes_in_file[d] * slab_size * unit_size ) {
           slab_size *= file->sizes_in_file[d];
-          ++file->n_slab_dims;  // number of complete dimensions
+          file->n_slab_dims++;  /* integral number of complete dimensions */
         } else {
           slab_size *= MIN( file->sizes_in_file[d],
                             (hsize_t)( MI_MAX_VAR_BUFFER_SIZE / ( slab_size * unit_size ) ) );
