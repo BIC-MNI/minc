@@ -239,7 +239,7 @@ static  void  get_default_cache_block_sizes(
 
         /*--- set the last two dimensions to be entire size of dimension */
 
-        for_less( dim, MAX( 0, n_dims - 2), n_dims )
+        for_less( dim, MAX( 0, n_dims - 2), MAX_DIMENSIONS )
             block_sizes[dim] = -1;
     }
     else if( !default_block_sizes_set &&

@@ -1,13 +1,18 @@
 
 
 
+2009-05-08  Andrew L Janke  <a.janke@gmail.com>
+
+   * volume_io/Volumes/volume_cache.c: added loop range fix to keep
+       valgrind happy. (via Claude).
+
 -- Release of minc 2.0.18 --
 
 2009-04-29 Claude Lepage <claude@bic.mni.mcgill.ca>
    * Smarter utilization of buffer in input_mnc.c and output_mnc.c
 
 2009-04-29  Andrew L Janke <a.janke@gmail.com>
-	* progs/mincinfo/mincinfo.c: fixed a stack smash
+   * progs/mincinfo/mincinfo.c: fixed a stack smash
 
 2009-04-21 Claude Lepage <claude@bic.mni.mcgill.ca>
    * Fixed bug with chunking for internal file compression using hdf5
