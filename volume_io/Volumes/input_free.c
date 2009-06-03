@@ -489,8 +489,10 @@ VIOAPI  BOOLEAN  input_more_free_format_file(
 
     if( (long) volume_input->slice_index < volume_input->sizes_in_file[0] )
     {
-        if( !volume_is_alloced( volume ) )
+        if( !volume_is_alloced( volume ) ) {
             alloc_volume_data( volume );
+            if( !volume_is_alloced( volume ) ) return( FALSE );
+        }
 
         status = input_slice( volume_input );
 

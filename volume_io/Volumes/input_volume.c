@@ -248,6 +248,12 @@ VIOAPI  Status  input_volume(
         terminate_progress_report( &progress );
 
         delete_volume_input( &input_info );
+
+        if( !volume_is_alloced( *volume ) ) {
+          delete_volume( *volume );
+          *volume = NULL;
+          status = ERROR;
+        }
     }
 
     return( status );

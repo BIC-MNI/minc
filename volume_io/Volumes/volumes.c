@@ -2392,6 +2392,11 @@ VIOAPI  Volume   copy_volume_definition(
                                             voxel_min, voxel_max );
     alloc_volume_data( copy );
 
+    if( !volume_is_alloced( copy ) ) {
+      delete_volume( copy );
+      copy = NULL;
+    }
+
     return( copy );
 }
 
@@ -2424,6 +2429,9 @@ VIOAPI  Volume  copy_volume(
     }
 
     copy = copy_volume_definition( volume, MI_ORIGINAL_TYPE, FALSE, 0.0, 0.0 );
+    if( !copy ) {
+      return( NULL );
+    }
 
     /* --- find out how many voxels are in the volume */
 

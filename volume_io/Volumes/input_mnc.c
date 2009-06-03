@@ -1016,6 +1016,7 @@ VIOAPI  BOOLEAN  input_more_minc_file(
                                           file->filename,
                                           &file->original_input_options );
         }
+        if( !volume_is_alloced( volume ) ) return( FALSE );
     }
 
     if( volume->is_cached_volume )

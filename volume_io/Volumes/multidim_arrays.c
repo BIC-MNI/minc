@@ -215,9 +215,46 @@ VIOAPI  void  get_multidim_sizes(
 ---------------------------------------------------------------------------- */
 
 VIOAPI  BOOLEAN  multidim_array_is_alloced(
-    multidim_array   *array )
-{
-    return( array->data != NULL );
+    multidim_array   *array ) {
+
+    BOOLEAN status = FALSE;
+    void    **p1, ***p2, ****p3, *****p4, ******p5;
+
+    if( array == NULL ) return( FALSE );
+
+    switch( array->n_dimensions ) {
+      case  1: p1 = (void **)&array->data;
+               status = ( *p1 != NULL );
+               break;
+      case  2: p2 = (void ***)&array->data;
+               if( *p2 == NULL ) break;
+               if( **p2 == NULL ) break;
+               status = TRUE;
+               break;
+      case  3: p3 = (void ****)&array->data;
+               if( *p3 == NULL ) break;
+               if( **p3 == NULL ) break;
+               if( ***p3 == NULL ) break;
+               status = TRUE;
+               break;
+      case  4: p4 = (void *****)&array->data;
+               if( *p4 == NULL ) break;
+               if( **p4 == NULL ) break;
+               if( ***p4 == NULL ) break;
+               if( ****p4 == NULL ) break;
+               status = TRUE;
+               break;
+      case  5: p5 = (void ******)&array->data;
+               if( *p5 == NULL ) break;
+               if( **p5 == NULL ) break;
+               if( ***p5 == NULL ) break;
+               if( ****p5 == NULL ) break;
+               if( *****p5 == NULL ) break;
+               status = TRUE;
+               break;
+    }
+
+    return( status );
 }
 
 /* ----------------------------- MNI Header -----------------------------------
