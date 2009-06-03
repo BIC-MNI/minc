@@ -1,10 +1,8 @@
 
-
-
-2009-05-08  Andrew L Janke  <a.janke@gmail.com>
-
-   * volume_io/Volumes/volume_cache.c: added loop range fix to keep
-       valgrind happy. (via Claude).
+2009-06-03 Claude Lepage <claude@bic.mni.mcgill.ca>
+   * Fixed bug in multidim_array_is_alloced for correct check of 
+     memory allocation of image data. Return volume=NULL when memory 
+     allocation fails.
 
 -- Release of minc 2.0.18 --
 
@@ -12,7 +10,7 @@
    * Smarter utilization of buffer in input_mnc.c and output_mnc.c
 
 2009-04-29  Andrew L Janke <a.janke@gmail.com>
-   * progs/mincinfo/mincinfo.c: fixed a stack smash
+	* progs/mincinfo/mincinfo.c: fixed a stack smash
 
 2009-04-21 Claude Lepage <claude@bic.mni.mcgill.ca>
    * Fixed bug with chunking for internal file compression using hdf5
