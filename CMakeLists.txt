@@ -2,6 +2,8 @@
 #
 # Andrew Janke - a.janke@gmail.com
 
+CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+
 PROJECT(libminc2)
 
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake-modules")
