@@ -1,6 +1,7 @@
 
 2009-07-08 Andrew L Janke <a.janke@gmail.com>
 	* Added minimum cmake version to CMakeLists.txt
+	* Added libtoolize/glibtoolize logic in autogen.sh (thanks Sean)
 
 2009-06-03 Claude Lepage <claude@bic.mni.mcgill.ca>
    * Fixed bug in multidim_array_is_alloced for correct check of 

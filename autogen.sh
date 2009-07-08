@@ -14,10 +14,16 @@ EOF
     exit 1
 fi
 
+# On Mac OS X, the GNU libtool is named 'glibtool'.
+HOSTOS=`uname`
+LIBTOOLIZE=libtoolize
+if test "$HOSTOS"x = Darwinx; then
+  LIBTOOLIZE=glibtoolize
+fi
 
 aclocal -I m4
 autoheader
-libtoolize --automake
+$LIBTOOLIZE --automake
 automake --add-missing --copy
 autoconf
 
