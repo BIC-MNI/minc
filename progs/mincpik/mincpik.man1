@@ -1,5 +1,5 @@
 .\"                                      Hey, EMACS: -*- nroff -*-
-.TH MINCPIK 1 "$Date: 2007-08-13 13:36:00 $" "" "MINC User's Guide"
+.TH MINCPIK 1 "$Date: 2009-08-11 13:49:19 $" "" "MINC User's Guide"
 
 .SH NAME
 mincpik \- generate images from minc files
@@ -13,6 +13,9 @@ mincpik \- generate images from minc files
 generates image files from MINC volumes using the Imagemagick
 convert utility. For a complete list of output file types see the
 convert man pages.
+
+Currently if there is a time dimension in the file the image will
+only produced from the first time point
 
 .SH General options
 .TP

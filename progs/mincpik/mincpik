@@ -218,6 +218,8 @@ if($opt{auto_range}){
 
 # foreach slicing direction
 foreach $space (@{$opt{dirs}}){
+
+   print "Doing direction $space\n" if $opt{'verbose'};
    
    my($slice);
    $CODE = "GRAY";
@@ -268,7 +270,13 @@ foreach $space (@{$opt{dirs}}){
    if($dim_names =~ m/vector_dimension/){
       $CODE = 'RGB';
       }
-   
+  
+   # take only the first timepoint if we have a time dimension
+   my @time_res_args = ();
+   if($dim_names =~ m/time/){
+      @time_res_args = ('-dimrange', "time=0,0");
+      }
+    
    # do the reshaping
    $dimorder = join(',', $space, @{$ordering{$space}});
    if($CODE eq 'RGB'){
@@ -282,6 +290,7 @@ foreach $space (@{$opt{dirs}}){
             '-dimsize', "$ordering{$space}[1]=-1",
             '-dimorder', $dimorder,
             '-dimrange', "$space=$slice,1",
+            @time_res_args,
             $infile, "$tmpdir/reshaped.mnc");                  
    if(scalar(@{$opt{range}}) != 0){
       push(@args, '-valid_range', @{$opt{range}}[0], @{$opt{range}}[1]);
@@ -335,7 +344,7 @@ foreach $space (@{$opt{dirs}}){
 # do the triplanar if requested
 if($opt{triplanar}){
    my @orient_args;
-   
+
    if($opt{title}){
       $imgfile = "$tmpdir/mont.png";
       }
