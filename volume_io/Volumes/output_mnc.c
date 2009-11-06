@@ -1424,7 +1424,8 @@ static  Status  output_the_volume(
       count[d] = 1;
       file_indices[d] = file_start[d];
       if( to_volume_index[d] != INVALID_AXIS ) {
-        if( MI_MAX_VAR_BUFFER_SIZE > volume_count[to_volume_index[d]] * slab_size * unit_size ) {
+        if( MI_MAX_VAR_BUFFER_SIZE > volume_count[to_volume_index[d]] * slab_size * unit_size 
+            && n_steps == 1 ) {
           count[d] = volume_count[to_volume_index[d]];
           file->n_slab_dims++;  /* integral number of complete dimensions */
         } else {
@@ -1493,6 +1494,12 @@ static  Status  output_the_volume(
     }
 
     terminate_progress_report( &progress );
+
+    if( step != n_steps ) {
+      fprintf( stderr, "Error: Your output minc file may be incomplete\n" );
+      fprintf( stderr, "(wrote only %d out of %d buffers)\n", step, n_steps );
+      exit(1);
+    }
 
     return( OK );
 }
