@@ -589,15 +589,17 @@ VIOAPI  Minc_file  initialize_minc_input_from_minc_id(
     file->n_slab_dims = 0;
     slab_size = 1;
     int unit_size = get_type_size( get_volume_data_type(volume) );
+    int full_dim = 1;
 
     for( d = file->n_file_dimensions-1; d >= 0; d-- ) {
       if( file->to_volume_index[d] != INVALID_AXIS ) {
-        if( MI_MAX_VAR_BUFFER_SIZE > file->sizes_in_file[d] * slab_size * unit_size ) {
+        if( MI_MAX_VAR_BUFFER_SIZE > file->sizes_in_file[d] * slab_size * unit_size && full_dim ) {
           slab_size *= file->sizes_in_file[d];
           file->n_slab_dims++;  /* integral number of complete dimensions */
         } else {
           slab_size *= MIN( file->sizes_in_file[d],
                             (hsize_t)( MI_MAX_VAR_BUFFER_SIZE / ( slab_size * unit_size ) ) );
+          full_dim = 0;
         }
       }
     }
