@@ -274,7 +274,7 @@ foreach $space (@{$opt{dirs}}){
 
       # perc offset
       if(defined($opt{'sagittal_offset_perc'})){
-         $slice += int($img_x * $opt{'sagittal_offset_perc'} / 100);
+         $slice += int($n_slices * $opt{'sagittal_offset_perc'} / 100);
          }
       }
    
