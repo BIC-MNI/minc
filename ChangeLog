@@ -1,3 +1,7 @@
+
+2009-11-13 Andrew L Janke <a.janke@gmail.com>
+   * progs/mincpik/mincpik: added -sagittal_offset_perc option
+
 2009-11-06 Claude Lepage <claude@bic.mni.mcgill.ca>
 	* volume_io/Volumes/output_mnc.c: fix output buffers for a slice
           as only first buffer would be written out

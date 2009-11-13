@@ -1,15 +1,13 @@
 #! /usr/bin/env perl
 #
+# Copyright 2009
 # Andrew Janke - a.janke@gmail.com
-# Center for Magnetic Resonance
 # The University of Queensland
-# http://www.cmr.uq.edu.au/~rotor
 #
-# Copyright Andrew Janke, The University of Queensland.
 # Permission to use, copy, modify, and distribute this software and its
 # documentation for any purpose and without fee is hereby granted,
 # provided that the above copyright notice appear in all copies.  The
-# author and the University of Queensland make no representations about the
+# author and the University make no representations about the
 # suitability of this software for any purpose.  It is provided "as is"
 # without express or implied warranty.
 
@@ -51,6 +49,7 @@ $me = &basename($0);
    'title' => 0,
    'title_text' => undef,
    'sagittal_offset' => undef,
+   'sagittal_offset_perc' => undef,
    'orientation' => 'vertical',
    'anot_bar' => undef,
    );
@@ -144,10 +143,13 @@ $Usage = "Usage: $me [options] <infile.mnc> [<image.type>]\n".
    ['-tilesize', "integer", 1, \$opt{tilesize},
       "pixel size for each image in a triplanar"],
    ['-sagittal_offset', "integer", 1, \$opt{sagittal_offset},
-      "offset the sagittal slice from the centre in the triplanar",
+      "offset the sagittal slice from the centre",
       "<# slices>"],
+   ['-sagittal_offset_perc', "integer", 1, \$opt{sagittal_offset_perc},
+      "offset the sagittal slice by a percentage from the centre",
+      "<% offset>"],
    ['-vertical', 'const', 'vertical', \$opt{orientation},
-     'create a vertical triplanar view'],
+     'create a vertical triplanar view (Default)'],
    ['-horizontal', 'const', 'horizontal', \$opt{orientation},
      'create a horizontal triplanar view'],
    );
@@ -181,6 +183,11 @@ if($opt{auto_range} && @{$opt{image_range}}){
 # warn about -slice and -triplanar
 if(defined($opt{slice}) && $opt{triplanar}){
    warn "\n$me: you probably don't want to use both -triplanar and -slice\n\n";
+   } 
+
+# warn about -sagittal_offset and -sagittal_offset_perc
+if(defined($opt{sagittal_offset}) && $opt{sagittal_offset_perc}){
+   warn "\n$me: only use one of -sagittal_offset -sagittal_offset_perc\n\n";
    } 
 
 # set up directions for triplanar
@@ -257,10 +264,20 @@ foreach $space (@{$opt{dirs}}){
    # figure out the slice to get
    $slice = (!defined($opt{slice})) ? int($n_slices/2) : $opt{slice};
    
-   # do the sagittal offset
-   if($space eq 'xspace' && defined($opt{sagittal_offset})){
-      $slice += $opt{sagittal_offset};
+   # do the sagittal offset (only one of these should be done)
+   if($space eq 'xspace'){
+
+      # slice offset      
+      if(defined($opt{'sagittal_offset'})){
+         $slice += $opt{'sagittal_offset'};
+         }
+
+      # perc offset
+      if(defined($opt{'sagittal_offset_perc'})){
+         $slice += int($img_x * $opt{'sagittal_offset_perc'} / 100);
+         }
       }
+   
    # check we didn't step of the edge
    if($slice >= $n_slices || $slice < 0){ 
       die "Slice $slice out of range (0-" . ($n_slices-1) . ")\n\n";
