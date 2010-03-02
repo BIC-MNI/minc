@@ -1,4 +1,7 @@
 
+2010-03-02  Andrew L Janke  <a.janke@gmail.com>
+   * Added minccmp (minccmp.c and minccmp.man1)
+
 2010-02-03  Andrew L Janke  <a.janke@gmail.com>
    * progs/mincpik/mincik: added -text_size option (Thanks Mishkin)
    * removed all non-quoted string barewords (hash refs)
