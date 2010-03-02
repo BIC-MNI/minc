@@ -7,6 +7,11 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.c,v $
+ * Revision 6.14  2010-03-02 23:24:40  rotor
+ *  * libsrc/hdf_convenience.c: removed spurious debug output
+ *  * libsrc/minc.h: replaced MAX_NC_OPEN with 32
+ *  * libsrc/voxel_loop.c: replaced MAX_NC_OPEN with MI_MAX_NUM_ICV
+ *
  * Revision 6.13  2010-03-02 12:23:14  rotor
  *  * ported HDF calls to 1.8.x
  *  * Makefile.am: updated for minccmp
@@ -1987,7 +1992,7 @@ PRIVATE Loopfile_Info *initialize_loopfile_info(int num_input_files,
 
    /* Keep track of number of files that we can open */
    num_free_files = loop_options->max_open_files;
-   if (num_free_files > MAX_NC_OPEN) num_free_files = MAX_NC_OPEN;
+   if (num_free_files > MI_MAX_NUM_ICV) num_free_files = MI_MAX_NUM_ICV;
 
    /* Check to see if we can open output files (we must leave room for one
       input file) */
@@ -2677,7 +2682,7 @@ MNCAPI Loop_Options *create_loop_options(void)
    loop_options->is_signed = TRUE;
    loop_options->valid_range[0] = 0.0;
    loop_options->valid_range[1] = 0.0;
-   loop_options->max_open_files = MAX_NC_OPEN - 2;
+   loop_options->max_open_files = MI_MAX_NUM_ICV - 2;
    loop_options->check_all_input_dim_info = TRUE;
    loop_options->convert_input_to_scalar = FALSE;
    loop_options->output_vector_size = 0;
@@ -2816,7 +2821,7 @@ MNCAPI void set_loop_datatype(Loop_Options *loop_options,
 @NAME       : set_loop_max_open_files
 @INPUT      : loop_options - user options for looping
               max_open_files - maximum number of open files allowed (between
-                 1 and MAX_NC_OPEN)
+                 1 and MI_MAX_NUM_ICV)
 @OUTPUT     : (none)
 @RETURNS    : (nothing)
 @DESCRIPTION: Routine to set the maximum number of open minc files.
@@ -2829,7 +2834,7 @@ MNCAPI void set_loop_datatype(Loop_Options *loop_options,
 MNCAPI void set_loop_max_open_files(Loop_Options *loop_options, 
                                     int max_open_files)
 {
-   if ((max_open_files <= 0) || (max_open_files > MAX_NC_OPEN)) {
+   if ((max_open_files <= 0) || (max_open_files > MI_MAX_NUM_ICV)) {
       (void) fprintf(stderr, 
                      "Bad number of files %d in set_loop_max_open_files\n",
                      max_open_files);

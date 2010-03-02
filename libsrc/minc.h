@@ -19,7 +19,12 @@
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc.h,v $
- * Revision 6.18  2007-08-09 17:05:25  rotor
+ * Revision 6.19  2010-03-02 23:24:40  rotor
+ *  * libsrc/hdf_convenience.c: removed spurious debug output
+ *  * libsrc/minc.h: replaced MAX_NC_OPEN with 32
+ *  * libsrc/voxel_loop.c: replaced MAX_NC_OPEN with MI_MAX_NUM_ICV
+ *
+ * Revision 6.18  2007/08/09 17:05:25  rotor
  *  * added some fixes of Claudes for chunking and internal compression
  *
  * Revision 6.17  2005/08/26 21:04:57  bert
@@ -140,7 +145,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.18 2007-08-09 17:05:25 rotor Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.19 2010-03-02 23:24:40 rotor Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include <netcdf.h>
@@ -373,7 +378,10 @@ extern "C" {
 
 /* Constants for image conversion variable (icv) properties */
 /* Maximum number of icv's allowed */
-#define MI_MAX_NUM_ICV MAX_NC_OPEN
+/* changed to 32 as netcdf 4.x no longer defines MAX_NC_OPEN */
+/* #define MI_MAX_NUM_ICV MAX_NC_OPEN */
+#define MI_MAX_NUM_ICV 32
+
 /* Default max and min for normalization */
 #define MI_DEFAULT_MAX 1.0
 #define MI_DEFAULT_MIN 0.0

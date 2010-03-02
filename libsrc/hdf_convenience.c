@@ -1535,13 +1535,15 @@ hdf_varget(int fd, int varid, const long *start_ptr, const long *length_ptr,
 
 // fprintf(stderr, "cleanup - dst_id: %d  fspc_id: %d  mspc_id: %d\n", dst_id, fspc_id, mspc_id);
  
- 
+
+// I think this should be needed but am not sure with HDF 1.8.x
+// Andrew Janke - 3/3/2010 
 // if(fspc_id >= 0)
 //    H5Sclose(fspc_id);
   if (mspc_id >= 0)
     H5Sclose(mspc_id);
   
-fprintf(stderr, "cleanup - done\n");
+// fprintf(stderr, "cleanup - done\n");
   return (status);
 }
 
