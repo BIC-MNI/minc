@@ -34,7 +34,11 @@
 @CREATED    : July 27, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: image_conversion.c,v $
- * Revision 6.16  2008-01-17 02:33:02  rotor
+ * Revision 6.17  2010-03-02 12:23:14  rotor
+ *  * ported HDF calls to 1.8.x
+ *  * Makefile.am: updated for minccmp
+ *
+ * Revision 6.16  2008/01/17 02:33:02  rotor
  *  * removed all rcsids
  *  * removed a bunch of ^L's that somehow crept in
  *  * removed old (and outdated) BUGS file
@@ -1411,6 +1415,8 @@ PRIVATE int MI_icv_access(int operation, mi_icv_type *icvp, long start[],
               MI_RETURN(MI_ERROR);
           }
       }
+
+// fprintf(stderr, "Getting values at %p\n", chunk_start);
 
       /* Get the values */
       if (MI_varaccess(operation, icvp->cdfid, icvp->varid,

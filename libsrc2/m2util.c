@@ -215,12 +215,12 @@ midescend_path(hid_t file_id, const char *path)
      * automatic error reporting of HDF5.
      */
     H5E_BEGIN_TRY {
-        tmp_id = H5Dopen(file_id, path);
+        tmp_id = H5Dopen1(file_id, path);
 
         /* If the dataset open fails, try opening the object as a group.
          */
         if (tmp_id < 0) {
-            tmp_id = H5Gopen(file_id, path);
+            tmp_id = H5Gopen1(file_id, path);
         }
     } H5E_END_TRY;
     return (tmp_id);
@@ -303,7 +303,7 @@ miset_attr_at_loc(hid_t hdf_loc, const char *name, mitype_t data_type,
         return (MI_ERROR);
     }
     
-    hdf_attr = H5Acreate(hdf_loc, name, ftyp_id, spc_id, H5P_DEFAULT);
+    hdf_attr = H5Acreate1(hdf_loc, name, ftyp_id, spc_id, H5P_DEFAULT);
     if (hdf_attr < 0) {
 	return (MI_ERROR);
     }
@@ -1253,7 +1253,7 @@ minc_create_thumbnail(mihandle_t volume, int grp)
     }
 
     sprintf(path, "/minc-2.0/image/%d", grp);
-    grp_id = H5Gcreate(volume->hdf_id, path, 0);
+    grp_id = H5Gcreate1(volume->hdf_id, path, 0);
     if (grp_id < 0) {
         return (MI_ERROR);
     }
@@ -1488,7 +1488,7 @@ minc_update_thumbnail(mihandle_t volume, hid_t loc_id, int igrp, int ogrp)
     /* Open the input path.
      */
     sprintf(path, "%d/image", igrp);
-    idst_id = H5Dopen(loc_id, path);
+    idst_id = H5Dopen1(loc_id, path);
     
     if (idst_id < 0) {
         return (MI_ERROR);
@@ -1524,10 +1524,10 @@ minc_update_thumbnail(mihandle_t volume, hid_t loc_id, int igrp, int ogrp)
     sprintf(path, "%d/image", ogrp);
     
     H5E_BEGIN_TRY {
-        odst_id = H5Dcreate(loc_id, path, typ_id, ofspc_id, H5P_DEFAULT);
+        odst_id = H5Dcreate1(loc_id, path, typ_id, ofspc_id, H5P_DEFAULT);
     } H5E_END_TRY;
     if (odst_id < 0) {
-        odst_id = H5Dopen(loc_id, path);
+        odst_id = H5Dopen1(loc_id, path);
         if (odst_id < 0) {
             return (MI_ERROR);
         }
@@ -1547,20 +1547,20 @@ minc_update_thumbnail(mihandle_t volume, hid_t loc_id, int igrp, int ogrp)
 
         sprintf(path, "%d/image-max", ogrp);
         H5E_BEGIN_TRY {
-            omax_id = H5Dcreate(loc_id, path, H5T_IEEE_F64LE, tfspc_id, 
+            omax_id = H5Dcreate1(loc_id, path, H5T_IEEE_F64LE, tfspc_id, 
                                 H5P_DEFAULT);
         } H5E_END_TRY;
         if (omax_id < 0) {
-            omax_id = H5Dopen(loc_id, path);
+            omax_id = H5Dopen1(loc_id, path);
         }
 
         sprintf(path, "%d/image-min", ogrp);
         H5E_BEGIN_TRY {
-            omin_id = H5Dcreate(loc_id, path, H5T_IEEE_F64LE, tfspc_id, 
+            omin_id = H5Dcreate1(loc_id, path, H5T_IEEE_F64LE, tfspc_id, 
                                 H5P_DEFAULT);
         } H5E_END_TRY;
         if (omin_id < 0) {
-            omin_id = H5Dopen(loc_id, path);
+            omin_id = H5Dopen1(loc_id, path);
         }
     }
     
@@ -1664,7 +1664,7 @@ minc_update_thumbnails(mihandle_t volume)
     hsize_t i;
     char name[MI2_MAX_PATH];
   
-    grp_id = H5Gopen(volume->hdf_id, "/minc-2.0/image");
+    grp_id = H5Gopen1(volume->hdf_id, "/minc-2.0/image");
     if (grp_id < 0) {
         return (MI_ERROR);      /* Error opening group. */
     }
@@ -1735,7 +1735,7 @@ create_standard_dataset(hid_t hdf_file, const char *name)
   hid_t grp_info;
   int result;
 
-  grp_info = H5Gopen(hdf_file, "/minc-2.0/info");
+  grp_info = H5Gopen1(hdf_file, "/minc-2.0/info");
   if (grp_info < 0) {
     return (MI_ERROR);
   }
@@ -1744,7 +1744,7 @@ create_standard_dataset(hid_t hdf_file, const char *name)
     return (MI_ERROR);
   }
   
-  dataset_info = H5Dcreate(grp_info, name, 
+  dataset_info = H5Dcreate1(grp_info, name, 
 			   H5T_STD_I32LE, dataspace_info, H5P_DEFAULT);
   if (dataset_info < 0) {
     return (MI_ERROR);
@@ -1991,7 +1991,7 @@ miget_scalar(hid_t loc_id, hid_t type_id, const char *path, void *data)
     int result = MI_ERROR;
 
     H5E_BEGIN_TRY {
-        dset_id = H5Dopen(loc_id, path);
+        dset_id = H5Dopen1(loc_id, path);
     } H5E_END_TRY;
     if (dset_id >= 0) {
         spc_id = H5Dget_space(dset_id);

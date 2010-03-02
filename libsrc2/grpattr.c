@@ -47,7 +47,7 @@ milist_start(mihandle_t vol, const char *path, int flags,
     
     strncat(fullpath, path, sizeof (fullpath) - strlen(fullpath));
 
-    grp_id = H5Gopen(vol->hdf_id, fullpath);
+    grp_id = H5Gopen1(vol->hdf_id, fullpath);
     if (grp_id < 0) {
         return (MI_ERROR);
     }
@@ -118,7 +118,7 @@ milist_recursion(milisthandle_t handle, char *path)
       
                 frame->grp_idx = 0;
                 frame->att_idx = 0;
-                frame->grp_id = H5Gopen(data->frame_ptr->grp_id, tmp);
+                frame->grp_id = H5Gopen1(data->frame_ptr->grp_id, tmp);
 			
                 strcpy(frame->relpath, data->frame_ptr->relpath);
                 l = strlen(frame->relpath);
@@ -166,7 +166,7 @@ milist_attr_next(mihandle_t vol, milisthandle_t handle,
       
      
         H5E_BEGIN_TRY {
-            r = H5Aiterate(data->frame_ptr->grp_id, 
+            r = H5Aiterate1(data->frame_ptr->grp_id, 
                            &data->frame_ptr->att_idx, milist_attr_op, data);
         } H5E_END_TRY;
         if (r > 0) {
@@ -313,14 +313,14 @@ micreate_group(mihandle_t vol, const char *path, const char *name)
     H5E_BEGIN_TRY {
         /* See if the group already exists.  If so, just return.
          */
-        hdf_new_grp = H5Gopen(hdf_grp, name);
+        hdf_new_grp = H5Gopen1(hdf_grp, name);
         if (hdf_new_grp >= 0) {
             H5Gclose(hdf_new_grp);
             return (MI_NOERROR);
         }
         /* Actually create the requested group.
          */
-        hdf_new_grp = H5Gcreate(hdf_grp, name, 0);
+        hdf_new_grp = H5Gcreate1(hdf_grp, name, 0);
         if (hdf_new_grp < 0) {
             return (MI_ERROR);
         }
@@ -705,7 +705,7 @@ miset_attr_values(mihandle_t vol, mitype_t data_type, const char *path,
 	!strcmp(std_name,"study") )
       {
 	H5E_BEGIN_TRY {
-	  tmp_id = H5Dopen(hdf_file, fullpath);
+	  tmp_id = H5Dopen1(hdf_file, fullpath);
 	  if (tmp_id < 0) {
 	    create_standard_dataset(hdf_file,std_name);
 	  }

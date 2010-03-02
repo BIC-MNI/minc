@@ -1,6 +1,9 @@
+
+New in Release 2.0.19
+---------------------
 * volume_io/Volumes/output_mnc.c: fix output buffers for a slice
   as only first buffer would be written out
-
+* ported HDF calls to 1.8.x
 * Fixed bug in multidim_array_is_alloced for correct check of
   memory allocation of image data. Return volume=NULL when memory
   allocation fails.

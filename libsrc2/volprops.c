@@ -142,7 +142,7 @@ miget_volume_props(mihandle_t volume, mivolumeprops_t *props)
       else {
 	for (i = 0; i < nfilters; i++) {
 	  cd_nelmts = MI2_MAX_CD_ELEMENTS;
-          fcode = H5Pget_filter(hdf_plist, i, &flags, &cd_nelmts,
+          fcode = H5Pget_filter1(hdf_plist, i, &flags, &cd_nelmts,
                                 cd_values, sizeof(fname), fname);
 	  switch (fcode) {
 	  case H5Z_FILTER_DEFLATE:
@@ -241,7 +241,7 @@ miselect_resolution(mihandle_t volume, int depth)
   if ( volume->hdf_id < 0 || depth > MI2_MAX_RESOLUTION_GROUP || depth < 0) {
     return (MI_ERROR);
   }
-  grp_id = H5Gopen(volume->hdf_id, "/minc-2.0/image");
+  grp_id = H5Gopen1(volume->hdf_id, "/minc-2.0/image");
   if (grp_id < 0) {
     return (MI_ERROR);
   }
@@ -263,20 +263,20 @@ miselect_resolution(mihandle_t volume, int depth)
       H5Dclose(volume->image_id);
   }
   sprintf(path, "%d/image", depth);
-  volume->image_id = H5Dopen(grp_id, path);
+  volume->image_id = H5Dopen1(grp_id, path);
 
   if (volume->volume_class == MI_CLASS_REAL) {
       if (volume->imax_id >= 0) {
           H5Dclose(volume->imax_id);
       }
       sprintf(path, "%d/image-max", depth);
-      volume->imax_id = H5Dopen(grp_id, path);
+      volume->imax_id = H5Dopen1(grp_id, path);
 
       if (volume->imin_id >= 0) {
           H5Dclose(volume->imin_id);
       }
       sprintf(path, "%d/image-min", depth);
-      volume->imin_id = H5Dopen(grp_id, path);
+      volume->imin_id = H5Dopen1(grp_id, path);
   }
   return (MI_NOERROR);
 }

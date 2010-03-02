@@ -64,7 +64,7 @@ micreate_volume_image(mihandle_t volume)
         return (MI_ERROR);
     }
     
-    dset_id = H5Dcreate(volume->hdf_id, "/minc-2.0/image/0/image", 
+    dset_id = H5Dcreate1(volume->hdf_id, "/minc-2.0/image/0/image", 
                         volume->ftype_id, 
                         dataspace_id, volume->plist_id);
     
@@ -125,7 +125,7 @@ micreate_volume_image(mihandle_t volume)
         dtmp = 0.0;
         H5Pset_fill_value(dcpl_id, H5T_NATIVE_DOUBLE, &dtmp);
 
-        dset_id = H5Dcreate(volume->hdf_id, "/minc-2.0/image/0/image-min",
+        dset_id = H5Dcreate1(volume->hdf_id, "/minc-2.0/image/0/image-min",
                             H5T_IEEE_F64LE, dataspace_id, dcpl_id);
         if (ndims != 0) {
             miset_attr_at_loc(dset_id, "dimorder", MI_TYPE_STRING,
@@ -140,7 +140,7 @@ micreate_volume_image(mihandle_t volume)
         dtmp = 1.0;
         H5Pset_fill_value(dcpl_id, H5T_NATIVE_DOUBLE, &dtmp);
 
-        dset_id = H5Dcreate(volume->hdf_id, "/minc-2.0/image/0/image-max",
+        dset_id = H5Dcreate1(volume->hdf_id, "/minc-2.0/image/0/image-max",
                             H5T_IEEE_F64LE, dataspace_id, dcpl_id);
         if (ndims != 0) {
             miset_attr_at_loc(dset_id, "dimorder", MI_TYPE_STRING,
@@ -448,7 +448,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
 
   /* Try creating DIMENSIONS GROUP i.e. /minc-2.0/dimensions
    */
-  grp_id = H5Gopen(file_id, MI_FULLDIMENSIONS_PATH);
+  grp_id = H5Gopen1(file_id, MI_FULLDIMENSIONS_PATH);
   if (grp_id < 0) {
       return (MI_ERROR);
   }
@@ -473,7 +473,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
     }
      
     /* Create a dataset(dimension variable name) in DIMENSIONS GROUP */
-    dataset_id = H5Dcreate(grp_id, dimensions[i]->name, 
+    dataset_id = H5Dcreate1(grp_id, dimensions[i]->name, 
                            H5T_IEEE_F64LE, dataspace_id, H5P_DEFAULT);
     
     /* Dimension variable for a regular dimension contains
@@ -516,7 +516,7 @@ micreate_volume(const char *filename, int number_of_dimensions,
 	strcat(name, "-width");
 
 	/* Create dataset dimension_name-width */
-	dataset_width = H5Dcreate(grp_id, name, H5T_IEEE_F64LE, 
+	dataset_width = H5Dcreate1(grp_id, name, H5T_IEEE_F64LE, 
                                   dataspace_id, H5P_DEFAULT);
 	/* Return an Id for the dataspace of the dataset dataset_width */
 	fspc_id = H5Dget_space(dataset_width);
@@ -795,7 +795,7 @@ miget_volume_voxel_count(mihandle_t volume, int *number_of_voxels)
     sprintf(path, "/minc-2.0/image/%d/image", volume->selected_resolution);
     /* Open the dataset with the specified path
      */
-    dset_id = H5Dopen(volume->hdf_id, path);
+    dset_id = H5Dopen1(volume->hdf_id, path);
     if (dset_id < 0) {
         return (MI_ERROR);
     }
@@ -1107,7 +1107,7 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
     /* hdf5 macro can temporarily disable the automatic error printing */
     H5E_BEGIN_TRY {
          /* Open the dataset image-max at the specified path*/
-        dset_id = H5Dopen(file_id, "/minc-2.0/image/0/image-max");
+        dset_id = H5Dopen1(file_id, "/minc-2.0/image/0/image-max");
     } H5E_END_TRY;
     if (dset_id >= 0) {
         /* Get the Id of the copy of the dataspace of the dataset */
@@ -1140,7 +1140,7 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
     miinvert_transform(handle->v2w_transform, handle->w2v_transform);
 
     /* Open the image dataset */
-    handle->image_id = H5Dopen(file_id, "/minc-2.0/image/0/image");
+    handle->image_id = H5Dopen1(file_id, "/minc-2.0/image/0/image");
     if (handle->image_id < 0) {
 	return (MI_ERROR);
     }
@@ -1188,8 +1188,8 @@ miopen_volume(const char *filename, int mode, mihandle_t *volume)
     /* hdf5 macro can temporarily disable the automatic error printing */
     H5E_BEGIN_TRY {
         /* Open both image-min and image-max datasets */
-        handle->imax_id = H5Dopen(file_id, "/minc-2.0/image/0/image-max");
-        handle->imin_id = H5Dopen(file_id, "/minc-2.0/image/0/image-min");
+        handle->imax_id = H5Dopen1(file_id, "/minc-2.0/image/0/image-max");
+        handle->imin_id = H5Dopen1(file_id, "/minc-2.0/image/0/image-min");
     } H5E_END_TRY;
 
     /* Convert the type to a MINC type.

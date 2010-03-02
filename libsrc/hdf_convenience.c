@@ -80,7 +80,7 @@ hdf_id_add(int fd)
 	new->nvars = 0;
 	new->ndims = 0;
 	new->link =_m2_list;
-        new->grp_id = H5Gopen(fd, MI2_GRPNAME);
+        new->grp_id = H5Gopen(fd, MI2_GRPNAME, H5P_DEFAULT);
         new->comp_type = MI2_COMP_UNKNOWN;
         new->comp_param = 0;
         new->chunk_type = MI2_CHUNK_UNKNOWN;
@@ -182,7 +182,7 @@ hdf_var_add(struct m2_file *file, const char *name, const char *path,
 	strncpy(new->name, name, NC_MAX_NAME - 1);
 	strncpy(new->path, path, NC_MAX_NAME - 1);
         new->is_cmpd = 0;
-        new->dset_id = H5Dopen(file->fd, path);
+        new->dset_id = H5Dopen1(file->fd, path);
         new->ftyp_id = H5Dget_type(new->dset_id);
         new->mtyp_id = H5Tget_native_type(new->ftyp_id, H5T_DIR_ASCEND);
         new->fspc_id = H5Dget_space(new->dset_id);
@@ -618,7 +618,7 @@ hdf_put_dimorder(struct m2_file *file, int dst_id, int ndims,
 
     spc_id = H5Screate(H5S_SCALAR);
 
-    att_id = H5Acreate(dst_id, MI2_DIMORDER, typ_id, spc_id, H5P_DEFAULT);
+    att_id = H5Acreate(dst_id, MI2_DIMORDER, typ_id, spc_id, H5P_DEFAULT, H5P_DEFAULT);
 
     if (att_id >= 0) {
 	H5Awrite(att_id, typ_id, str_buf);
@@ -925,7 +925,7 @@ hdf_set_length(hid_t dst_id, const char *dimnm, unsigned long length)
         /* Create the attribute anew.
 	 */
         att_id = H5Acreate(dst_id, MI2_LENGTH, H5T_STD_U32LE, aspc_id, 
-                           H5P_DEFAULT);
+                           H5P_DEFAULT, H5P_DEFAULT);
       }  H5E_END_TRY;
         if (att_id >= 0) {
             H5Awrite(att_id, H5T_NATIVE_LONG, (void *) &length);
@@ -1102,12 +1102,12 @@ hdf_attput(int fd, int varid, const char *attnm, nc_type val_typ,
 
             new_plst_id = H5Dget_create_plist(var->dset_id);
 
-            new_dset_id = H5Dcreate(file->grp_id, temp, new_type_id, 
+            new_dset_id = H5Dcreate1(file->grp_id, temp, new_type_id, 
                                     var->fspc_id, new_plst_id);
 
             /* Iterate over all attributes, copying from old to new. */
             i = 0;
-            H5Aiterate(var->dset_id, &i, hdf_copy_attr, (void *) new_dset_id);
+            H5Aiterate1(var->dset_id, &i, hdf_copy_attr, (void *) new_dset_id);
 
             H5Dclose(var->dset_id);
             H5Tclose(var->ftyp_id);
@@ -1186,7 +1186,7 @@ hdf_attput(int fd, int varid, const char *attnm, nc_type val_typ,
 
         /* Create the attribute anew.
          */
-        att_id = H5Acreate(loc_id, attnm, ftyp_id, spc_id, H5P_DEFAULT);
+        att_id = H5Acreate2(loc_id, attnm, ftyp_id, spc_id, H5P_DEFAULT, H5P_DEFAULT);
     } H5E_END_TRY;
 
     if (att_id < 0)
@@ -1381,7 +1381,7 @@ hdf_vardef(int fd, const char *varnm, nc_type vartype, int ndims,
     }
     
     H5E_BEGIN_TRY {
-        dst_id = H5Dcreate(fd, varpath, typ_id, spc_id, prp_id);
+        dst_id = H5Dcreate1(fd, varpath, typ_id, spc_id, prp_id);
     } H5E_END_TRY;
 
     if (dst_id < 0) {
@@ -1464,6 +1464,8 @@ hdf_varget(int fd, int varid, const long *start_ptr, const long *length_ptr,
   struct m2_file *file;
   struct m2_var *var;
 
+// fprintf(stderr, "HDF varget\n");
+
   /* Emulate the obsolete "rootvariable"
    */
   if (varid == MI_ROOTVARIABLE_ID) {
@@ -1531,8 +1533,15 @@ hdf_varget(int fd, int varid, const long *start_ptr, const long *length_ptr,
 
  cleanup:
 
+// fprintf(stderr, "cleanup - dst_id: %d  fspc_id: %d  mspc_id: %d\n", dst_id, fspc_id, mspc_id);
+ 
+ 
+// if(fspc_id >= 0)
+//    H5Sclose(fspc_id);
   if (mspc_id >= 0)
     H5Sclose(mspc_id);
+  
+fprintf(stderr, "cleanup - done\n");
   return (status);
 }
 
@@ -2057,7 +2066,7 @@ hdf_copy_attr(hid_t in_id, const char *attr_name, void *op_data)
    if ((typ_id = H5Aget_type(inatt_id)) < 0)
      goto cleanup;
 
-   outatt_id = H5Acreate(out_id, attr_name, typ_id, spc_id, H5P_DEFAULT);
+   outatt_id = H5Acreate2(out_id, attr_name, typ_id, spc_id, H5P_DEFAULT, H5P_DEFAULT);
    if (outatt_id < 0) {
      /* This can happen if the attribute already exists.  If it does, we
       * don't overwrite the existing value.
@@ -2119,7 +2128,7 @@ hdf_open_dsets(struct m2_file *file, hid_t grp_id, char *cpath, int is_dim)
 	    strcpy(tpath, cpath);
 	    strcat(tpath, temp);
 	    strcat(tpath, "/");
-	    new_id = H5Gopen(grp_id, temp);
+	    new_id = H5Gopen1(grp_id, temp);
 	    if (new_id >= 0) {
 		hdf_open_dsets(file, new_id, tpath, is_dim);
 		H5Gclose(new_id);
@@ -2130,7 +2139,7 @@ hdf_open_dsets(struct m2_file *file, hid_t grp_id, char *cpath, int is_dim)
 	    H5Gget_objname_by_idx(grp_id, idx, temp, sizeof(temp));
 	    strcpy(tpath, cpath);
 	    strcat(tpath, temp);
-	    new_id = H5Dopen(grp_id, temp);
+	    new_id = H5Dopen1(grp_id, temp);
 	    if (new_id >= 0) {
 		hid_t spc_id;
 		spc_id = H5Dget_space(new_id);
@@ -2206,7 +2215,7 @@ hdf_open(const char *path, int mode)
     /* Open the image variables.
      */
     H5E_BEGIN_TRY {
-        dset_id = H5Dopen(fd, "/minc-2.0/image/0/image");
+        dset_id = H5Dopen1(fd, "/minc-2.0/image/0/image");
         if (dset_id >= 0) {
             hid_t type_id;
             int is_compound = 0;
@@ -2237,7 +2246,7 @@ hdf_open(const char *path, int mode)
             H5Dclose(dset_id);
         }
     
-        dset_id = H5Dopen(fd, "/minc-2.0/image/0/image-min");
+        dset_id = H5Dopen1(fd, "/minc-2.0/image/0/image-min");
         if (dset_id >= 0) {
             hdf_get_diminfo(dset_id, &ndims, dims);
             hdf_var_add(file, MIimagemin, "/minc-2.0/image/0/image-min", 
@@ -2245,7 +2254,7 @@ hdf_open(const char *path, int mode)
             H5Dclose(dset_id);
         }
 
-        dset_id = H5Dopen(fd, "/minc-2.0/image/0/image-max");
+        dset_id = H5Dopen1(fd, "/minc-2.0/image/0/image-max");
         if (dset_id >= 0) {
             hdf_get_diminfo(dset_id, &ndims, dims);
             hdf_var_add(file, MIimagemax, "/minc-2.0/image/0/image-max", 
@@ -2256,13 +2265,13 @@ hdf_open(const char *path, int mode)
 
     /* Open all of the datasets in the "dimensions" category.
      */
-    grp_id = H5Gopen(fd, "/minc-2.0/dimensions");
+    grp_id = H5Gopen2(fd, "/minc-2.0/dimensions", H5P_DEFAULT);
     hdf_open_dsets(file, grp_id, "/minc-2.0/dimensions/", 1);
     H5Gclose(grp_id);
 
     /* Open all of the datasets in the "info" category.
      */
-    grp_id = H5Gopen(fd, "/minc-2.0/info");
+    grp_id = H5Gopen2(fd, "/minc-2.0/info", H5P_DEFAULT);
     hdf_open_dsets(file, grp_id, "/minc-2.0/info/", 0);
     H5Gclose(grp_id);
     return (fd);
@@ -2296,26 +2305,26 @@ hdf_create(const char *path, int cmode, struct mi2opts *opts_ptr)
     /* Create the default groups.
      * Should we use a non-zero value for size_hint (parameter 3)???
      */
-    if ((grp_id = H5Gcreate(fd, MI2_GRPNAME, 0)) < 0) {
+    if ((grp_id = H5Gcreate1(fd, MI2_GRPNAME, 0)) < 0) {
 	return (MI_ERROR);
     }
 
-    if ((tmp_id = H5Gcreate(grp_id, "dimensions", 0)) < 0) {
-	return (MI_ERROR);
-    }
-    H5Gclose(tmp_id);
-
-    if ((tmp_id = H5Gcreate(grp_id, "info", 0)) < 0) {
+    if ((tmp_id = H5Gcreate1(grp_id, "dimensions", 0)) < 0) {
 	return (MI_ERROR);
     }
     H5Gclose(tmp_id);
 
-    if ((tmp_id = H5Gcreate(grp_id, "image", 0)) < 0) {
+    if ((tmp_id = H5Gcreate1(grp_id, "info", 0)) < 0) {
 	return (MI_ERROR);
     }
     H5Gclose(tmp_id);
 
-    if ((tmp_id = H5Gcreate(grp_id, "image/0", 0)) < 0) {
+    if ((tmp_id = H5Gcreate1(grp_id, "image", 0)) < 0) {
+	return (MI_ERROR);
+    }
+    H5Gclose(tmp_id);
+
+    if ((tmp_id = H5Gcreate1(grp_id, "image/0", 0)) < 0) {
 	return (MI_ERROR);
     }
     H5Gclose(tmp_id);

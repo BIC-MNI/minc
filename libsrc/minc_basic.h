@@ -14,7 +14,11 @@
 @CREATED    : August 28, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_basic.h,v $
- * Revision 6.6  2008-04-11 05:15:00  rotor
+ * Revision 6.7  2010-03-02 12:23:14  rotor
+ *  * ported HDF calls to 1.8.x
+ *  * Makefile.am: updated for minccmp
+ *
+ * Revision 6.6  2008/04/11 05:15:00  rotor
  *  * rewrote error code  (Claude) to remove global defs that were
  *     causing build problems with DYLIB on OSX
  *
@@ -70,7 +74,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_basic.h,v 6.6 2008-04-11 05:15:00 rotor Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_basic.h,v 6.7 2010-03-02 12:23:14 rotor Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include <minc.h>
@@ -80,7 +84,7 @@
 /* Maximum buffer size for conversions. Should not be a power of 2 - this
    can cause poor performance on some systems (e.g. SGI) due to caching-
    related inefficiencies */
-#define MI_MAX_VAR_BUFFER_SIZE 1000000
+#define MI_MAX_VAR_BUFFER_SIZE 100000
 
 /* Possible values for sign of a value */
 #define MI_PRIV_DEFSIGN   0

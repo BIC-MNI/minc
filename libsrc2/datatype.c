@@ -37,7 +37,7 @@ miget_data_type_size(mihandle_t volume, misize_t *voxel_size)
     if (grp_id < 0) {
 	return (MI_ERROR);
     }
-    dset_id = H5Dopen(grp_id, "image");
+    dset_id = H5Dopen1(grp_id, "image");
     if (dset_id < 0) {
 	return (MI_ERROR);
     }

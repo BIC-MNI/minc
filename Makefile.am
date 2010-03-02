@@ -180,6 +180,7 @@ bin_PROGRAMS = \
 	minc_modify_header \
 	mincaverage \
 	minccalc \
+	minccmp \
 	mincconcat \
 	minccopy \
 	mincexpand \
@@ -276,6 +277,8 @@ minccalc_SOURCES = \
 mincconcat_SOURCES = progs/mincconcat/mincconcat.c
 
 minccopy_SOURCES = progs/minccopy/minccopy.c
+
+minccmp_SOURCES = progs/minccmp/minccmp.c
 
 mincexample1_SOURCES = progs/mincexample/mincexample1.c
 
@@ -511,6 +514,7 @@ dist_man1_MANS = \
 	progs/mincaverage/mincaverage.man1 \
 	progs/minccalc/minccalc.man1 \
 	progs/mincconcat/mincconcat.man1 \
+	progs/minccmp/minccmp.man1 \
 	progs/minccopy/minccopy.man1 \
 	progs/mincdiff/mincdiff.man1 \
 	progs/mincedit/mincedit.man1 \
