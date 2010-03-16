@@ -1,6 +1,9 @@
 
 2010-03-02  Andrew L Janke  <a.janke@gmail.com>
    * Added minccmp (minccmp.c and minccmp.man1)
+   * libsrc/hdf_convenience.c: removed spurious debug output
+   * libsrc/minc.h: replaced MAX_NC_OPEN with 32
+   * libsrc/voxel_loop.c: replaced MAX_NC_OPEN with MI_MAX_NUM_ICV
 
 2010-02-03  Andrew L Janke  <a.janke@gmail.com>
    * progs/mincpik/mincik: added -text_size option (Thanks Mishkin)
