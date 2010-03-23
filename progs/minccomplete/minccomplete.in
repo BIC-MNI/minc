@@ -1,0 +1,212 @@
+#! /usr/bin/env perl
+#
+# Checks if a MINC file is complete
+#
+# Copyright Andrew Janke a.janke@gmail.com
+#
+# Permission to use, copy, modify, and distribute this software and its
+# documentation for any purpose and without fee is hereby granted,
+# provided that the above copyright notice appear in all copies.  The
+# author makes no representations about the suitability of this software
+# for any purpose.  It is provided "as is" without express or implied warranty.
+
+
+use strict;
+use warnings "all";
+use Getopt::Long;
+use Pod::Usage;
+use File::Basename;
+
+my($me, %opt, $dump, $infile, $error);
+
+$me = basename($0);
+%opt = (
+   'help' => 0,
+   'man' => 0,
+   'verbose' => 0,
+   'error_string' => undef,
+   );
+
+# Check arguments
+&GetOptions(
+   'help|?' => \$opt{'help'},
+   'man' => \$opt{'man'},
+   'v|verbose' => \$opt{'verbose'},
+   'version' => sub { &print_version_info },
+   'e|error_string=s' => \$opt{'error_string'},
+   ) or pod2usage(-verbose => 1) && exit;
+   
+# handle -man, -help or missing args
+pod2usage(-verbose => 1) if $opt{'help'};
+pod2usage(-exitstatus => 0, -verbose => 2) if $opt{'man'};
+pod2usage(-verbose => 0) && exit if ($#ARGV != 0);
+
+$infile = $ARGV[0];
+
+# check if the file in question exists
+if(!-e $infile){
+   if(defined($opt{error_string})){
+      print STDOUT "$opt{error_string}\n";
+      exit(-1);
+      }
+   else{
+      die "$me: Couldn't find $infile\n\n";
+      }
+   }
+
+# figure out what we have here
+if($infile =~ m/\.mnc(\.gz|)$/){
+   my($version);
+   
+   print STDOUT "Checking a MINC file ($infile)\n" if $opt{'verbose'};
+   
+   # first check that the header is "valid"
+   if(system("mincdump -h $infile 2> /dev/null 1>&2") == 0){
+      $error = 0;
+      }
+   else{
+      $error = -1;
+      }
+   
+   # if good, check if the image is complete for MINC2
+   if($error == 0){
+      chomp($version = `mincinfo -minc_version $infile 2> /dev/null`);
+      
+      if($version =~ m/HDF5/){
+         print STDOUT "File is $version\n" if $opt{'verbose'};
+         
+         chomp($dump = `mincinfo -attvalue image:complete $infile 2> /dev/null`);
+         $error = -1 if ($dump ne 'true_');
+         }
+      }
+   }
+
+elsif($infile =~ m/\.xfm$/){
+   print STDOUT "Checking a XFM file ($infile)\n" if $opt{'verbose'};
+   
+   if(system("xfm2param $infile 2> /dev/null 1>&2") == 0){
+      $error = 0;
+      }
+   else{
+      $error = -1;
+      }
+   }
+
+
+# now output the status
+if($error){
+   if(defined($opt{'error_string'})){
+      print STDOUT "$opt{'error_string'}\n";
+      }
+   else{
+      print STDOUT "$error\n";
+      }
+   }
+else{
+   print STDOUT "$error\n";
+   }
+
+exit($error);
+
+# print version information
+sub print_version_info {
+   my $PACKAGE = '@PACKAGE_NAME@';
+   my $VERSION = '@PACKAGE_VERSION@';
+   my $PACKAGE_BUGREPORT = '@PACKAGE_BUGREPORT@';
+   
+   print STDOUT "\n$PACKAGE version $VERSION\n".
+                "Comments to $PACKAGE_BUGREPORT\n\n";
+   exit 0;
+   }
+
+
+__END__
+
+=head1 NAME
+
+B<minccomplete> - checks if a MINC file is complete
+
+=head1 SYNOPSIS
+
+B<minccomplete> [options] <file.mnc>
+
+minccomplete is designed as a QC tool that you can use to check
+if MINC or xfm files have been completely written.
+
+=head1 DESCRIPTION
+
+B<minccomplete> will check if a file exists and is completely written.
+The reasons for non-completion are varied but typically caused when 
+a process writing a MINC or xfm file is interrupted. A zero will be 
+returned if the file is complete and a -1 if it isn't.
+
+Examples:
+
+   $ minccomplete in.mnc
+   0
+   $ minccomplete in.xfm
+   0
+
+A MINC file is returned as complete if the image attribute image:complete
+is set. ie:
+
+   mincinfo -attvalue image:complete infile.mnc
+
+A xfm file is deemed complete if xfm2param can parse the file.
+The associated exit codes will also be set as part of this so 
+that minccomplete can be used in scripts.
+
+An entirely simplistic example:
+   
+   #! /bin/sh
+   
+   infile=$1
+   
+   if [ `minccomplete ${infile}` ]
+   then
+      echo "Yes!"
+   else
+      echo "Nope, try again"
+   fi
+
+Problems or comments should be sent to: a.janke@gmail.com
+ 
+=head1 OPTIONS
+
+=over 4
+
+=item B<-v>, B<--verbose>
+
+Be noisy when doing things
+
+=item B<--version>
+
+Print version number and exit
+
+=item B<-h>, B<--help>
+
+Dump some quick help output
+
+=item B<--man>
+
+Dump a man page
+
+=item B<-e>, B<--error_string>
+
+Don't die on errors (eg: file not found) and print the supplied value instead
+
+=back
+
+=head1 SEE ALSO
+
+mincheader(1) mincinfo(1) xfm2param(1)
+
+=head1 AUTHOR
+
+Andrew Janke - a.janke@gmail.com
+
+=head1 COPYRIGHTS
+
+Copyright 2000 by Andrew L Janke
+
+=cut

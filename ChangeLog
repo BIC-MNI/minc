@@ -1,4 +1,9 @@
 
+
+2010-03-22  Andrew L Janke  <a.janke@gmail.com>
+   * added pod2man for manpage generation from scripts
+   * shifted minchistory man to POD
+
 2010-03-02  Andrew L Janke  <a.janke@gmail.com>
    * Added minccmp (minccmp.c and minccmp.man1)
    * libsrc/hdf_convenience.c: removed spurious debug output

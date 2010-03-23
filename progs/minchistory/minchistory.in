@@ -1,0 +1,165 @@
+#! /usr/bin/env perl
+#
+# Simple script to dump history information from a minc file
+#
+# Copyright Andrew Janke a.janke@gmail.com
+#
+# Permission to use, copy, modify, and distribute this software and its
+# documentation for any purpose and without fee is hereby granted,
+# provided that the above copyright notice appear in all copies.  The
+# author makes no representations about the suitability of this software
+# for any purpose.  It is provided "as is" without express or implied warranty.
+
+
+my($n_columns) = 80;
+
+use strict;
+use warnings "all";
+use Getopt::Long;
+use Pod::Usage;
+use Text::Format;
+use File::Basename;
+
+my($me, %opt, $cmd_text, $text, $fname, $counter, @tmp, $c);
+
+$me = &basename($0);
+%opt = (
+   'help' => 0,
+   'man' => 0,
+   'verbose' => 0,
+   'error_string' => undef,
+   );
+
+# Check arguments
+&GetOptions(
+   'help|?' => \$opt{'help'},
+   'man' => \$opt{'man'},
+   'v|verbose' => \$opt{'verbose'},
+   'version' => sub { &print_version_info },
+   'e|error_string=s' => \$opt{'error_string'},
+   ) or pod2usage(-verbose => 1) && exit;
+   
+# handle -man, -help or missing args
+pod2usage(-verbose => 1) if $opt{'help'};
+pod2usage(-exitstatus => 0, -verbose => 2) if $opt{'man'};
+pod2usage(-verbose => 0) && exit if ($#ARGV < 0);
+
+#$Usage = "Usage: $me <file1.mnc> [<file2.mnc> ... ]\n\n";
+#die $Usage if ($#ARGV < 0);
+
+# set up text objects
+$text = new Text::Format( firstIndent => 0,
+                          bodyIndent => 5,
+                          columns => $n_columns );
+$cmd_text = new Text::Format( firstIndent => 0,
+                          bodyIndent => 5,
+                          columns => ($n_columns - 2) );
+
+# for each input file
+foreach $fname (@ARGV){
+   if(!-e $fname){
+      warn "$me: Couldn't find $fname\n";
+      next;
+      }
+
+   print STDOUT $text->format("--- History of $fname ---\n");
+
+   $counter = 1;
+   foreach (`mincinfo -attvalue :history "$fname"`){
+      chomp;
+      next if $_ eq '';
+      
+      # add the command number to the front
+      $_ = sprintf("[%02d] ", $counter ++) . $_;
+      
+      # add \'s to the end of each line except the last
+      @tmp = split(/\n/, $cmd_text->format($_));
+      for($c=0; $c<$#tmp; $c++){
+         print STDOUT "$tmp[$c] \\\n";
+         }
+      print STDOUT "$tmp[$#tmp]\n";
+      }
+   
+   print STDOUT "\n";
+   }
+
+# print version information
+sub print_version_info {
+   my $PACKAGE = '@PACKAGE_NAME@';
+   my $VERSION = '@PACKAGE_VERSION@';
+   my $PACKAGE_BUGREPORT = '@PACKAGE_BUGREPORT@';
+   
+   print STDOUT "\n$PACKAGE version $VERSION\n".
+                "Comments to $PACKAGE_BUGREPORT\n\n";
+   exit 0;
+   }
+
+
+__END__
+
+=head1 NAME
+
+B<minchistory> - prints history information for minc files
+
+=head1 SYNOPSIS
+
+B<minchistory> [options] <file1.mnc> [<file2.mnc> ... ]
+
+minchistory will dump the internal history of one or more MINC files
+
+=head1 DESCRIPTION
+
+B<minchistory> is a B<perl> script that prints the history 
+information in a collection of MINC files.  Most MINC files contain an
+internal "audit trail" that lists the commands used to create the 
+MINC file.  This tool provides a convenient way to examine this information.
+
+For each file, B<minchistory> prints a title line followed by a series of 
+lines which list the history information for that file.
+
+   --- History of <filename> ---
+   [01] Wed Oct 13 15:35:35 EST 2004>>>> dicom3_to_minc .
+   [02] Wed Oct 13 15:43:34 2004>>> mincreshape +direction \
+     bob-jones_256x256x256_T1.mnc out.mnc -dimorder zspace,yspace,xspace \
+     -clobber
+
+B<minchistory> is essentially an alias for the following command with a bit
+of pretty printing added.
+
+   mincinfo -attvalue :history B<filename.mnc>
+ 
+=head1 OPTIONS
+
+=over 4
+
+=item B<-v>, B<--verbose>
+
+Be noisy when doing things
+
+=item B<--version>
+
+Print version number and exit
+
+=item B<-h>, B<--help>
+
+Dump some quick help output
+
+=item B<--man>
+
+Dump a man page
+
+=back
+
+=head1 SEE ALSO
+
+mincinfo(1)
+
+=head1 AUTHOR
+
+Andrew Janke - a.janke@gmail.com
+
+=head1 COPYRIGHTS
+
+Copyright 2000 by Andrew L Janke
+
+=cuts

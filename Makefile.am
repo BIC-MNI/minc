@@ -11,6 +11,12 @@ if MINC2
 SUBDIRS += libsrc2/test
 endif
 
+# how to build man pages from POD
+progs/minccomplete/minccomplete.man1: progs/minccomplete/minccomplete
+	$(POD2MAN) --section=1 $< > $@
+progs/minchistory/minchistory.man1: progs/minchistory/minchistory
+	$(POD2MAN) --section=1 $< > $@
+
 # Add these to the include searches.
 #
 INCLUDES = \
@@ -165,12 +171,14 @@ dist_bin_SCRIPTS = \
 	progs/mincdiff/mincdiff \
 	progs/mincedit/mincedit \
 	progs/mincheader/mincheader \
-	progs/minchistory/minchistory \
 	progs/mincpik/mincpik \
 	progs/mincview/mincview
 
 # Scripts that we process (to add version #s) before install
-bin_SCRIPTS = progs/xfm/xfmflip
+bin_SCRIPTS = \
+	progs/minccomplete/minccomplete \
+	progs/minchistory/minchistory \
+   progs/xfm/xfmflip
 
 # Programs we build and install.
 #
@@ -231,6 +239,8 @@ LDADD = libvolume_io2.la libminc2.la
 
 EXTRA_DIST = GETTING_STARTED \
 	$(m4_files) \
+	progs/minccomplete/minccomplete.in \
+	progs/minchistory/minchistory.in \
 	progs/xfm/xfmflip.in \
 	libsrc/strdup.c \
 	epm-header.in \
@@ -505,7 +515,7 @@ libacr_nema_la_SOURCES = \
 	conversion/Acr_nema/message.c \
 	conversion/Acr_nema/value_repr.c
 
-# MAN pages go here.  The "dist_" prefix signals that they files
+# MAN pages go here.  The "dist_" prefix signals that they
 # are to be included in source distribution.
 #
 dist_man1_MANS = \
@@ -513,6 +523,7 @@ dist_man1_MANS = \
 	progs/minc_modify_header/minc_modify_header.man1 \
 	progs/mincaverage/mincaverage.man1 \
 	progs/minccalc/minccalc.man1 \
+	progs/minccomplete/minccomplete.man1 \
 	progs/mincconcat/mincconcat.man1 \
 	progs/minccmp/minccmp.man1 \
 	progs/minccopy/minccopy.man1 \
