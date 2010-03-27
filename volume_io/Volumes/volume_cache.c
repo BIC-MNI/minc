@@ -18,7 +18,7 @@
 #define   HASH_TABLE_SIZE_FACTOR          3
 
 #define   DEFAULT_BLOCK_SIZE              64
-#define   DEFAULT_CACHE_THRESHOLD         100000000
+#define   DEFAULT_CACHE_THRESHOLD         -1
 #define   DEFAULT_MAX_BYTES_IN_CACHE      100000000
 
 static  BOOLEAN  n_bytes_cache_threshold_set = FALSE;

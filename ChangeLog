@@ -3,6 +3,8 @@
 2010-03-22  Andrew L Janke  <a.janke@gmail.com>
    * added pod2man for manpage generation from scripts
    * shifted minchistory man to POD
+   * conversion/vff2mnc/vff2mnc.c: added error checking for fgets
+   * set default volume_io caching to none
 
 2010-03-02  Andrew L Janke  <a.janke@gmail.com>
    * Added minccmp (minccmp.c and minccmp.man1)

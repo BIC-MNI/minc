@@ -5,7 +5,11 @@
 @CREATED    : Jul 2006 (Leila Baghdadi)
 @MODIFIED   : 
  * $Log: vff2mnc.c,v $
- * Revision 1.6  2008-09-23 02:18:08  alex
+ * Revision 1.7  2010-03-27 15:10:59  rotor
+ *  * removed default volume_io caching
+ *  * fixed a few warnings in vff2mnc (fgets)
+ *
+ * Revision 1.6  2008/09/23 02:18:08  alex
  * Fixed typo on line 141 which prevented minc to be built
  *
  * Revision 1.5  2008/09/04 16:15:01  baghdadi
@@ -523,7 +527,10 @@ read_2Dvff_files_header(const char **file_list, int num_files,
       exit(EXIT_FAILURE);  /* bad open? */
     }
     /* ensure file is VFF */
-    fgets(linebuf, sizeof(linebuf), fp);
+    if(fgets(linebuf, sizeof(linebuf), fp) == NULL){
+       fprintf(stderr, "Error with fgets on line %d of %s\n", 
+          __LINE__, __FILE__);
+       }
     if (strncmp(linebuf, "ncaa", 4) != 0) {
       fclose(fp);
       printf("File is not in vff format!!!\n");
@@ -531,7 +538,10 @@ read_2Dvff_files_header(const char **file_list, int num_files,
     }
     /* create a dictionary */
     while (linebuf[0] != '\f') {
-      fgets(linebuf, sizeof(linebuf), fp);
+      if(fgets(linebuf, sizeof(linebuf), fp) == NULL){
+         fprintf(stderr, "Error with fgets on line %d of %s\n", 
+            __LINE__, __FILE__);
+         }
       pch=strchr(linebuf, '=');
       if (pch != NULL && pch[1] !=';') {
 	strncpy(temp, linebuf, pch-linebuf);
@@ -743,7 +753,10 @@ read_3Dvff_file_header(char *filename, struct mnc_vars *m2, struct vff_attrs *va
     exit(EXIT_FAILURE);  /* bad open? */
   }
   /* ensure file is VFF */
-  fgets(linebuf, sizeof(linebuf), fp);
+  if(fgets(linebuf, sizeof(linebuf), fp) == NULL){
+     fprintf(stderr, "Error with fgets on line %d of %s\n", 
+        __LINE__, __FILE__);
+     }
   if (strncmp(linebuf, "ncaa", 4) != 0) {
     fclose(fp);
     printf("File is not in vff format!!!\n");
@@ -753,7 +766,10 @@ read_3Dvff_file_header(char *filename, struct mnc_vars *m2, struct vff_attrs *va
   /* create a dictionary */
   while (linebuf[0] != '\f') {
     counter =0;
-    fgets(linebuf, sizeof(linebuf), fp);
+    if(fgets(linebuf, sizeof(linebuf), fp) == NULL){
+       fprintf(stderr, "Error with fgets on line %d of %s\n", 
+          __LINE__, __FILE__);
+       }
     pch=strchr(linebuf, '=');
     if (pch != NULL && pch[1] !=';') {
       strncpy(temp, linebuf, pch-linebuf);
@@ -1136,7 +1152,10 @@ add_attributes_from_files(mihandle_t hvol)
       for (i=0; i < MAX_DESCRIPTION; i++) {
 	str[i] = malloc(MAX_BUF_LINE + 1);
 	CHKMEM(str[i]);
-	fgets(str[i], MAX_BUF_LINE, inf);
+	if(fgets(str[i], MAX_BUF_LINE, inf) == NULL){
+      fprintf(stderr, "Error with fgets on line %d of %s\n", 
+         __LINE__, __FILE__);
+      }
 	for (p = str[i]; *p != '\0'; p++) {
 	  if (*p == '\r') {
 	    *p = '\0';
