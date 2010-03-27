@@ -14,6 +14,9 @@
 @CREATED    : August 28, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minc_basic.h,v $
+ * Revision 6.8  2010-03-27 15:09:28  rotor
+ *  * back to 1000000
+ *
  * Revision 6.7  2010-03-02 12:23:14  rotor
  *  * ported HDF calls to 1.8.x
  *  * Makefile.am: updated for minccmp
@@ -74,7 +77,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_basic.h,v 6.7 2010-03-02 12:23:14 rotor Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc_basic.h,v 6.8 2010-03-27 15:09:28 rotor Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include <minc.h>
@@ -84,7 +87,7 @@
 /* Maximum buffer size for conversions. Should not be a power of 2 - this
    can cause poor performance on some systems (e.g. SGI) due to caching-
    related inefficiencies */
-#define MI_MAX_VAR_BUFFER_SIZE 100000
+#define MI_MAX_VAR_BUFFER_SIZE 1000000
 
 /* Possible values for sign of a value */
 #define MI_PRIV_DEFSIGN   0
