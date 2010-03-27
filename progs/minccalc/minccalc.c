@@ -19,7 +19,10 @@ McGill University
 This is predominately a rehash of mincmath by Peter Neelin
 
  * $Log: minccalc.c,v $
- * Revision 1.18  2008-01-17 02:33:02  rotor
+ * Revision 1.19  2010-03-27 15:24:03  rotor
+ *  * added outfile checks (with clobber) in minccalc
+ *
+ * Revision 1.18  2008/01/17 02:33:02  rotor
  *  * removed all rcsids
  *  * removed a bunch of ^L's that somehow crept in
  *  * removed old (and outdated) BUGS file
@@ -108,6 +111,7 @@ Mon May 21 01:01:01 EST 2000 - Original version "imgcalc" by David Leonard
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <string.h>
 #include <ctype.h>
 #include <float.h>
@@ -291,11 +295,19 @@ int main(int argc, char *argv[]){
       }
    }
 
+   /* check for output files */
+   for (i=0; i < nout; i++){
+      if(access(outfiles[i], F_OK) == 0 && !clobber){
+         fprintf(stderr, "%s: %s exists, use -clobber to overwrite\n\n",
+                 argv[0], outfiles[i]);
+         exit(EXIT_FAILURE);
+      }
+   }
+
    /* Get the list of input files either from the command line or
       from a file, or report an error if both are specified.
       Note that if -outfile is given then there is no output file name
       left on argv after option parsing. */
-
    nfiles = argc - 2;
    if (Output_list != NULL) nfiles++;
    if (filelist == NULL) {
