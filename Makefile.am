@@ -237,7 +237,7 @@ noinst_PROGRAMS = \
 
 LDADD = libvolume_io2.la libminc2.la
 
-EXTRA_DIST = GETTING_STARTED \
+EXTRA_DIST = \
 	$(m4_files) \
 	progs/minccomplete/minccomplete.in \
 	progs/minchistory/minchistory.in \

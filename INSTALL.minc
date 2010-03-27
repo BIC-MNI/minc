@@ -13,27 +13,15 @@ The NetCDF and HDF libraries must be built and installed before you
 can build MINC. Teaching MINC to find the NetCDF library depends on where
 the latter is installed.  There are two possibilities here:
 
-1. NetCDF may be installed in a location where the compiler can find
+1. NetCDF and HDF5 may be installed in a location where the compiler can find
 it.  If so, you have nothing to do.
 
-2. Third-party libraries are commonly installed such that the headers
-live in /usr/local/include and the library file lives in
-/usr/local/include.  The prefix may be something else; "/opt" is
-common, too.  If this is the case, you should pass the argument
-"--with-build-path=/usr/local" to configure.
+2. Third-party libraries are commonly installed with headers
+in /usr/local/include and libraries in /usr/local/include.
+If this is the case, you should pass the argument
+"--with-build-path=/usr/local" to configure as such:
 
-
-Running configure
------------------
-We not also need to tell configure that we want the build a MINC2
-version of MINC so we need to add the --enable-minc2 argument to
-the configure line as below. If you dont use this option the HDF5
-back-end of MINC will not be built and you will be left with what 
-will essentially be a MINC 1.X build.
-
-Now run configure with the arguments you have deduced above
-
-   ./configure --enable-minc2 <options>
+   ./configure --with-build-path=/usr/local <options>
 
 
 Compiling
@@ -51,5 +39,3 @@ Building against the MINC2 library
 ----------------------------------
 From here on in if you wish to build against the MINC2 library with
 other packages you will have to use the --with-minc2 configure flag
-
-

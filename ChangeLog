@@ -6,6 +6,7 @@
    * conversion/vff2mnc/vff2mnc.c: added error checking for fgets
    * set default volume_io caching to none
    * added checks for outfiles in minccalc
+   * removed outdated GETTING_STARTED file
 
 2010-03-02  Andrew L Janke  <a.janke@gmail.com>
    * Added minccmp (minccmp.c and minccmp.man1)

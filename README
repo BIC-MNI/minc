@@ -3,7 +3,7 @@ MINC - Medical Image NetCDF
 INTRODUCTION
 ------------
 The MINC file format is a highly flexible medical image file format
-built on top of the HDF5 generalized data format. The format is
+built on the HDF5 generalized data format. The format is
 simple, self-describing, extensible, portable and N-dimensional, with
 programming interfaces for both low-level data access and high-level
 volume manipulation. On top of the libraries is a suite of generic
@@ -53,9 +53,6 @@ The minc package is available from
 Minc requires that the NetCDF and HDF5 packages be built and installed first.
 It is available from the Unidata Program centre at
 the University Corporation for Atmospheric Research (unidata.ucar.edu). 
-
-For building and installation instructions, refer to the files
-INSTALL.minc and INSTALL.
 
 
 SUPPORT FOR HDF5 "MINC 2.0" FORMAT FILES
@@ -169,12 +166,47 @@ files found in the libsrc2 directory.
 The general philosophy is to provide a higher level interface than "libminc",
 but without some of the constraints and memory management of "volume_io".
 
-The library is largely implemented but is still incomplete.  In general
-functions which are most obviously useful and standard have been implemented,
-while some of the more esoteric features have not been finished.  I would
-appreciate all comments and criticisms both of the overall design and
-the specific implementation.
 
-Documentation for the new calls can be found at:
+DOCUMENTATION
+-------------
 
-http://www.bic.mni.mcgill.ca/software/minc2/api_doc/index.html
+http://en.wikibooks.org/wiki/MINC
+
+
+PROGRAMMING WITH THE MINC API
+-----------------------------
+
+1) NetCDF and HDF5 are basis, providing a C callable
+library for accessing data structures in a file at a low-level.
+
+2) The low-level MINC library is used to do medical-image specific 
+things. It provides some enhancements to NetCDF and HDF5
+as well as image conversion routines for dealing with image pixel
+value issues as well as image size and orientation. Documentation
+consists of a programmer's guide and reference (minc_user.tex and
+minc_reference.tex in the doc directory).  Example C programs exist
+in progs/mincexample.
+
+3) A high-level C library called volume_io provides a Volume data
+type, with functions like input_volume to give simple access to data
+while handling issues of pixel range conversion and voxel-to-world
+coordinate conversion. Documentation consists of a programmer's
+reference volume_io/Documentation/volume_io.tex.  Example programs
+exist in volume_io/Testing.
+
+The LaTeX documentation is not built by default.  You can build these
+documents using
+
+    cd doc; make docs
+    cd volume_io/Documentation; make docs
+
+latex and dvips are required.
+
+
+Applications that use MINC alone need to #include <minc.h> and
+link with "-lminc2 -lnetcdf -lhdf5 -lz -lm".
+
+Applications built with VolumeIO need to #include <volume_io.h>
+and link with "-lvolume_io2 -lminc2 -lnetcdf -lhdf5 -lz -lm".
+
+
