@@ -1,4 +1,6 @@
-
+2010-05-18  Steve M. Robbins  <smr@sumost.ca>
+   * minc.h: ensure hdf5.h included before netcdf.h to avoid build
+     error with netcdf 4.1.1 and openmpi 1.4.1.
 
 2010-03-22  Andrew L Janke  <a.janke@gmail.com>
    * added pod2man for manpage generation from scripts

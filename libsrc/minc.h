@@ -19,6 +19,9 @@
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc.h,v $
+ * Revision 6.20  2010-05-19 03:18:42  stever
+ * Ensure hdf5.h included before netcdf.h.
+ *
  * Revision 6.19  2010-03-02 23:24:40  rotor
  *  * libsrc/hdf_convenience.c: removed spurious debug output
  *  * libsrc/minc.h: replaced MAX_NC_OPEN with 32
@@ -145,10 +148,16 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.19 2010-03-02 23:24:40 rotor Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.20 2010-05-19 03:18:42 stever Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
+#if MINC2
+#include <hdf5.h>
 #include <netcdf.h>
+#include "minc_compat.h"
+#else
+#include <netcdf.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -592,9 +601,6 @@ struct mi2opts {
     int chunk_type;
     int chunk_param;
 };
-
-#include <hdf5.h>
-#include "minc_compat.h"
 
 #define MI2_ISH5OBJ(x) (H5Iget_type(x) > 0)
 
