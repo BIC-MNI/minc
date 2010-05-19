@@ -1,4 +1,5 @@
 2010-05-18  Steve M. Robbins  <smr@sumost.ca>
+   * libsrc/hdf_convenience.c: specify version 2 of H5Gopen, H5Acreate.
    * minc.h: ensure hdf5.h included before netcdf.h to avoid build
      error with netcdf 4.1.1 and openmpi 1.4.1.
 

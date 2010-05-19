@@ -80,7 +80,7 @@ hdf_id_add(int fd)
 	new->nvars = 0;
 	new->ndims = 0;
 	new->link =_m2_list;
-        new->grp_id = H5Gopen(fd, MI2_GRPNAME, H5P_DEFAULT);
+        new->grp_id = H5Gopen2(fd, MI2_GRPNAME, H5P_DEFAULT);
         new->comp_type = MI2_COMP_UNKNOWN;
         new->comp_param = 0;
         new->chunk_type = MI2_CHUNK_UNKNOWN;
@@ -618,7 +618,7 @@ hdf_put_dimorder(struct m2_file *file, int dst_id, int ndims,
 
     spc_id = H5Screate(H5S_SCALAR);
 
-    att_id = H5Acreate(dst_id, MI2_DIMORDER, typ_id, spc_id, H5P_DEFAULT, H5P_DEFAULT);
+    att_id = H5Acreate2(dst_id, MI2_DIMORDER, typ_id, spc_id, H5P_DEFAULT, H5P_DEFAULT);
 
     if (att_id >= 0) {
 	H5Awrite(att_id, typ_id, str_buf);
@@ -924,7 +924,7 @@ hdf_set_length(hid_t dst_id, const char *dimnm, unsigned long length)
         H5Adelete(dst_id, MI2_LENGTH);
         /* Create the attribute anew.
 	 */
-        att_id = H5Acreate(dst_id, MI2_LENGTH, H5T_STD_U32LE, aspc_id, 
+        att_id = H5Acreate2(dst_id, MI2_LENGTH, H5T_STD_U32LE, aspc_id, 
                            H5P_DEFAULT, H5P_DEFAULT);
       }  H5E_END_TRY;
         if (att_id >= 0) {
