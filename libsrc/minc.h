@@ -19,6 +19,10 @@
 @CREATED    : July 24, 1992. (Peter Neelin, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc.h,v $
+ * Revision 6.21  2010-05-19 03:44:25  stever
+ * Move definition of MNCAPI ahead of #include "minc_compat.h"; fix-up for
+ * previous check-in.
+ *
  * Revision 6.20  2010-05-19 03:18:42  stever
  * Ensure hdf5.h included before netcdf.h.
  *
@@ -148,8 +152,19 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.20 2010-05-19 03:18:42 stever Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/minc.h,v 6.21 2010-05-19 03:44:25 stever Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
+
+#ifndef MNCAPI
+#if defined(_MSC_VER)
+/* If we are building on the Microsoft C compiler, we want to
+ * explicitly import all public functions from the DLL
+ */
+#define MNCAPI __declspec(dllimport)
+#else
+#define MNCAPI
+#endif /* _MSC_VER not defined */
+#endif /* MNCAPI not defined */
 
 #if MINC2
 #include <hdf5.h>
@@ -478,16 +493,6 @@ extern "C" {
 #define MI_ERR_UNCOMPRESS       1349  /* Not able to uncompress file */
 
 /* MINC public functions */
-#ifndef MNCAPI
-#if defined(_MSC_VER)
-/* If we are building on the Microsoft C compiler, we want to
- * explicitly import all public functions from the DLL
- */
-#define MNCAPI __declspec(dllimport)
-#else
-#define MNCAPI
-#endif /* _MSC_VER not defined */
-#endif /* MNCAPI not defined */
 
 /* From netcdf_convenience.c */
 MNCAPI char *miexpand_file(char *path, char *tempfile, 
