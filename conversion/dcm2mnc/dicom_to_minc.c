@@ -8,7 +8,10 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
-   * Revision 1.28  2008-08-12 05:00:23  rotor
+   * Revision 1.29  2010-06-23 13:21:05  rotor
+   *  * changed H5Acreate2 calls back to the H5Acreate macro
+   *
+   * Revision 1.28  2008/08/12 05:00:23  rotor
    *  * large number of changes from Claude (64 bit and updates)
    *
    * Revision 1.27  2008/01/17 06:20:54  stever

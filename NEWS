@@ -1,5 +1,5 @@
 
-New in Release 2.0.19
+New in Release 2.1.0
 ---------------------
 * volume_io/Volumes/output_mnc.c: fix output buffers for a slice
   as only first buffer would be written out

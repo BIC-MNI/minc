@@ -75,18 +75,15 @@
 
 
 2009-01-03  Steve M. Robbins  <smr@sumost.ca>
-
    * testdir/run_test_progs.sh: New.  Test that programs like
-   mincheader and mincdiff work properly.
-
+      mincheader and mincdiff work properly.
    * configure.in: Bump to version 2.0.17.
-
    * libsrc/ParseArgv.c (ParseArgv): Change ARGV_CONSTANT to treat
-   src and dst and pointer to integer, as documented.  Reverts change
-   6.9 of this file.
+      src and dst and pointer to integer, as documented.  Reverts change
+      6.9 of this file.
 
    * testdir/test_arg_parse.c: New. Test program for argument parsing
-   (ParseArgv.[ch]).
+      (ParseArgv.[ch]).
    * testdir/run_test_arg_parse.sh: New. Test driver for above.
    * testdir/Makefile.am (TESTS): Add run_test_arg_parse.sh.
 
@@ -100,10 +97,9 @@
    * libsrc2/test/testminctools.sh: Add "set -e" to exit on any error.
 
    * configure.in: Remove AC_PROG_RANLIB, obsoleted by use of
-   AC_PROG_LIBTOOL.
+      AC_PROG_LIBTOOL.
 
 2008-10-12  Steve M. Robbins  <smr@sumost.ca>
-
    * conversion/dcm2mnc/dcm2mnc.man1: 
    * conversion/ecattominc/ecattominc.man1:
    * conversion/micropet/upet2mnc.man1:
@@ -112,7 +108,7 @@
    * conversion/nifti1/nii2mnc.man1:
    * conversion/vff2mnc/vff2mnc.man1:
    * progs/mincgen/mincgen.man1: Fix errors, mainly removing trailing
-   TAB characters.
+      TAB characters.
 
 -- Release of minc 2.0.16 --
 
@@ -163,15 +159,12 @@
    * libsrc/hdf_convenience.c (hdf_path_from_name): added NC_NAT to switch
 
 2008-01-17  Steve M. Robbins  <smr@sumost.ca>
-
    * testdir/test_speed.c (nctypename): Return "unknown" if no switch
-   case used.
-
+      case used.
    * libsrc2/test/vector_dimension-test.c (create_test_file): 
    * libsrc2/test/hyper-test-2.c (create_test_file): 
    * conversion/dcm2mnc/dicom_to_minc.c (copy_element_properties):
-   Change return type from int to void; no callers require a return value.
-
+      Change return type from int to void; no callers require a return value.
    * testdir/icv_fillvalue.c (main):
    * conversion/micropet/upet2mnc.c (main): Return 0 at end of function.
 
@@ -184,32 +177,26 @@
    * progs/mincreshape/mincreshape.h: 
    * progs/mincreshape/mincreshape.c: 
    * progs/mincreshape/copy_data.c: Move static function declarations
-   from header file to .c files that define the function.  Avoids
-   compiler warnings.
-
+      from header file to .c files that define the function.  Avoids
+      compiler warnings.
    * progs/mincresample/mincresample.h: 
    * progs/mincresample/mincresample.c: 
    * progs/mincresample/resample_volumes.c: Move static function
-   declarations from header file to .c files that define the
-   function.  Avoids compiler warnings.
-
+      declarations from header file to .c files that define the
+      function.  Avoids compiler warnings.
    * progs/minccalc/minccalc.c (constant,constant2): Remove unushed
-   variables.
-
+      variables.
    * libsrc/voxel_loop.c (get_output_filename): Remove unused function.
-
    * conversion/nifti1/nifti1_local.h:
    * conversion/nifti1/mnc2nii.c: Move definition of dimnames to .c
-   file where it is used.  Avoids compiler warning.
-
+      file where it is used.  Avoids compiler warning.
    * conversion/dcm2mnc/dicom_read.c: Don't declare or define
-   convert_numa3_coordinate(), since the caller is #if 0'd out.
+      convert_numa3_coordinate(), since the caller is #if 0'd out.
 
 2008-01-12  Steve M. Robbins  <smr@sumost.ca>
    * libsrc2/hyper.c (mirw_hyperslab_raw): 
    * libsrc/hdf_convenience.c (hdf_varget): Use hsize_t rather than
-   hssize_t for 3rd argument to H5Sselect_hyperslab().
-
+      hssize_t for 3rd argument to H5Sselect_hyperslab().
    * libsrc/voxel_loop.c:
    * progs/mincinfo/mincinfo.c:
    * progs/mincmath/mincmath.c:
@@ -270,7 +257,7 @@
 
 2007-08-08 Claude Lepage <claude@bic.mni.mcgill.ca>
    * Increased size of MI_MAX_VAR_BUFFER_SIZE and fix chunking
-   for internal file compression using hdf5
+      for internal file compression using hdf5
    * Modified mincconvert to use default chunking
 
 2007-05-18  Andrew L Janke <a.janke@gmail.com>
@@ -280,17 +267,17 @@
 
 2006-09-01  Jonathan Harlap <jharlap@bic.mni.mcgill.ca>
    * conversion/Acr_nema - Fixed a bug causing dump_acr_nema to skip
-   all elements with element number 0x0010
+      all elements with element number 0x0010
 
 2006-05-31 Jonathan Harlap <jharlap@bic.mni.mcgill.ca>
    * Makefile.am - modified to build and install
-   image_filters/extract and image_filters/byte_swap if the ACR NEMA
-   tools are intstalled, as they are required by dicom_to_minc.pl
-   
+      image_filters/extract and image_filters/byte_swap if the ACR NEMA
+      tools are intstalled, as they are required by dicom_to_minc.pl
+
 2006-05-18 Bert Vincent <bert@bic.mni.mcgill.ca>
    * progs/various... added config.h to source files that need it for
-   proper operation with MINC 2.0
-   
+      proper operation with MINC 2.0
+
 2006-04-19 Claude Lepage <claude@bic.mni.mcgill.ca>
    * fix duplicate instances of solve_linear_system and 
       scaled_maximal_pivoting_gaussian_elimination in
@@ -301,73 +288,72 @@
    * conversion/dcm2mnc, conversion/Acr_nema - added general support
    for Siemens DTI sequences, inserting attributes according to
    Jennifer Campbell's conventions.
-   
+
 2006-03-27 Bert Vincent <bert@bic.mni.mcgill.ca>
    * conversion/nifti1/mnc2nii.c - Set time and vector dimensions 
    "properly" for some versions of Analyze and NIfTI libraries. Also
    set the intent_code field to NIFTI_INTENT_VECTOR if the 
    vector_dimension is set. Also fixed an issue with file names.
-   
+
 2006-03-10 Bert Vincent <bert@bic.mni.mcgill.ca>
    * conversion/Acr_nema/element.c - Modify acr_dump_element_list()
    to use helper function maybe_print_as_string() to print data with
    unknown VR as either ASCII or a string of hex bytes.
-   
+
 2006-02-28 Bert Vincent <bert@bic.mni.mcgill.ca>
    * libsrc/hdf_convenience.c - Modify the hdf_vardef() function
    to avoid errors in HDF5 1.6.5
-   
-2006-02-19  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
 
+2006-02-19  Steve M. Robbins  <steve@nyongwa.montreal.qc.ca>
    * testdir/create_grid_xfm.c (main): Initialize variable
         mio before using.
 
 2006-02-09 Bert Vincent <bert@bic.mni.mcgill.ca>
    * conversion/dcm2mnc/dicom_to_minc.c, 
-   conversion/dcm2mnc/siemens_to_dicom.c - Deal more correctly
-   with some odd cases in .IMA files.
-   
+      conversion/dcm2mnc/siemens_to_dicom.c - Deal more correctly
+      with some odd cases in .IMA files.
+
 2006-02-08 Bert Vincent <bert@bic.mni.mcgill.ca>
    * progs/rawtominc/rawtominc.c, conversion/nifti1/nii2mnc.c, 
      conversion/micropet/upet2mnc.c: Change fopen() parameter
-     to "rb" to force correct operation on DOS/Windows.
+        to "rb" to force correct operation on DOS/Windows.
    * libsrc2/volume.c: Allow signed as well as unsigned base
-     types for labels.
-   
+        types for labels.
+
 2005-12-15 Bert Vincent <bert@bic.mni.mcgill.ca>
    * libsrc2/volume.c - set units field unconditionally in 
    _miget_file_dimension()
-   
+
 2005-12-13 Bert Vincent <bert@bic.mni.mcgill.ca>
    * conversion/dcm2mnc/dicom_to_minc.c: Ignore DICOM protocol
-   errors. This change was necessitated by images from a Philips
-   Intera scanner version 'NT 10.4.1\\PIIM V2.1.4.1 MIMIT MCS' that
-   appears to set the DICOM length field incorrectly.
+      errors. This change was necessitated by images from a Philips
+      Intera scanner version 'NT 10.4.1\\PIIM V2.1.4.1 MIMIT MCS' that
+      appears to set the DICOM length field incorrectly.
 
 2005-12-03 Bert Vincent <bert@bic.mni.mcgill.ca>
    * conversion/micropet/upet2mnc.c - fix handling of single-frame data
    * progs/mincgen/main.c - make "-o" option imply "-b"
-   
+
 2005-11-22 Bert Vincent <bert@bic.mni.mcgill.ca>
    * progs/mincgen/genlib.c - fix free() issue
    * progs/mincgen/load.c - #include config.h
-   
+
 2005-11-11 Bert Vincent <bert@bic.mni.mcgill.ca>
    * conversion/dcm2mnc/dcm2mnc.h - fix definition of IMA_MAGIC_SIZE
    * conversion/dcm2mnc/dcm2mnc.c - fix test for is_ima_file()
-   
+
 2005-11-04 Bert Vincent <bert@bic.mni.mcgill.ca>
    * conversion/dcm2mnc/dicom_to_minc.h - further relaxation of 
-   COORDINATE_EPSILON, now set to 0.005
+      COORDINATE_EPSILON, now set to 0.005
    * conversion/dcm2mnc/minc_file.c - combine cloned
-   regular/irregular dimension checking code into new function,
-   check_regular()
+      regular/irregular dimension checking code into new function,
+      check_regular()
    * conversion/dcm2mnc/dcm2mnc.c - update version to 2.0.07
-   
+
 2005-10-26 Bert Vincent <bert@bic.mni.mcgill.ca>
    * conversion/dcm2mnc/dicom_to_minc.h - set COORDINATE_EPSILON to
-   a fixed value of 0.0001 rather than 100*FLT_EPSILON to allow for
-   more slop in coordinates.
+      a fixed value of 0.0001 rather than 100*FLT_EPSILON to allow for
+      more slop in coordinates.
    * conversion/nifti1/mnc2nii.c - handle missing value for spacetype.
    
 2005-09-16 Bert Vincent <bert@bic.mni.mcgill.ca>
