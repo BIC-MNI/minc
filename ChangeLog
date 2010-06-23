@@ -1,3 +1,6 @@
+2010-05-23  Andrew L Janke  <a.janke@gmail.com>
+   * changed all calls to H5Acreate2 to the H5Acreate macro
+
 2010-05-18  Steve M. Robbins  <smr@sumost.ca>
    * libsrc/hdf_convenience.c: specify version 2 of H5Gopen, H5Acreate.
    * minc.h: ensure hdf5.h included before netcdf.h to avoid build
