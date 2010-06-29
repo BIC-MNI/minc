@@ -13,7 +13,7 @@ main(int argc, char **argv)
 
     /* Turn off automatic error reporting.
      */
-    H5Eset_auto(NULL, NULL);
+    H5Eset_auto(H5E_DEFAULT, NULL, NULL);
 
     /* Check each file.
      */

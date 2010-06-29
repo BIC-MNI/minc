@@ -80,7 +80,7 @@ hdf_id_add(int fd)
 	new->nvars = 0;
 	new->ndims = 0;
 	new->link =_m2_list;
-        new->grp_id = H5Gopen(fd, MI2_GRPNAME);
+        new->grp_id = H5Gopen1(fd, MI2_GRPNAME);
         new->comp_type = MI2_COMP_UNKNOWN;
         new->comp_param = 0;
         new->chunk_type = MI2_CHUNK_UNKNOWN;

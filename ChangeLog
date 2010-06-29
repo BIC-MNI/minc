@@ -1,3 +1,6 @@
+2010-06-28  Andrew L Janke  <a.janke@gmail.com>
+ * Added progs/xfm/xfm2def.c and progs/xfm/xfm2def.man1
+
 2010-05-23  Andrew L Janke  <a.janke@gmail.com>
    * changed all calls to H5Acreate2 to the H5Acreate macro
 

@@ -207,6 +207,7 @@ bin_PROGRAMS = \
 	mincwindow \
 	rawtominc \
 	transformtags \
+	xfm2def \
 	xfmconcat \
 	xfminvert \
 	mincconvert \
@@ -341,6 +342,8 @@ rawtominc_SOURCES = \
 	progs/Proglib/convert_origin_to_start.c
 
 transformtags_SOURCES = progs/xfm/transformtags.c
+
+xfm2def_SOURCES = progs/xfm/xfm2def.c
 
 xfmconcat_SOURCES = progs/xfm/xfmconcat.c
 
@@ -549,6 +552,7 @@ dist_man1_MANS = \
 	progs/mincwindow/mincwindow.man1 \
 	progs/rawtominc/rawtominc.man1 \
 	progs/xfm/transformtags.man1 \
+	progs/xfm/xfm2def.man1 \
 	progs/xfm/xfmconcat.man1 \
 	progs/xfm/xfminvert.man1 \
 	progs/xfm/xfmflip.man1 \

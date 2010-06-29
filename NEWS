@@ -1,9 +1,13 @@
 
-New in Release 2.1.0
+New in Release 2.1.00
 ---------------------
-* volume_io/Volumes/output_mnc.c: fix output buffers for a slice
-  as only first buffer would be written out
-* ported HDF calls to 1.8.x
+* Added pod2man for man page generation of help for perl scripts
+* Added minccmp and xfm2def
+* Added checks for outfiles to minccalc
+* Added taking first time point for 4D files, -test_size and
+    -sagittal_offset_perc to mincpik
+* ported some HDF calls to 1.8.x
+* Added libtoolize/glibtoolize logic in autogen.sh (thanks Sean)
 * Fixed bug in multidim_array_is_alloced for correct check of
   memory allocation of image data. Return volume=NULL when memory
   allocation fails.
