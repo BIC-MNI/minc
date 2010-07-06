@@ -23,6 +23,7 @@
 
 #define   INVERSE_FUNCTION_TOLERANCE     0.01
 #define   INVERSE_DELTA_TOLERANCE        1.0e-5
+
 #define   MAX_INVERSE_ITERATIONS         20
 
 static void   evaluate_grid_volume(
@@ -251,10 +252,7 @@ VIOAPI  void  grid_inverse_transform_point(
     Real   error_x, error_y, error_z, error, smallest_e;
     Real   ftol;
 
-    ftol = 0.05;
-
     grid_transform_point( transform, x, y, z, &tx, &ty, &tz );
-
     tx = x - (tx - x);
     ty = y - (ty - y);
     tz = z - (tz - z);
@@ -273,11 +271,16 @@ VIOAPI  void  grid_inverse_transform_point(
     best_y = ty;
     best_z = tz;
 
-    while( ++tries < NUMBER_TRIES && smallest_e > ftol )
-    {
-        tx += 0.67 * error_x;
-        ty += 0.67 * error_y;
-        tz += 0.67 * error_z;
+    // Volume volume = (Volume) transform->displacement_volume;
+    // ftol = 0.05;   // good for MNI space at 1mm (grid 2mm or 4mm)
+    // ftol = 0.001;  // good for big brain slice (grid at 0.125, voxel at 0.01mm
+    // Make the error a fraction of the initial residual.
+    ftol = 0.05 * smallest_e + 0.0001;
+
+    while( ++tries < NUMBER_TRIES && smallest_e > ftol ) {
+        tx += 0.95 * error_x;
+        ty += 0.95 * error_y;
+        tz += 0.95 * error_z;
 
         grid_transform_point( transform, tx, ty, tz, &gx, &gy, &gz );
 
@@ -287,8 +290,7 @@ VIOAPI  void  grid_inverse_transform_point(
     
         error = FABS(error_x) + FABS(error_y) + FABS(error_z);
 
-        if( error < smallest_e )
-        {
+        if( error < smallest_e ) {
             smallest_e = error;
             best_x = tx;
             best_y = ty;
@@ -348,82 +350,76 @@ static  void   evaluate_grid_volume(
 
     /*--- find which of 4 dimensions is the vector dimension */
 
-    for_less( vector_dim, 0, FOUR_DIMS )
-    {
-        for_less( d, 0, N_DIMENSIONS )
-        {
+    for_less( vector_dim, 0, FOUR_DIMS ) {
+        for_less( d, 0, N_DIMENSIONS ) {
             if( volume->spatial_axes[d] == vector_dim )
                 break;
         }
-
         if( d == N_DIMENSIONS )
             break;
     }
 
     get_volume_sizes( volume, sizes );
 
-    bound = (Real) degrees_continuity / 2.0;
+    /*--- if a 2-d slice, do best interpolation in the plane */
 
-    /*--- if near the edges, reduce the degrees of continuity */
-
-    for_less( d, 0, FOUR_DIMS )
-    {
-        if( d != vector_dim )
-        {
-            while( degrees_continuity >= -1 &&
-                   (voxel[d] < bound  ||
-                    voxel[d] > (Real) sizes[d] - 1.0 - bound ||
-                    bound == (Real) sizes[d] - 1.0 - bound ) )
-            {
-                --degrees_continuity;
-                if( degrees_continuity == 1 )
-                    degrees_continuity = 0;
-                bound = (Real) degrees_continuity / 2.0;
-            }
-        }
+    int is_2dslice = -1;
+    for_less( d, 0, FOUR_DIMS ) {
+      if( d == vector_dim ) continue;
+      if( sizes[d] == 1 ) {
+        is_2dslice = d;
+      }
     }
+
+    for_less( d, 0, FOUR_DIMS ) {
+      if( d == vector_dim || d == is_2dslice ) continue;
+      if( degrees_continuity+2 > sizes[d] ) degrees_continuity = sizes[d] - 2;
+    }
+
+    bound = (Real) degrees_continuity / 2.0;
 
     /*--- check to fill in the first derivative */
 
-    if( degrees_continuity < 0 && deriv_x != NULL )
-    {
-        for_less( v, 0, N_COMPONENTS )
-        {
+    if( degrees_continuity < 0 && deriv_x != NULL ) {
+        for_less( v, 0, N_COMPONENTS ) {
             deriv_x[v] = 0.0;
             deriv_y[v] = 0.0;
             deriv_z[v] = 0.0;
         }
     }
 
-    /*--- if outside */
+    /*--- check if outside */
 
-    if( degrees_continuity == -2 )
-    {
-        for_less( v, 0, N_COMPONENTS )
-            values[v] = 0.0;
-
+    for( d = 0; d < FOUR_DIMS; d++ ) {
+      if( d == vector_dim ) continue;
+      if( voxel[d] < -0.5 || voxel[d] > sizes[d]-0.5 ) {
+        for_less( v, 0, N_COMPONENTS ) {
+           values[v] = 0.0;
+        }
         return;
+      }
     }
 
     /*--- determine the starting positions in the volume to grab control
           vertices */
 
     id = 0;
-    for_less( d, 0, FOUR_DIMS )
-    {
-        if( d != vector_dim )
-        {
+    for_less( d, 0, FOUR_DIMS ) {
+        if( d == vector_dim ) continue;
+        if( d == is_2dslice ) {
+            pos = 0.0;
+            start[d] = 0;
+            end[d] = 1;
+        } else {
             pos = voxel[d] - bound;
-            start[d] =       FLOOR( pos );
-            if( voxel[d] == (Real) sizes[d] - 1.0 - bound )
-            {
-                --start[d];
-                fraction[id] = 1.0;
+            start[d] = FLOOR( pos );
+            if( start[d] < 0 ) {
+                start[d] = 0;
+            } else if( start[d]+degrees_continuity+1 >= sizes[d] ) {
+                start[d] = sizes[d] - degrees_continuity - 2;
             }
-            else
-                fraction[id] = pos - (Real) start[d];
-
             end[d] = start[d] + degrees_continuity + 2;
+            fraction[id] = pos - (double) start[d];
             ++id;
         }
     }
@@ -434,12 +430,10 @@ static  void   evaluate_grid_volume(
     end[vector_dim] = N_COMPONENTS;
 
     inc_so_far = N_COMPONENTS;
-    for_down( d, FOUR_DIMS-1, 0 )
-    {
-        if( d != vector_dim )
-        {
+    for_down( d, FOUR_DIMS-1, 0 ) {
+        if( d != vector_dim ) {
             inc[d] = inc_so_far;
-            inc_so_far *= degrees_continuity + 2;
+            inc_so_far *= ( end[d] - start[d] );
         }
     }
 
@@ -466,14 +460,10 @@ static  void   evaluate_grid_volume(
 
     ind0 = 0;
 
-    for_less( v0, start0, end0 )
-    {
-        for_less( v1, start1, end1 )
-        {
-            for_less( v2, start2, end2 )
-            {
-                for_less( v3, start3, end3 )
-                {
+    for_less( v0, start0, end0 ) {
+        for_less( v1, start1, end1 ) {
+            for_less( v2, start2, end2 ) {
+                for_less( v3, start3, end3 ) {
                     GET_VALUE_4D_TYPED( coefs[ind0], (Real), volume,
                                         v0, v1, v2, v3 );
                     ind0 += inc3;
@@ -487,16 +477,19 @@ static  void   evaluate_grid_volume(
 
     /*--- interpolate values */
 
-    if( degrees_continuity == -1 )
-    {
+    if( degrees_continuity == -1 ) {
         for_less( v, 0, N_COMPONENTS )
             values[v] = coefs[v];
-    }
-    else
-    {
-        evaluate_interpolating_spline( N_DIMENSIONS, fraction,
-                                       degrees_continuity + 2, 
-                                       N_COMPONENTS, coefs, 0, values_derivs );
+    } else {
+        if( is_2dslice == -1 ) {
+          evaluate_interpolating_spline( N_DIMENSIONS, fraction,
+                                         degrees_continuity + 2, 
+                                         N_COMPONENTS, coefs, 0, values_derivs );
+        } else {
+          evaluate_interpolating_spline( N_DIMENSIONS-1, fraction,
+                                         degrees_continuity + 2, 
+                                         N_COMPONENTS, coefs, 0, values_derivs );
+        }
 
         /*--- extract values and derivatives from values_derivs */
 
@@ -505,8 +498,9 @@ static  void   evaluate_grid_volume(
         else
             derivs_per_value = 1;
 
-        for_less( v, 0, N_COMPONENTS )
+        for_less( v, 0, N_COMPONENTS ) {
             values[v] = values_derivs[v*derivs_per_value];
+        }
 
         if( deriv_x != NULL )
         {

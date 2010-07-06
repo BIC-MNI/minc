@@ -1,12 +1,16 @@
 
 New in Release 2.1.00
 ---------------------
+* Improved convergence and accuracy for application of non-linear 
+  transformation
+* Set default volume_io caching to none
 * Added pod2man for man page generation of help for perl scripts
 * Added minccmp and xfm2def
 * Added checks for outfiles to minccalc
 * Added taking first time point for 4D files, -test_size and
     -sagittal_offset_perc to mincpik
-* ported some HDF calls to 1.8.x
+* ported some HDF calls to 1.8.x (must now use 1.8.X; 1.6.X no
+  longer supported from now on)
 * Added libtoolize/glibtoolize logic in autogen.sh (thanks Sean)
 * Fixed bug in multidim_array_is_alloced for correct check of
   memory allocation of image data. Return volume=NULL when memory
