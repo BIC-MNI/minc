@@ -1068,12 +1068,13 @@ VIOAPI  void   evaluate_volume_in_world(
         axis = volume->spatial_axes[d];
         if( axis < 0 )
         {
-            print_error(
-                  "evaluate_volume_in_world(): must have 3 spatial axes.\n" );
-            return;
+          // print_error(
+          //       "evaluate_volume_in_world(): must have 3 spatial axes.\n" );
+          // return;
+        } else {
+          interpolating_dimensions[axis] = TRUE;
         }
 
-        interpolating_dimensions[axis] = TRUE;
     }
 
     /*--- compute the number of values, the product of the sizes of the

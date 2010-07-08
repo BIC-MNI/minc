@@ -1,6 +1,6 @@
 2010-07-06 Claude Lepage <claude@bic.mni.mcgill.ca>
    * Improved convergence and accuracy for application of non-linear
-     transformation
+     transformation (especially for 2-d slices)
 
 2010-06-28  Andrew L Janke  <a.janke@gmail.com>
    * Added progs/xfm/xfm2def.c and progs/xfm/xfm2def.man1
