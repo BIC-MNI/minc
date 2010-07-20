@@ -14,7 +14,7 @@
 
 #include  <internal_volume_io.h>
 
-#define   DEGREES_CONTINUITY         2    /* Cubic interpolation */
+#define   DEGREES_CONTINUITY         2    /* -1 = Nearest; 0 = Linear; 1 = Quadratic; 2 = Cubic interpolation */
 #define   SPLINE_DEGREE         ((DEGREES_CONTINUITY) + 2)
 
 #define   N_COMPONENTS   N_DIMENSIONS /* displacement vector has 3 components */
@@ -266,16 +266,44 @@ VIOAPI  void  grid_inverse_transform_point(
     tries = 0;
 
     error = smallest_e = FABS(error_x) + FABS(error_y) + FABS(error_z);
-
     best_x = tx;
     best_y = ty;
     best_z = tz;
 
-    // Volume volume = (Volume) transform->displacement_volume;
+    // Adapt ftol to grid step sizes. For 1mm stx volume with grid 4mm, we
+    // are using ftol=0.05 (=4mm/80). For histology data at grid 0.125mm,
+    // then use ftol=0.125/80=0.0015625, which is fine on 0.01mm volume. 
     // ftol = 0.05;   // good for MNI space at 1mm (grid 2mm or 4mm)
-    // ftol = 0.001;  // good for big brain slice (grid at 0.125, voxel at 0.01mm
+    // ftol = 0.001;  // acceptable for big brain slice (grid at 0.125, voxel at 0.01mm)
+
+    // This is ok too:
     // Make the error a fraction of the initial residual.
-    ftol = 0.05 * smallest_e + 0.0001;
+    // ftol = 0.05 * smallest_e + 0.0001;
+
+    int    sizes[MAX_DIMENSIONS];
+    Real   steps[MAX_DIMENSIONS];
+    Volume volume = (Volume) transform->displacement_volume;
+    get_volume_sizes( volume, sizes );
+    get_volume_separations( volume, steps );
+
+    /*--- find which of 4 dimensions is the vector dimension */
+    short d, vector_dim = -1;
+    for_less( vector_dim, 0, FOUR_DIMS ) {
+      for_less( d, 0, N_DIMENSIONS ) {
+        if( volume->spatial_axes[d] == vector_dim ) break;
+      }
+      if( d == N_DIMENSIONS ) break;
+    }
+
+    ftol = -1.0;
+    for_less( d, 0, FOUR_DIMS ) {
+      if( d == vector_dim ) continue;
+      if( sizes[d] == 1 ) continue;
+      if( ftol < 0 ) ftol = steps[d];
+      if( steps[d] < ftol ) ftol = steps[d];
+    }
+    ftol = ftol / 80.0;
+    if( ftol > 0.05 ) ftol = 0.05;   // just to be sure for large grids
 
     while( ++tries < NUMBER_TRIES && smallest_e > ftol ) {
         tx += 0.95 * error_x;
@@ -343,6 +371,7 @@ static  void   evaluate_grid_volume(
     Real     coefs[SPLINE_DEGREE*SPLINE_DEGREE*SPLINE_DEGREE*N_COMPONENTS];
     Real     values_derivs[N_COMPONENTS + N_COMPONENTS * N_DIMENSIONS];
 
+
     convert_world_to_voxel( volume, x, y, z, voxel );
 
     if( get_volume_n_dimensions(volume) != FOUR_DIMS )
@@ -371,12 +400,27 @@ static  void   evaluate_grid_volume(
       }
     }
 
-    for_less( d, 0, FOUR_DIMS ) {
-      if( d == vector_dim || d == is_2dslice ) continue;
-      if( degrees_continuity+2 > sizes[d] ) degrees_continuity = sizes[d] - 2;
-    }
-
     bound = (Real) degrees_continuity / 2.0;
+
+    /*--- if near the edges, reduce the degrees of continuity.
+          This is very important. Doing cubic (with a shifted
+          stencil) near a boundary will cause trouble because
+          the stencil needs to be centered. This is why quadratic
+          is also disabled (not symmetric stencil). CL. */
+
+    for_less( d, 0, FOUR_DIMS ) {
+      if( d == is_2dslice ) continue;
+      if( d == vector_dim ) continue;
+      while( degrees_continuity >= -1 &&
+             (voxel[d] < bound  ||
+              voxel[d] > (Real) sizes[d] - 1.0 - bound ||
+              bound == (Real) sizes[d] - 1.0 - bound ) ) {
+        --degrees_continuity;
+        if( degrees_continuity == 1 )
+          degrees_continuity = 0;
+        bound = (Real) degrees_continuity / 2.0;
+      }
+    }
 
     /*--- check to fill in the first derivative */
 
