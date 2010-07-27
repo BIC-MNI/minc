@@ -1,3 +1,6 @@
+2010-07-27  Andrew L Janke  <a.janke@gmail.com>
+   * conversion/micropet/upet2mnc.c: error bug squashed (John Cupitt)
+   
 2010-07-06 Claude Lepage <claude@bic.mni.mcgill.ca>
    * Improved convergence and accuracy for application of non-linear
      transformation (especially for 2-d slices)

@@ -446,20 +446,22 @@ message(msg_level_t level, char *fmt, ...)
         prefix_str = NULL;
         break;
     }
-    va_start(ap, fmt);
     if (_verbose_flag || level != MSG_INFO) {
         if (level != MSG_INFO) {
             if (prefix_str != NULL) {
                 fprintf(stderr, "%s", prefix_str);
             }
+            va_start(ap, fmt);
             vfprintf(stderr, fmt, ap);
+            va_end(ap);
         }
         if (prefix_str != NULL) {
             fprintf(stdout, "%s", prefix_str);
         }
+        va_start(ap, fmt);
         vfprintf(stdout, fmt, ap);
+        va_end(ap);
     }
-    va_end(ap);
 }
 
 static int
