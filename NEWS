@@ -2,10 +2,10 @@
 New in Release 2.1.00
 ---------------------
 * Improved convergence and accuracy for application of non-linear 
-  transformation (especially for 2-d slices)
+  transformation (especially for 2-d slices) - Claude
 * Set default volume_io caching to none
 * Added pod2man for man page generation of help for perl scripts
-* Added minccmp and xfm2def
+* Added minccmp and xfm2def man man pages
 * Added checks for outfiles to minccalc
 * Added taking first time point for 4D files, -test_size and
     -sagittal_offset_perc to mincpik
@@ -15,6 +15,7 @@ New in Release 2.1.00
 * Fixed bug in multidim_array_is_alloced for correct check of
   memory allocation of image data. Return volume=NULL when memory
   allocation fails.
+* Fixed a bug in upet2mnc on 64 bit platforms (thanks John Cupitt)
 
 New in Release 2.0.18
 ---------------------

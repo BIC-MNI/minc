@@ -1,0 +1,80 @@
+.TH XFM2DEF 1 "$Date: 2010-08-11 04:06:42 $" "" "MINC User's Guide"
+.SH NAME
+xfm2def \- convert a MNI transform file to a deformation volume
+
+.SH SYNOPSIS
+\fBxfm2def\fR\ [options] \fIinput.xfm\fR\ \fIdef_vol.mnc\fR
+
+.SH DESCRIPTION
+\fIxfm2def\fR takes an input transform \fIinput.xfm\fR that can consist of a
+series of concatenated transforms in a single xfm file and converts this into a
+single deformation volume that is output as \fIdef_vol.mnc\fR. Note that the
+output is not a tranform file itself, you can then make use of this volume in a
+MINC tranform by creating an .xfm file as such:
+
+   MNI Transform File
+   
+   Transform_Type = Grid_Transform;
+   Displacement_Volume = def_vol.mnc;
+
+The output resolution and sampling of the deformation grid must be specified 
+or a default size will be used. (100x100x100 1mm steps centred around the origin).
+
+
+.SH OPTIONS
+.TP
+\fB\-help\fR
+Print summary of command-line options and exit.
+.TP
+\fB\-version\fR
+Print the program's version number and exit.
+.TP
+\fB\-verbose\fR
+Print out extra progress information while running.
+.TP
+\fB\-clobber\fR
+Overwrite any existing output file
+.TP
+\fB\-xnelements\fR\ \fInx\fR
+Number of elements along the xspace dimension.
+.TP
+\fB\-ynelements\fR\ \fIny\fR
+Number of elements along the yspace dimension.
+.TP
+\fB\-znelements\fR\ \fInz\fR
+Number of elements along the zspace dimension.
+.TP
+\fB\-xstep\fR\ \fIxstep\fR
+Step between voxels along the xspace dimension.
+.TP
+\fB\-ystep\fR\ \fIystep\fR
+Step between voxels along the yspace dimension.
+.TP
+\fB\-zstep\fR\ \fIzstep\fR
+Step between voxels along the zspace dimension.
+.TP
+\fB\-xstart\fR\ \fIxstart\fR
+Position of centre of first voxel along the xspace dimension.
+.TP
+\fB\-ystart\fR\ \fIystart\fR
+Position of centre of first voxel along the yspace dimension.
+.TP
+\fB\-zstart\fR\ \fIzstart\fR
+Position of centre of first voxel along the zspace dimension.
+.TP
+\fB\-xdircos\fR\ \fIx1\ x2\ x3\fR
+Direction cosines for the xspace dimension.
+.TP
+\fB\-ydircos\fR\ \fIy1\ y2\ y3\fR
+Direction cosines for the yspace dimension.
+.TP
+\fB\-zdircos\fR\ \fIz1\ z2\ z3\fR
+Direction cosines for the zspace dimension.
+
+.SH AUTHOR
+Andrew Janke
+
+.SH COPYRIGHTS
+Copyright \(co 2010 Andrew Janke - a.janke@gmail.com
+
+

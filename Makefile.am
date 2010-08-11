@@ -422,7 +422,7 @@ extract_SOURCES = conversion/image_filters/extract.c
 byte_swap_SOURCES = conversion/image_filters/byte_swap.c
 
 
-libminc2_la_LDFLAGS = -version-info 2:2:1
+libminc2_la_LDFLAGS = -version-info 2:3:1
 libminc2_la_SOURCES = \
 	libsrc/ParseArgv.c \
 	libsrc/dim_conversion.c \

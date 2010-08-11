@@ -6,7 +6,7 @@ AC_CONFIG_AUX_DIR(ac_config_aux)
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
 
-AC_REVISION($Revision: 6.42 $)
+AC_REVISION($Revision: 6.43 $)
 
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -24,8 +24,8 @@ AC_CHECK_HEADERS(sys/time.h sys/stat.h sys/wait.h unistd.h)
 AC_CHECK_HEADERS(fcntl.h pwd.h float.h values.h)
 
 AC_CHECK_TYPES([int32_t, int16_t])
-dnl Build only static libs by default
-AC_DISABLE_SHARED
+# dnl Build only static libs by default
+# AC_DISABLE_SHARED
 AC_PROG_LIBTOOL
 
 AC_PATH_PROGS(POD2MAN, pod2man)
