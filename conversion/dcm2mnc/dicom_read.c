@@ -7,6 +7,9 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_read.c,v $
+   * Revision 1.29  2010-11-23 23:30:50  claude
+   * dcm2mnc: fixed seg fault bug (Claude) and added b-matrix (Ilana)
+   *
    * Revision 1.28  2008-08-12 05:00:23  rotor
    *  * large number of changes from Claude (64 bit and updates)
    *
@@ -352,6 +355,11 @@ init_general_info(General_Info *gi_ptr, /* OUT */
 
                 def_val = acr_find_int(group_list,
                                        ACR_Number_of_time_slices,
+                                       def_val);
+		
+		/*Sometimes need to look further for time count (ex:segmented FLASH)*/
+		def_val = acr_find_int(group_list,
+                                       ACR_Cardiac_number_of_images,
                                        def_val);
 
             }
@@ -780,12 +788,29 @@ get_file_info(Acr_Group group_list, File_Info *fi_ptr, General_Info *gi_ptr)
         acr_get_element_double_array(element, WORLD_NDIMS, grad_direction) != WORLD_NDIMS) {
         grad_direction[XCOORD] = 
             grad_direction[YCOORD] = 
-            grad_direction[ZCOORD] = 0; /*this should be 0 for the b=0 images  ilana*/
+            grad_direction[ZCOORD] = 0; /*this should be 0 for the b=0 images*/
     }
     fi_ptr->grad_direction[XCOORD] = (double)grad_direction[XCOORD];
     fi_ptr->grad_direction[YCOORD] = (double)grad_direction[YCOORD];
     fi_ptr->grad_direction[ZCOORD] = (double)grad_direction[ZCOORD];
 
+    /*Want to add B-matrix if it exists, the problem is that
+    the b=0 image does not even have the field (0019x1027) while
+    the other directions might (AND b=0 is ofen the first image!).
+    Initialize to all 0s and decide later whether to include in header? */
+    if (gi_ptr->acq.dti) {
+        element = acr_find_group_element(group_list, ACR_B_matrix);
+        int num_bmatrix_elements=6;/*bmatrix should have 6 values*/
+        if (element == NULL ||
+            acr_get_element_double_array(element, num_bmatrix_elements, 
+                                         fi_ptr->b_matrix) != num_bmatrix_elements) {
+            int i=0;
+            for(i;i<num_bmatrix_elements;i++){ 
+                fi_ptr->b_matrix[i]=0; /*bmatrix for b=0 should be 0*/
+            }
+        }
+    }
+    
     // If we get to here, then we have a valid file
     fi_ptr->valid = TRUE;
     return;
@@ -1903,7 +1928,7 @@ get_general_header_info(Acr_Group group_list, General_Info *gi_ptr)
     get_string_field(gi_ptr->acq.phase_enc_dir, 
                      group_list, ACR_Phase_encoding_direction);
 
-    /*Add image comments ilana*/
+    /*Add image comments*/
     /*strncpy(gi_ptr->acq.comments, "", STRING_T_LEN);*/
     get_string_field(gi_ptr->acq.comments, 
                      group_list, ACR_Image_comments);

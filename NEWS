@@ -1,3 +1,15 @@
+New in Release 
+---------------------
+* Fixed bug in dicom_to_minc.c for segmentation fault on undefined sequence
+  (initialization of gi_ptr->cur_size)
+* Free some memory after usage
+* Added b-matrix field for Siemens diffusion scans (version >= VB
+  only).
+* Made changes to ordering of slices: e.g. a descending acquisition
+  now has negative slice step. This was an issue with MOSAIC, in
+  which the ordering of the slices in the MOSAIC image is ascending,
+  even though the acquisition is descending (version >= VA25 and
+  >= VB11).
 
 New in Release 2.1.00
 ---------------------

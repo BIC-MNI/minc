@@ -7,6 +7,9 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: minc_file.c,v $
+   * Revision 1.19  2010-11-23 23:30:50  claude
+   * dcm2mnc: fixed seg fault bug (Claude) and added b-matrix (Ilana)
+   *
    * Revision 1.18  2009-01-20 11:58:13  rotor
    *  * CMakeLists.txt: updated version
    *  * Updated Changelog to include releases
@@ -983,6 +986,20 @@ void setup_minc_variables(int mincid, General_Info *general_info,
         ncattput(mincid, varid, "direction_x", NC_DOUBLE, length, tmp_ptr);
         ncattput(mincid, varid, "direction_y", NC_DOUBLE, length, tmp_ptr);
         ncattput(mincid, varid, "direction_z", NC_DOUBLE, length, tmp_ptr);
+        free( tmp_ptr );
+       
+    /*This means that ANY DTI sequence will have a b_matrix in the mincheader.
+	For Siemens software versions before VB (and probably other vendors),
+	the field does not exist but we still choose to set the b_matrix field in the
+	mincheader to all 0s. We do this because b=0 files do not have the b_matrix 0019x1027
+	field, and we must create one. I.e. determining whether the field exists
+	or not in a particular file is not enough to reject it for the series.*/
+	
+	int num_elements=6;/*should always have 6 elements per direction (i.e. 
+				direction=TIME variable)*/
+	double *tmp_ptr2 = calloc(length*num_elements,sizeof(double));
+	
+	ncattput(mincid, varid, "b_matrix", NC_DOUBLE, num_elements*length, tmp_ptr2); 
     }
 
     /* Create the dicom info variable */
@@ -1071,6 +1088,7 @@ put_att_dbl(int mincid, int varid, char *attname, int length, int position,
         ncattget(mincid, varid, attname, val_ptr);
         val_ptr[position] = value;
         ncattput(mincid, varid, attname, NC_DOUBLE, length, val_ptr);
+        free( val_ptr );
     }
 }
             
@@ -1178,6 +1196,17 @@ save_minc_image(int icvid, General_Info *gi_ptr,
                         gi_ptr->cur_size[TIME],
                         start[gi_ptr->image_index[TIME]],
                         fi_ptr->grad_direction[ZCOORD]);
+	    
+	    int i=0;
+	    int num_elements=6;
+	    for(i;i<num_elements;i++){ 
+		 put_att_dbl(mincid, 
+                	     ncvarid(mincid, MIacquisition),
+                             "b_matrix", 
+                             num_elements*gi_ptr->cur_size[TIME],
+                             start[gi_ptr->image_index[TIME]]*num_elements+i,
+                             fi_ptr->b_matrix[i]);
+		 }
         }
 
         /* If width information is present, save it to the appropriate

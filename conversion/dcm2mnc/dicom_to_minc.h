@@ -7,6 +7,9 @@
 @CREATED    : January 28, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_to_minc.h,v $
+ * Revision 1.10  2010-11-23 23:30:50  claude
+ * dcm2mnc: fixed seg fault bug (Claude) and added b-matrix (Ilana)
+ *
  * Revision 1.9  2007-06-08 20:28:57  ilana
  * added several fields to mincheader (dicom elements and found in ASCONV header)
  *
@@ -251,6 +254,7 @@ typedef struct {
    double width[MRI_NDIMS];     /* Sample width along each MRI dimension */
    double b_value;              /* DTI b-value, if present */
    double grad_direction[WORLD_NDIMS]; /* DTI gradient direction */
+   double b_matrix[6]; 
 } File_Info;
 
 /* Structure for storing the actual image data */

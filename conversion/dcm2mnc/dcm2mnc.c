@@ -5,6 +5,9 @@
 @CREATED    : June 2001 (Rick Hoge)
 @MODIFIED   : 
  * $Log: dcm2mnc.c,v $
+ * Revision 1.24  2010-11-23 23:30:50  claude
+ * dcm2mnc: fixed seg fault bug (Claude) and added b-matrix (Ilana)
+ *
  * Revision 1.23  2008-08-12 05:00:23  rotor
  *  * large number of changes from Claude (64 bit and updates)
  *
@@ -580,6 +583,7 @@ free_list(int num_files,
             free((void *) file_list[i]);
         }
         if (file_info_list[i] != NULL) {
+            free(file_info_list[i]->file_name);
             free(file_info_list[i]);
         }
     }
@@ -898,6 +902,7 @@ use_the_files(int num_files,
    
     /* Free acquisition file list */
     free(acq_file_list);
+    free(acq_file_index);
     free(used_file);
 
 }

@@ -8,6 +8,9 @@
    @CREATED    : January 28, 1997 (Peter Neelin)
    @MODIFIED   : 
    * $Log: dicom_to_minc.c,v $
+   * Revision 1.30  2010-11-23 23:30:50  claude
+   * dcm2mnc: fixed seg fault bug (Claude) and added b-matrix (Ilana)
+   *
    * Revision 1.29  2010-06-23 13:21:05  rotor
    *  * changed H5Acreate2 calls back to the H5Acreate macro
    *
@@ -361,6 +364,7 @@ dicom_to_minc(int num_files,
     gi.initialized = FALSE;
     gi.group_list = NULL;
     for (imri = 0; imri < MRI_NDIMS; imri++) {
+        gi.cur_size[imri] = -1;
         gi.indices[imri] = NULL;
         gi.coordinates[imri] = NULL;
         gi.widths[imri] = NULL;
@@ -468,10 +472,10 @@ dicom_to_minc(int num_files,
             /* Get file-specific information
              */
             get_file_info(group_list, &fi_ptr[iimage], &gi);
-	    
-	    //ilana debug
-	    /*int acq=acr_find_int(group_list, ACR_Acquisition, 1);
-	    printf("****WE HAVE ACQUISITION# %i",acq);*/
+    
+            //ilana debug
+            /*int acq=acr_find_int(group_list, ACR_Acquisition, 1);
+            printf("****WE HAVE ACQUISITION# %i",acq);*/
 
             /* increment iimage here
              */
@@ -529,7 +533,7 @@ dicom_to_minc(int num_files,
 
     if (G.Debug) {
         printf("Writing %d images to MINC file\n", num_files);
-    }	  
+    }
 
     /* Last group needed for second pass
      * we now have to read up to and including the image, 
@@ -736,11 +740,17 @@ is_siemens_mosaic(Acr_Group group_list)
     /* OK, we did not find the word "mosaic" in the image type.  But this
      * could still be a mosaic image.  Let's look for some other clues.
      */
-    if (acr_find_int(group_list, SPI_Number_of_slices_nominal, 0) > 1)
-        return 1;               /* probably mosaic. */
+    
+    /*the SPI_Number_of_slices_nominal and SPI_Number_of_raw_partitions_nomimal
+    are not always good fields with which to determine whether it's Mosaic 
+    or not, these fields often get set whether we have a mosaic image or not*/
+    
 
-    if (acr_find_int(group_list, SPI_Number_of_3D_raw_partitions_nominal, 0) > 1)
-        return 1;               /* probably mosaic */
+    /*if (acr_find_int(group_list, SPI_Number_of_slices_nominal, 0) > 1)
+        return 1; */              /* probably mosaic. */
+
+    /*if (acr_find_int(group_list, SPI_Number_of_3D_raw_partitions_nominal, 0) > 1)
+        return 1;   */            /* probably mosaic */
 
     return 0;                   /* probably not mosaic */
 }
@@ -819,32 +829,31 @@ parse_siemens_proto2(Acr_Group group_list, Acr_Element element)
                               value[0]);
         }
         else if (!strcmp(name, "B_value")) {
-		
+
             /*double tmp = atof(value[0]); this atof makes the value null!  ilana*/
-	     Acr_Double tmp = atoi(value[0]);
-	     /*need a hack for ICBM scan, see below ilana*/
+            Acr_Double tmp = atoi(value[0]);
+            /*need a hack for ICBM scan, see below ilana*/
             acr_insert_double(&group_list, ACR_Diffusion_b_value, 1, &tmp); 
         }
         else if (!strcmp(name, "DiffusionGradientDirection")) {
             Acr_Double tmp[3];
             if (vm == 3 && n_values >= vm) {
-		/*For the ICBM WIP scan, the b0 images do not have
-		B_value=0 or DiffusionGradientDirection=0 0 0, they
-		actually have DiffusionGradientDirection=-1.00010000 -1.00010000 -1.00010000
-		Use this to detect the b=0 images and hopefully this doesn't ever correspond
-		to a real gradient direction (have to change bvalues correspondingly)!   ilana*/
-		
-		if(!strcmp(value[0],"-1.00010000") && !strcmp(value[1],"-1.00010000")  && !strcmp(value[2],"-1.00010000")){
-			value[0] = value[1] = value[2] = "0"; /*grad directions should be 0*/
-			Acr_Double tmp2 = atoi("0");
-			acr_insert_double(&group_list, ACR_Diffusion_b_value, 1, &tmp2); /*also have to modify B values ilana*/
-		}
-		                  
-		tmp[0] = atof(value[0]);
+                /*For the ICBM WIP scan, the b0 images do not have
+                  B_value=0 or DiffusionGradientDirection=0 0 0, they
+                  actually have DiffusionGradientDirection=-1.00010000 -1.00010000 -1.00010000
+                  Use this to detect the b=0 images and hopefully this doesn't ever correspond
+                  to a real gradient direction (have to change bvalues correspondingly)!   ilana*/
+
+                if(!strcmp(value[0],"-1.00010000") && !strcmp(value[1],"-1.00010000")  && !strcmp(value[2],"-1.00010000")){
+                    value[0] = value[1] = value[2] = "0"; /*grad directions should be 0*/
+                    Acr_Double tmp2 = atoi("0");
+                    acr_insert_double(&group_list, ACR_Diffusion_b_value, 1, &tmp2); /*also have to modify B values ilana*/
+                }
+                  
+                tmp[0] = atof(value[0]);
                 tmp[1] = atof(value[1]);
                 tmp[2] = -1*atof(value[2]); /*dicom z = -minc z ilana*/
-		
-		
+
                 acr_insert_double(&group_list, 
                                   ACR_Diffusion_gradient_orientation,
                                   3,
@@ -881,7 +890,7 @@ add_siemens_info(Acr_Group group_list)
     char *str_ptr=NULL;
     char *str_ptr2=NULL;
     int interpolation_flag;
-    int enc_ix, num_encodings, num_b0; /*added by ilana*/
+    int enc_ix, num_encodings, num_b0; 
 
     element = acr_find_group_element(group_list, SPI_Protocol2);
     if (element != NULL) {
@@ -921,8 +930,17 @@ add_siemens_info(Acr_Group group_list)
         /* Add number of dynamic scans:
          */
         prot_find_string(protocol, "lRepetitions", str_buf);
-        acr_insert_numeric(&group_list, ACR_Acquisitions_in_series, 
-                           (double)(atoi(str_buf) + 1));
+        
+        if(atoi(str_buf)==0){ /*lRepetitions not found in ASCONV header*/
+            int frames = acr_find_int(group_list,
+                                      ACR_Cardiac_number_of_images,0);
+            /* this seems to give number of dynamic 
+               scans when lRepetitions not there*/
+            acr_insert_numeric(&group_list, ACR_Acquisitions_in_series, frames);
+        } else {
+            acr_insert_numeric(&group_list, ACR_Acquisitions_in_series, 
+                               atoi(str_buf) + 1); 
+        }    
 
         /* add number of echoes:
          */
@@ -934,6 +952,13 @@ add_siemens_info(Acr_Group group_list)
         prot_find_string(protocol,
                          "sCOIL_SELECT_MEAS.asList[0].sCoilElementID.tCoilID",
                          str_buf);
+
+        /*Adjust for change in naming convention (VB15 VA30)*/
+        if(atoi(str_buf)==0){
+            prot_find_string(protocol,
+                             "sCoilSelectMeas[0].asList[0].sCoilElementID.tCoilID",
+                             str_buf);
+        }
         acr_insert_string(&group_list, ACR_Receive_coil_name, str_buf);
 
         /* add MrProt dump
@@ -1005,23 +1030,22 @@ add_siemens_info(Acr_Group group_list)
         prot_find_string(protocol, "sKSpace.uc2DInterpolation", str_buf);
         interpolation_flag = strtol(str_buf, NULL, 0);
 
-	/*find Delay time in TR in ASCONV header ilana*/
-	prot_find_string(protocol, "lDelayTimeInTR", str_buf);
-	acr_insert_numeric(&group_list, EXT_Delay_in_TR,
+        /* find Delay time in TR in ASCONV header ilana */
+        prot_find_string(protocol, "lDelayTimeInTR", str_buf);
+        acr_insert_numeric(&group_list, EXT_Delay_in_TR,
                            (double)atol(str_buf));
-	
-	/*Find slice acquisition mode in ASCONV header, 
-	can't seem to find is in a standard dicom field
-	sSliceArray.ucMode takes on 3 values:
-	0x1 means ASCENDING
-	0x2 means DESCENDING
-	0x4 means INTERLEAVED*/
-	prot_find_string(protocol, "sSliceArray.ucMode", str_buf);
-	acr_insert_string(&group_list,EXT_Slice_order,str_buf);
 
-			
+        /* Find slice acquisition mode in ASCONV header, 
+           can't seem to find is in a standard dicom field
+           sSliceArray.ucMode takes on 3 values:
+           0x1 means ASCENDING
+           0x2 means DESCENDING
+           0x4 means INTERLEAVED */
+        prot_find_string(protocol, "sSliceArray.ucMode", str_buf);
+        acr_insert_string(&group_list,EXT_Slice_order,str_buf);
+
         /*Modified by ilana to handle the common types of diffusion scans (ref: siemens_dicom_to_minc for dicomserver)
-	
+
 	/* correct dynamic scan info if *MGH* diffusion scan:
          *
          * assumptions:
@@ -1139,15 +1163,15 @@ add_siemens_info(Acr_Group group_list)
             if (str_ptr == NULL || str_ptr2 == NULL) {
                 enc_ix = 0;
             }
-	    else if(atoi(str_ptr + sizeof(char)) == 0){ /*a 0 after the b means b=0 image*/
-			enc_ix = atoi(str_ptr2 + sizeof(char));
+	    else if(atoi(str_ptr +1) == 0){ /*a 0 after the b means b=0 image*/
+			enc_ix = atoi(str_ptr2 + 1);
 			}
 	    else{
-		enc_ix = atoi(str_ptr2 + sizeof(char)) + num_b0; /*should be in diffusion weighted images now*/
+		enc_ix = atoi(str_ptr2 + 1) + num_b0; /*should be in diffusion weighted images now*/
             }
 	  
 	    /* however with the current sequence, we get usable
-            * time indices from floor(global_image_num/num_slices)*/ /*i'm not sure that works here ilana*/
+            * time indices from floor(global_image_num/num_slices)*/ /*i'm not sure that works here*/
 	    
 	    acr_insert_numeric(&group_list, ACR_Acquisition, (double)enc_ix);
             /*acr_insert_numeric(&group_list, ACR_Acquisition, 
@@ -1176,11 +1200,11 @@ add_siemens_info(Acr_Group group_list)
             if (str_ptr == NULL || str_ptr2 == NULL){
                 enc_ix = 0;
             } 
-            else if(atoi(str_ptr + sizeof(char)) == 0){ /*a 0 after the b means b=0 image*/
-		enc_ix = atoi(str_ptr2 + sizeof(char));
+            else if(atoi(str_ptr +1) == 0){ /*a 0 after the b means b=0 image*/
+		enc_ix = atoi(str_ptr2 + 1);
 	    }
 	    else{
-		enc_ix = atoi(str_ptr2 + sizeof(char)) + num_b0; /*should be in diffusion weighted images now*/
+		enc_ix = atoi(str_ptr2 + 1) + num_b0; /*should be in diffusion weighted images now*/
             }
                 acr_insert_numeric(&group_list, ACR_Acquisition, (double)enc_ix);
           }
@@ -1254,8 +1278,9 @@ add_siemens_info(Acr_Group group_list)
              * WARNING: as far as I can tell, the phase-encoding dir (row/col)
              * is reversed for mosaic EPI scans (don't know if this is a
              * mosaic thing, an EPI thing, or whatever). 
-	     * (Something is wrong here, it seems that it's not reversed, but not sure
-	     * obviously doesn't show up when the acquisition matrix is square ilana)
+             * (Something is wrong here, it seems that it's not reversed, but
+             * not sure obviously doesn't show up when the acquisition matrix is
+             * square)
              * Get the array of sizes: freq row/freq col/phase row/phase col
              */
 
@@ -1282,19 +1307,19 @@ add_siemens_info(Acr_Group group_list)
                 str_ptr = (char *)acr_find_string(group_list, 
                                                   ACR_Phase_encoding_direction,
                                                   "");
-                if (!strncmp(str_ptr, "COL", 3)) { /*TODO test that this is right for non-square acquisition matrices ilana*/
+                if (!strncmp(str_ptr, "COL", 3)) { /*TODO test that this is right for non-square acquisition matrices*/
                     subimage_rows = subimage_size[3];
                     subimage_cols = subimage_size[0];
                 }
                 else if (!strncmp(str_ptr, "ROW", 3)) {
-		/*not sure the subimage dimensions should be opposite of the phase encoding direction, 
-		running into some problems, so I changed it to be the same
-		but I also might be breaking for other cases! ilana*/
+                   /*not sure the subimage dimensions should be opposite of 
+                    * the phase encoding direction, running into some problems, 
+                    * so changed it to be the same but I also might be breaking 
+                    * for other cases!*/
                     /*subimage_rows = subimage_size[2];
                     subimage_cols = subimage_size[1];*/
-		    subimage_rows = subimage_size[1];
+                    subimage_rows = subimage_size[1];
                     subimage_cols = subimage_size[2];
-			
                 }
                 else {
                     printf("WARNING: Unknown phase encoding direction '%s'\n",
@@ -1882,7 +1907,8 @@ sort_dimensions(General_Info *gi_ptr)
     Mri_Index imri;
     Sort_Element *sort_array;
     int nvalues;
-    int i;
+    int i,j;
+    int reverse_array;
 
     /* Sort the dimensions, if needed.
      */
@@ -1904,6 +1930,7 @@ sort_dimensions(General_Info *gi_ptr)
             
         if (G.Debug >= HI_LOGGING) {
             printf("Sorting %s dimension\n", Mri_Names[imri]);
+            printf(" slice order is:%s\n",gi_ptr->acq.slice_order );
         }
 
         /* Set up the array for sorting.
@@ -1923,21 +1950,43 @@ sort_dimensions(General_Info *gi_ptr)
         qsort((void *) sort_array, (size_t) nvalues, sizeof(*sort_array), 
               dimension_sort_function);
 
-        /* Copy the information back into the appropriate arrays 
-         */
-        for (i = 0; i < nvalues; i++) {
-            gi_ptr->indices[imri][i] = sort_array[i].identifier;
-            gi_ptr->coordinates[imri][i] = sort_array[i].value;
-            gi_ptr->widths[imri][i] = sort_array[i].width;
+        /* Added this from dicomserver conversion, it was probably removed.
+         * Although it should not matter whether we start negative and
+         * step positive or the other way around, we should try and stay
+         * consistent with previous versions and with the dicom header. 
+         * It is especially important for slice times */
+
+        /* Figure out if we should reverse the array to keep something 
+         * similar to the original ordering.
+         * Also need to check for slice ordering, MOSAIC images are
+         * always sorted from bottom to top whether the sequence was
+         * ascending or descending */
+        reverse_array = (sort_array[0].original_index > 
+                         sort_array[nvalues-1].original_index) || 
+                         (!strcmp(gi_ptr->acq.slice_order,"descending")&& !strcmp(Mri_Names[imri], "Slice"));
+
+        /* Copy the information back into the appropriate arrays */
+        for (i=0; i < nvalues; i++) {
+            j = (reverse_array ? nvalues - i - 1 : i);
+            gi_ptr->indices[imri][i] = sort_array[j].identifier;
+            gi_ptr->coordinates[imri][i] = sort_array[j].value;
+            gi_ptr->widths[imri][i] = sort_array[j].width;
         }
 
         if (G.Debug >= HI_LOGGING) {
             /* Print out all of the information about this dimension.
              */
-            printf(" nvalues %d min %f max %f\n",
+            if(reverse_array){
+                printf(" nvalues %d min %f max %f\n",
+                       nvalues, 
+                       gi_ptr->coordinates[imri][nvalues - 1],
+                       gi_ptr->coordinates[imri][0]);
+            }else{
+                printf(" nvalues %d min %f max %f\n",
                    nvalues, 
                    gi_ptr->coordinates[imri][0],
                    gi_ptr->coordinates[imri][nvalues - 1]);
+            }
             for (i = 0; i < nvalues; i++) {
                 printf("%3d %6d %8.3f\n", 
                        i,
@@ -1964,10 +2013,14 @@ sort_dimensions(General_Info *gi_ptr)
                 /* Check that each successive slice has roughly the same
                  * spacing, to within 2 percent of the initial delta.
                  */
+    
+                /* Check against absolute value of epsilon, could be positive 
+                 * or negative, because of reversal (fcmp does not handle this)
+                */
                 if (!fcmp(delta, 
                           (gi_ptr->coordinates[imri][i] - 
                            gi_ptr->coordinates[imri][i - 1]),
-                          2.0 * (delta / 100.0))) {
+                          fabs(2.0 * (delta / 100.0)))) {
                     /* TODO: Perhaps this message could be improved?? */
                     printf("WARNING: Missing %s data at index %d, %g %g\n",
                            Mri_Names[imri],
@@ -1999,16 +2052,19 @@ sort_dimensions(General_Info *gi_ptr)
                  * assumed value is the default (1.0), we adopt the 
                  * calculated value.
                  */
-                if (!fcmp(dbl_tmp1, dbl_tmp2, (dbl_tmp1 / 1000.0))) {
+                /* Check against absolute value of epsilon, could be positive 
+                 * or negative, because of reversal (fcmp does not handle this)
+                 */
+                if (!fcmp(dbl_tmp1, dbl_tmp2, fabs((dbl_tmp1 / 1000.0)))) {
                     printf("WARNING: Coordinate spacing (%g) differs from DICOM slice spacing (%g)\n", dbl_tmp2, dbl_tmp1);
                     if (!G.prefer_coords) {
                         printf(" (perhaps you should consider the -usecoordinates option)\n");
                     }
-                    if (dbl_tmp1 == 1.0 || G.prefer_coords || fcmp(dbl_tmp1, -dbl_tmp2, (dbl_tmp1 / 1000.0))) { 
-			    /*Although in the comment above it says that we should use the
-			    calculated value if the assumed and calculated value only differ
-			    by a sign change, this was not included in this if statement, added 
-			    by ilana because default was wrong (i.e. w/o using -usecoordinates option)*/
+                    if (dbl_tmp1 == 1.0 || G.prefer_coords || fcmp(dbl_tmp1, -dbl_tmp2, fabs(dbl_tmp1 / 1000.0))) { 
+                        /*Although in the comment above it says that we should use the
+                          calculated value if the assumed and calculated value only differ
+                          by a sign change, this was not included in this if statement, added 
+                          by ilana because default was wrong (i.e. w/o using -usecoordinates option)*/
                         gi_ptr->step[gi_ptr->slice_world] = dbl_tmp2;
                     }
                     printf(" Using %g for the slice spacing value.\n", 
@@ -2169,7 +2225,8 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
     Acr_Double separation;
     double RowColVec[6];
     double dircos[VOL_NDIMS][WORLD_NDIMS];
-    Acr_String str_tmp;
+    Acr_String str_tmp,str_tmp2;
+    int old = 1;
 
     if (G.Debug >= HI_LOGGING) {
         printf("mosaic_init(%lx, %lx, %d)\n",
@@ -2178,19 +2235,32 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
     }
 
     str_tmp = acr_find_string(group_list, SPI_Order_of_slices, "");
-    if (!strncmp(str_tmp, "INTERLEAVED", 11)) {
+    /* Seems like this field is often not found, 
+    *  the sSliceArray.ucMode field found in the ASCONV header
+    *  seems trustworthy. */
+    /* 0x1 means ASCENDING
+     * 0x2 means DESCENDING
+     * 0x4 means INTERLEAVED*/
+    str_tmp2 = acr_find_string(group_list, EXT_Slice_order, "");
+    
+    if (!strncmp(str_tmp, "INTERLEAVED", 11) || !strncmp(str_tmp2, "0x4", 3)) {
         mi_ptr->mosaic_seq = MOSAIC_SEQ_INTERLEAVED;
+        str_tmp="interleaved";
+
     }
-    else if (!strncmp(str_tmp, "ASCENDING", 9)) {
+    else if (!strncmp(str_tmp, "ASCENDING", 9)|| !strncmp(str_tmp2, "0x1", 3)) {
         mi_ptr->mosaic_seq = MOSAIC_SEQ_ASCENDING;
+        str_tmp="ascending";
     }
-    else if (!strncmp(str_tmp, "DESCENDING", 10)) {
+    else if (!strncmp(str_tmp, "DESCENDING", 10)|| !strncmp(str_tmp2, "0x2", 3)) {
         mi_ptr->mosaic_seq = MOSAIC_SEQ_DESCENDING;
+        str_tmp="descending";
     }
     else {
         mi_ptr->mosaic_seq = G.mosaic_seq;
+        str_tmp="default ascending";
     }
-
+    
     if (G.Debug >= HI_LOGGING) {
         printf(" ordering is %s\n", str_tmp);
     }
@@ -2221,6 +2291,9 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
     }
 
     // Check whether we need to do anything (1x1 grid may be the whole image)
+    mi_ptr->big_image = NULL;
+    mi_ptr->small_image = NULL;
+    mi_ptr->packed = FALSE;
     grid_size = mi_ptr->grid[0] * mi_ptr->grid[1];
     if ((grid_size == 1) &&
         (mi_ptr->size[0] == mi_ptr->big[0]) &&
@@ -2314,7 +2387,24 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
                );
     }
 
-    if (mi_ptr->mosaic_seq != MOSAIC_SEQ_INTERLEAVED) {
+    /* Treat slice ordering differently depending on software version
+       - for newer software versions(>VA25 or >VB), the mosaic images seem to
+       always be ordered ascending, regardless of acquisition order.*/
+    
+    str_tmp=strstr(acr_find_string(group_list, ACR_Software_versions, ""), 
+                   "syngo MR A");
+    str_tmp2=strstr(acr_find_string(group_list, ACR_Software_versions, ""), 
+                   "syngo MR B");
+        
+    if(str_tmp !=NULL){
+        if(atoi(str_tmp + 10) >= 25) old=0; /*software version >= VA25*/
+    }
+    else if(str_tmp2 !=NULL){
+          if(atoi(str_tmp2 + 10) >= 11) old=0; /*software version >= VB11*/ 
+    }
+    
+    if(old==1){ /*old behavior*/
+      if (mi_ptr->mosaic_seq != MOSAIC_SEQ_INTERLEAVED) {
         if (is_numaris3(group_list)) {
             for (i = 0; i < WORLD_NDIMS; i++) {
                 mi_ptr->position[i] -= 
@@ -2330,21 +2420,40 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
              */
 
             for (i = 0; i < WORLD_NDIMS; i++) {
-                /* Correct offset from mosaic Center
+
+                 /* Correct offset from mosaic Center
                  */
-                mi_ptr->position[i] += (double)
+                  mi_ptr->position[i] += (double)
                     ((dircos[VCOLUMN][i] * mi_ptr->big[0] * pixel_spacing[0]/2.0) +
                      (dircos[VROW][i] * mi_ptr->big[1] * pixel_spacing[1]/2));
                 
-                /* Move from center to corner of slice
-                 */
-                mi_ptr->position[i] -= 
+                 /* Move from center to corner of slice
+                  */
+                  mi_ptr->position[i] -= 
                     ((dircos[VCOLUMN][i] * mi_ptr->size[0] * pixel_spacing[0]/2.0) +
                      (dircos[VROW][i] * mi_ptr->size[1] * pixel_spacing[1]/2.0));
             }
-        }
-    }
 
+        }
+      }
+    }
+    else{ /*new behavior*/
+       for (i = 0; i < WORLD_NDIMS; i++) {
+
+                 /* Correct offset from mosaic Center
+                 */
+                  mi_ptr->position[i] += (double)
+                    ((dircos[VCOLUMN][i] * mi_ptr->big[0] * pixel_spacing[0]/2.0) +
+                     (dircos[VROW][i] * mi_ptr->big[1] * pixel_spacing[1]/2));
+                
+                 /* Move from center to corner of slice
+                  */
+                  mi_ptr->position[i] -= 
+                    ((dircos[VCOLUMN][i] * mi_ptr->size[0] * pixel_spacing[0]/2.0) +
+                     (dircos[VROW][i] * mi_ptr->size[1] * pixel_spacing[1]/2.0));
+       }
+    }
+    
     if (G.Debug >= HI_LOGGING) {
         printf(" corrected position %.3f %.3f %.3f\n",
                mi_ptr->position[0],
@@ -2409,6 +2518,7 @@ mosaic_init(Acr_Group group_list, Mosaic_Info *mi_ptr, int load_image)
 
         /* Steal the image element from the group list
          */
+        mi_ptr->packed = TRUE;
         mi_ptr->big_image = acr_find_group_element(group_list, ACR_Pixel_data);
         if (mi_ptr->big_image == NULL) {
             fprintf(stderr, "Couldn't find an image\n");
@@ -2455,6 +2565,8 @@ mosaic_insert_subframe(Acr_Group group_list, Mosaic_Info *mi_ptr,
     double position[WORLD_NDIMS];
     string_t string;
     int islice;
+    char *str_tmp, *str_tmp2;
+    int oldb=1;  
 
     if (G.Debug >= HI_LOGGING) {
         printf("mosaic_insert_subframe(%lx, %lx, %d, %d)\n",
@@ -2462,28 +2574,49 @@ mosaic_insert_subframe(Acr_Group group_list, Mosaic_Info *mi_ptr,
                iimage, load_image);
     }
 
-    /* Figure out what to do based upon the mosaic sequencing.
+ /* Figure out what to do based upon the mosaic sequencing.
      */
-    switch (mi_ptr->mosaic_seq) {
-    case MOSAIC_SEQ_INTERLEAVED:
+    /* Since at least software version VA25 (and thus VA30, VB15), 
+     * the mosaic sequencing in the file is the same, regardless
+     * of the acquisition (always ascending). 
+     * Also, the following code is based on a field that is 
+     * deprecated (0x0021 0x123f)... still keep old behavior in case
+     * its an older image type*/
+    
+    str_tmp=strstr(acr_find_string(group_list, ACR_Software_versions, ""), 
+                   "syngo MR A");
+    str_tmp2=strstr(acr_find_string(group_list, ACR_Software_versions, ""), 
+                   "syngo MR B");
+        
+    if(str_tmp !=NULL){
+        if(atoi(str_tmp + 10) >= 25) oldb=0; /*software version >= VA25*/
+    }
+    else if(str_tmp2 !=NULL){
+        if(atoi(str_tmp2 + 10) >= 11) oldb=0; /*software version >= VB11*/ 
+    }
+    
+    if(mi_ptr->mosaic_seq == MOSAIC_SEQ_INTERLEAVED && oldb==1){ //old behavior
+    /*case MOSAIC_SEQ_INTERLEAVED:*/
         /* For interleaved sequences, we have to map the odd slices to
          * the range slice_count/2..slice_count-1 and the even slices
          * from zero to slice_count/2-1
          */
-        if (iimage & 1) {       /* Odd?? */
-            islice = (mi_ptr->slice_count / 2) + (iimage / 2);
+      if (iimage & 1) {       /* Odd?? */
+          islice = (mi_ptr->slice_count / 2) + (iimage / 2);
         }
         else {
             islice = iimage / 2;
         }
-        break;
 
-    default:
-        /* Otherwise, just use the image number without modification for
-         * ascending or unknown slice ordering.
-         */
-        islice = iimage;
-        break;
+        //break;
+    }
+    else{
+    /*default:*/
+
+      /* Otherwise, just use the image number without modification for
+      * ascending or unknown slice ordering.
+      */
+      islice = iimage;
     }
 
 #if 0
@@ -2515,10 +2648,11 @@ mosaic_insert_subframe(Acr_Group group_list, Mosaic_Info *mi_ptr,
      * This involves subtracting the step * index from the mosaic
      * slice position.
      */
-    if (mi_ptr->mosaic_seq == MOSAIC_SEQ_DESCENDING) {
+     /*This should already have been taken care of in sort_dimensions above*/
+    /*if (mi_ptr->mosaic_seq == MOSAIC_SEQ_DESCENDING) {
         position[ZCOORD] = mi_ptr->position[ZCOORD] - 
             (double) islice * mi_ptr->step[ZCOORD];
-    }
+    }*/
 
     sprintf(string, "%.15g\\%.15g\\%.15g", 
             position[XCOORD], position[YCOORD], position[ZCOORD]);
@@ -2569,8 +2703,12 @@ mosaic_insert_subframe(Acr_Group group_list, Mosaic_Info *mi_ptr,
 static void 
 mosaic_cleanup(Mosaic_Info *mi_ptr)
 {
-    if (mi_ptr->packed && mi_ptr->big_image != NULL) {
+    if (mi_ptr) {
+      if (mi_ptr->packed && mi_ptr->big_image != NULL) {
         acr_delete_element(mi_ptr->big_image);
+        mi_ptr->packed = FALSE;
+        mi_ptr->big_image = NULL;
+      }
     }
 }
 
@@ -2839,9 +2977,11 @@ multiframe_insert_subframe(Acr_Group group_list, Multiframe_Info *mfi_ptr,
 static void 
 multiframe_cleanup(Multiframe_Info *mfi_ptr)
 {
-    if (mfi_ptr->big_image != NULL) {
+    if (mfi_ptr) {
+      if (mfi_ptr->big_image != NULL) {
         acr_delete_element(mfi_ptr->big_image);
         mfi_ptr->big_image = NULL;
+      }
     }
 }
 

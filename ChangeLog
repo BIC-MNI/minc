@@ -1,6 +1,20 @@
+2010-11-23 Claude Lepage <claude@bic.mni.mcgill.ca>
+   * Fixed bug in dicom_to_minc.c for segmentation fault on undefined sequence
+     (initialization of gi_ptr->cur_size)
+   * Free some memory after usage
+
+2010-11-23 Ilana Leppert <ilana@bic.mni.mcgill.ca>
+   * Added b-matrix field for Siemens diffusion scans (version >= VB
+     only). 
+   * Made changes to ordering of slices: e.g. a descending acquisition
+     now has negative slice step. This was an issue with MOSAIC, in
+     which the ordering of the slices in the MOSAIC image is ascending,
+     even though the acquisition is descending (version >= VA25 and
+     >= VB11).
+
 2010-07-27  Andrew L Janke  <a.janke@gmail.com>
    * conversion/micropet/upet2mnc.c: error bug squashed (John Cupitt)
-   
+
 2010-07-06 Claude Lepage <claude@bic.mni.mcgill.ca>
    * Improved convergence and accuracy for application of non-linear
      transformation (especially for 2-d slices)
