@@ -5,7 +5,16 @@
 @CREATED    : January 4, 1996 (Peter Neelin)
 @MODIFIED   : 
  * $Log: ecat_file.c,v $
- * Revision 6.4  2008-01-17 02:33:01  rotor
+ * Revision 6.5  2011-01-21 01:06:58  nikelski
+ *  * Fixed seg fault in ecattominc on 64-bit systems
+ *  * Corrected by modifying ecat_file.c and machine_indep.c as follows:
+ *    - added <stdint.h> include providing access to the int32_t type
+ *    - changed the "dirblock" buffer from long to int32_t, making explicit
+ *      that this buffer needs to hold 32-bit ints (reflecting the ecat file)
+ *    - added function get_int32_value to return 32-bit ints from the
+ *      dirblock buffer
+ *
+ * Revision 6.4  2008/01/17 02:33:01  rotor
  *  * removed all rcsids
  *  * removed a bunch of ^L's that somehow crept in
  *  * removed old (and outdated) BUGS file
@@ -43,6 +52,7 @@
               express or implied warranty.
 ---------------------------------------------------------------------------- */
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -148,7 +158,7 @@ private void ecat_initialize_table(Ecat_header_table_type *table);
 private int ecat_table_entry_compare(const void *v1, const void *v2);
 private int ecat_table_offset_compare(const void *v1, const void *v2);
 private int ecat_read_directory(Ecat_file *file);
-private long get_dirblock(Ecat_file *file, long *dirblock, int offset);
+private long get_dirblock(Ecat_file *file, int32_t *dirblock, int offset);
 private int ecat_get_subhdr_offset(Ecat_file *file, int volume, int slice, 
                                    long *offset);
 
@@ -939,9 +949,10 @@ private int ecat_table_offset_compare(const void *v1, const void *v2)
 ---------------------------------------------------------------------------- */
 private int ecat_read_directory(Ecat_file *file)
 {
-   int ientry, start_entry, num_used, num_alloc;
-   long nextblock, dirblock[DIRBLOCK_SIZE / sizeof(long)];
-
+   int ientry, start_entry, num_alloc;
+   long nextblock, num_used;
+   int32_t dirblock[DIRBLOCK_SIZE / sizeof(int32_t)];
+    
    /* Allocate space for the subheader offset array */
    num_alloc = file->num_volumes;
    if (file->header_description == ECAT_VER_PRE7)
@@ -1003,8 +1014,7 @@ private int ecat_read_directory(Ecat_file *file)
 @CREATED    : January 4, 1996 (Peter Neelin)
 @MODIFIED   : 
 ---------------------------------------------------------------------------- */
-private long get_dirblock(Ecat_file *file, long *dirblock, int offset)
-{
+private long get_dirblock(Ecat_file *file, int32_t *dirblock, int offset){
    long value;
 
    if (file->header_description == ECAT_VER_PRE7) {
@@ -1012,7 +1022,7 @@ private long get_dirblock(Ecat_file *file, long *dirblock, int offset)
    }
    else if (file->header_description == ECAT_VER_7) {
      /* value = dirblock[offset];*/
-      get_long_value(&dirblock[offset], &value); 
+      get_int32_value(&dirblock[offset], &value);
    }
    else {
       return 0;

@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -25,6 +26,17 @@ void get_long_value(const void *from, void *to) {
   (void) memcpy(&long_value, from, sizeof(long int));
   *(long int *)to = ntohl(long_value);
 }
+
+/* we need this, as the ecat directory block uses 32-bit ints */
+void get_int32_value(const void *from, void *to) {
+  int32_t int32_value;
+
+  (void) memcpy(&int32_value, from, sizeof(int32_t));
+  *(int32_t *)to = ntohl(int32_value);
+}
+
+
+
 /* from vax_conversion.c -Copyright 1993 Peter Neelin */
 /* ----------------------------- MNI Header -----------------------------------
 @NAME       : vax_conversions.c
@@ -34,7 +46,16 @@ void get_long_value(const void *from, void *to) {
 @CREATED    : December 10, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: machine_indep.c,v $
- * Revision 6.5  2009-01-20 11:58:13  rotor
+ * Revision 6.6  2011-01-21 01:06:58  nikelski
+ *  * Fixed seg fault in ecattominc on 64-bit systems
+ *  * Corrected by modifying ecat_file.c and machine_indep.c as follows:
+ *    - added <stdint.h> include providing access to the int32_t type
+ *    - changed the "dirblock" buffer from long to int32_t, making explicit
+ *      that this buffer needs to hold 32-bit ints (reflecting the ecat file)
+ *    - added function get_int32_value to return 32-bit ints from the
+ *      dirblock buffer
+ *
+ * Revision 6.5  2009/01/20 11:58:13  rotor
  *  * CMakeLists.txt: updated version
  *  * Updated Changelog to include releases
  *  * Warning cleanups below
