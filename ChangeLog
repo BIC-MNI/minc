@@ -1,3 +1,9 @@
+2011-01-19 Jim Nikelski <nikelski@bic.mni.mcgill.ca>
+   * Fixed x86_64 ecattominc bug which resulted in a segmentation fault
+     on 64-bit platforms. Change primarily required changing the type
+     of the "dirblock" IO buffer from long to int32_t, reflecting the
+     actual storage type in the ecat file.
+
 2010-11-23 Claude Lepage <claude@bic.mni.mcgill.ca>
    * Fixed bug in dicom_to_minc.c for segmentation fault on undefined sequence
      (initialization of gi_ptr->cur_size)
