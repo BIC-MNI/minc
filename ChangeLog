@@ -1,3 +1,7 @@
+
+2011-02-09  Andrew L Janke  <a.janke@gmail.com>
+   * libsrc/minc_compat.h: Added cplusplus extern to header
+
 2011-01-19 Jim Nikelski <nikelski@bic.mni.mcgill.ca>
    * Fixed x86_64 ecattominc bug which resulted in a segmentation fault
      on 64-bit platforms. Change primarily required changing the type
