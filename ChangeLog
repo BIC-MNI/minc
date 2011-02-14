@@ -1,4 +1,9 @@
 
+
+2011-02-14  Andrew L Janke  <a.janke@gmail.com>
+   * progs/mincview/mincview: converted from csh to bash and changed
+      from xv to display
+
 2011-02-09  Andrew L Janke  <a.janke@gmail.com>
    * libsrc/minc_compat.h: Added cplusplus extern to header
 

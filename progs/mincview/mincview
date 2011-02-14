@@ -1,147 +1,136 @@
-#! /bin/csh -f
+#! /bin/bash
+#
 # Script for viewing a minc file.
-# Requires a pnm file viewer such as xv or display from ImageMagick,
-# as wells as the filter invert_raw_image.
+# Requires a pnm file viewer. (display from ImageMagick)
 #
 # Displays images with patient left on left side of the screen.
 
-# Constants
-set xv_visual = `xdpyinfo | awk '($1=="class:"){visual=$2};(($1=="depth:") && (visual=="TrueColor") && ($2==24)) {found=1}; END {if (found) print "-visual TrueColor"}'`
-set VIEWER = "xv"       # Any pnm display program that handles a list of files
-set VIEWER_OPTIONS = "-geometry 512x512 -fixed -cmap -raw $xv_visual"
-set PGM_CODE = "P5"
-set PPM_CODE = "P6"
-set usage = "Usage: $0 <filename.mnc> [<slice number>]"
-set exit_status = 0
+
+PGM_CODE="P5"
+PPM_CODE="P6"
+usage="Usage: $0 <infile.mnc> [<slice number>]"
 
 # Check arguments
-if (($#argv < 1) || ($#argv > 2) || ("$1" == "-help") || ("$1" == "-h")) then
+if [ $# -lt "1" ] || \
+   [ $# -gt "2" ] || \
+   [ "$1" = "-help" ] || \
+   [ "$1" = "-h" ]
+then
    echo "$usage"
+   echo ""
    exit -1
-endif
-set filename = "$1"
-set slice = `awk "BEGIN{print $2+0}" < /dev/null`
-@ slice_specified = ( $#argv >= 2 )
+fi
+
+infile="$1"
 
 # Create temporary directory
-if (! $?TMPDIR) then
-    if (-d /var/tmp) then
-	set TMPDIR = /var/tmp
-    else if (-d /usr/tmp) then
-	set TMPDIR = /usr/tmp
-    else
-	set TMPDIR = /tmp
-    endif
-endif
-if (! -d $TMPDIR) then
-    echo "Working directory $TMPDIR does not exist."
-    exit 1
-endif
-set workingdir = $TMPDIR
+tmpdir="/tmp/mincview-$$"
 
-set workingparent = $workingdir/mincview-$$
-set childdir = $filename:t
-set workingdir = $workingparent/$childdir
-onintr cleanup
-mkdir $workingparent
-mkdir $workingdir
+# cleanup nicely
+trap "rm -rf $tmpdir" 0 1 2 3 13 15
 
-# Expand the file if needed
-set newfilename = $filename:t
-set newfilename = $workingdir/temp_$newfilename:r
-set filename = `mincexpand $filename $newfilename -name_only`
+mkdir -p $tmpdir
 
 # Get dimension names
-set dims = `mincinfo $filename -vardims image`
+dims=( $(mincinfo -vardims image $infile ) )
+
+echo " + Dimensions: ${dims[*]}"
 
 # Check for vector dimension
-set pnm_code = $PGM_CODE
-set bytes_per_pixel = 1
-if ("$dims[$#dims]" == "vector_dimension") then
-   @ ndims = $#dims - 1
-   set nvec = `mincinfo $filename -dimlength $dims[$#dims]`
-   set start_suffix = ",0"
-   if ($nvec != 3) then
-      set count_suffix = ",1"
+pnm_code=$PGM_CODE
+if [ "${dims[${#dims[*]} - 1]}" = "vector_dimension" ]
+then
+   ndims=$(( ${#dims[*]} - 1 ))
+   nvec=$(mincinfo $infile -dimlength $dims[$#dims])
+   start_suffix=",0"
+   if [ $nvec != 3 ]
+   then
+      count_suffix=",1"
    else
-      set count_suffix = ",3"
-      set pnm_code = $PPM_CODE
-      set bytes_per_pixel = 3
-   endif
+      count_suffix=",3"
+      pnm_code=$PPM_CODE
+   fi
 else
-   set ndims = $#dims
-   set start_suffix = ""
-   set count_suffix = ""
-endif
+   ndims="${#dims[*]}"
+   start_suffix=""
+   count_suffix=""
+fi
 
-if ($ndims > 3) then
-   @ nprefix = $ndims - 3
-   set start_prefix = \
-      "`awk 'BEGIN{for (i=0;i<$nprefix;i++) print "'"'"0,"'"'"}' < /dev/null`"
-   set count_prefix = \
-      "`awk 'BEGIN{for (i=0;i<$nprefix;i++) print "'"'"1,"'"'"}' < /dev/null`"
-else if ($ndims < 2) then
-   echo "No image found in file $filename"
-   set exit_status = -1
-   goto cleanup
+echo " + ndims: $ndims"
+
+if [ $ndims -gt 3 ]
+then
+   nprefix=$(( $ndims - 3 ))
+   start_prefix=$(awk 'BEGIN{for (i=0;i<$nprefix;i++) print "0,"}' < /dev/null)
+   count_prefix=$(awk 'BEGIN{for (i=0;i<$nprefix;i++) print "1,"}' < /dev/null)
+elif [ $ndims -lt "2" ]
+then
+   echo "No image found in file $infile"
+   exit -1
 else
-   set start_prefix = ""
-   set count_prefix = ""
-endif
+   start_prefix=""
+   count_prefix=""
+fi
 
 # Get number of slices and image dimensions
-@ ind1 = $ndims - 2
-@ ind2 = $ndims - 1
-@ ind3 = $ndims
-if ($ind1 > 0) then
-   set nslices = `mincinfo $filename -dimlength $dims[$ind1]`
+ind1=$(( $ndims - 3 ))
+ind2=$(( $ndims - 2 ))
+ind3=$(( $ndims - 1 ))
+if [ $ind1 -gt "-1" ]
+then
+   nslices=$(mincinfo $infile -dimlength ${dims[$ind1]})
 else
-   set nslices = 1
-endif
-set imgsize = `mincinfo $filename -dimlength $dims[$ind2] -dimlength $dims[$ind3]`
-if ($slice_specified) then
-   if (($slice >= $nslices) || ($slice < 0)) then
+   nslices=1
+fi
+
+# figure out which slices to get
+allslices=$(seq 0 $(($nslices - 1)))
+slices_to_get=${2:-"$allslices"}
+
+if [ $slice_specified ]
+then
+   if [ $slice -ge $nslices ] || [ $slice -lt "0" ]
+   then
       echo "Slice number out of range"
-      set exit_status = -1
-      goto cleanup
-   endif
-   @ nslices = $slice + 1
-endif
+      exit -1
+   fi
+   nslices=$(($slice + 1))
+fi
 
 # Check for inverting images to get standard orientation
-set rows = -$imgsize[1]
-set cols = $imgsize[2]
+imgsize=( $(mincinfo -dimlength ${dims[$ind2]} -dimlength ${dims[$ind3]} $infile) )
+rows="-${imgsize[0]}"
+cols="${imgsize[1]}"
+
+echo " + ROWS: $rows COLS: $cols"
+echo " + nslices $nslices"
 
 # Loop through slices, if needed
-echo -n Loading slices
-while ($slice < $nslices)
-   echo -n .
-   if ($ndims > 2) then
-      set start = "$start_prefix $slice,0,0 $start_suffix"
-      set count = "$count_prefix 1,$imgsize[1],$imgsize[2] $count_suffix"
+echo -n "Loading slices"
+for slice in $slices_to_get
+do
+   echo -n "."
+   if [ $ndims -gt 2 ]
+   then
+      start="${start_prefix}$slice,0,0${start_suffix}"
+      count="${count_prefix}1,${imgsize[0]},${imgsize[1]}${count_suffix}"
    else
-      set start = "0,0 $start_suffix"
-      set count = "$imgsize[1],$imgsize[2] $count_suffix"
-   endif
-   set output_file = $workingdir/$slice
-   echo "$pnm_code" >! $output_file
-   echo "$imgsize[2] $imgsize[1]" >> $output_file
+      start="0,0$start_suffix"
+      count="${imgsize[0]},${imgsize[1]}$count_suffix"
+   fi
+   output_file=$(printf "$tmpdir/slice-%04d.pgm" $slice)
+   echo "$pnm_code" > $output_file
+   echo "${imgsize[1]} ${imgsize[0]}" >> $output_file
    echo "255" >> $output_file
-   mincextract $filename -byte -start "$start" -count "$count" \
-      -positive_direction |\
-    invert_raw_image $cols $rows $bytes_per_pixel >> $output_file
-   @ slice++
-end
-echo Done
-
-# Remove the temporary file
-rm -f $newfilename
+   mincextract -byte \
+      -start $start \
+      -count $count \
+      -positive_direction \
+      $infile >> $output_file
+   
+   slice=$(($slice + 1))
+done
+echo "Done"
 
 # Display the images
-cd $workingparent
-$VIEWER $VIEWER_OPTIONS $childdir/{?,??,???,????} 
-
-cleanup:
-   cd /
-   rm -rf $workingparent
-   exit $exit_status
+display -geometry 512x512 -flip $tmpdir/slice-*.pgm 
