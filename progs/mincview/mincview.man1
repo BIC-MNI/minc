@@ -1,5 +1,5 @@
 .\"                                      Hey, EMACS: -*- nroff -*-
-.TH MINCVIEW 1 "$Date: 2004-05-20 21:52:09 $" "" "MINC User's Guide"
+.TH MINCVIEW 1 "$Date: 2011-02-15 02:48:11 $" "" "MINC User's Guide"
 
 .SH NAME
 mincview \- view a MINC file
@@ -16,6 +16,5 @@ The programs Display or register are more suited for typical use.
 
 .SH "SEE ALSO"
 .LP
-.BR xv (1),
 .BR Display (1),
 .BR register (1).

@@ -1,14 +1,11 @@
 #! /bin/bash
 #
 # Script for viewing a minc file.
-# Requires a pnm file viewer. (display from ImageMagick)
-#
-# Displays images with patient left on left side of the screen.
+# uses display from ImageMagick to display the images.
 
 
 PGM_CODE="P5"
 PPM_CODE="P6"
-usage="Usage: $0 <infile.mnc> [<slice number>]"
 
 # Check arguments
 if [ $# -lt "1" ] || \
@@ -16,8 +13,13 @@ if [ $# -lt "1" ] || \
    [ "$1" = "-help" ] || \
    [ "$1" = "-h" ]
 then
-   echo "$usage"
-   echo ""
+   cat <<END
+Usage: $0 <infile.mnc> [<slice number>]
+
+Images are displayed with the patients left on the left side
+of the screen.
+
+END
    exit -1
 fi
 
@@ -87,22 +89,20 @@ fi
 allslices=$(seq 0 $(($nslices - 1)))
 slices_to_get=${2:-"$allslices"}
 
-if [ $slice_specified ]
+if [ "$slices_to_get" = "$2" ]
 then
-   if [ $slice -ge $nslices ] || [ $slice -lt "0" ]
+   if [ "$slices_to_get" -ge "$nslices" ] || [ "$slices_to_get" -lt "0" ]
    then
-      echo "Slice number out of range"
+      echo ""
+      echo "$0: Slice number $slices_to_get out of range (0-$nslices)"
+      echo ""
       exit -1
    fi
-   nslices=$(($slice + 1))
 fi
 
 # Check for inverting images to get standard orientation
 imgsize=( $(mincinfo -dimlength ${dims[$ind2]} -dimlength ${dims[$ind3]} $infile) )
-rows="-${imgsize[0]}"
-cols="${imgsize[1]}"
-
-echo " + ROWS: $rows COLS: $cols"
+echo " + imgsize: ${imgsize[0]}x${imgsize[1]}"
 echo " + nslices $nslices"
 
 # Loop through slices, if needed
@@ -132,5 +132,16 @@ do
 done
 echo "Done"
 
+cat <<END
+--------------------------------------------------------------
+Images are now being displayed with display from ImageMagick.
+
+Use <space> to advance to the next image
+
+The image number is displayed in the title of the window
+--------------------------------------------------------------
+
+END
+
 # Display the images
-display -geometry 512x512 -flip $tmpdir/slice-*.pgm 
+display -monitor -geometry 512x512 -flip $tmpdir/slice-*.pgm 
