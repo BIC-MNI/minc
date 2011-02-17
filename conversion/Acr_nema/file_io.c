@@ -6,7 +6,10 @@
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: file_io.c,v $
- * Revision 6.9  2008-01-13 09:38:54  stever
+ * Revision 6.10  2011-02-17 06:41:51  rotor
+ *  * Fixed a HDF5 error output bug in testing code
+ *
+ * Revision 6.9  2008/01/13 09:38:54  stever
  * Avoid compiler warnings about functions and variables that are defined
  * but not used.  Remove some such functions and variables,
  * conditionalize some, and move static declarations out of header files

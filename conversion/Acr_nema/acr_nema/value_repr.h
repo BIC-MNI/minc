@@ -6,7 +6,10 @@
 @CREATED    : January 31, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: value_repr.h,v $
- * Revision 6.3  2005-03-04 00:08:08  bert
+ * Revision 6.4  2011-02-17 06:41:51  rotor
+ *  * Fixed a HDF5 error output bug in testing code
+ *
+ * Revision 6.3  2005/03/04 00:08:08  bert
  * Cleanup headers, mostly by getting rid of the infernal 'public' and using extern instead
  *
  * Revision 6.2  2000/08/16 15:53:46  neelin

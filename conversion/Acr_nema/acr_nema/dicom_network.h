@@ -6,7 +6,10 @@
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_network.h,v $
- * Revision 6.6  2001-03-19 18:30:33  neelin
+ * Revision 6.7  2011-02-17 06:41:51  rotor
+ *  * Fixed a HDF5 error output bug in testing code
+ *
+ * Revision 6.6  2001/03/19 18:30:33  neelin
  * Added function to set implementation uid and changed name of function
  * that gets it.
  *

@@ -5,7 +5,10 @@
 @CREATED    : July 9, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_client_routines.h,v $
- * Revision 6.5  1999-10-29 17:51:50  neelin
+ * Revision 6.6  2011-02-17 06:41:51  rotor
+ *  * Fixed a HDF5 error output bug in testing code
+ *
+ * Revision 6.5  1999/10/29 17:51:50  neelin
  * Fixed Log keyword
  *
  * Revision 6.4  1998/11/13 15:55:27  neelin
