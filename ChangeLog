@@ -1,4 +1,8 @@
 
+2011-04-29  Andrew L Janke  <a.janke@gmail.com>
+   * libsrc2/volume.c: added minc_version global
+   * libsrc/netcdf_convenience.c: added minc_version global
+
 2011-02-17  Andrew L Janke  <a.janke@gmail.com>
    * libsrc2/test/datatype-test.c: fixed a HDF5 bug in error output
 

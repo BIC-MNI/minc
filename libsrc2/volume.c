@@ -366,6 +366,8 @@ micreate_volume(const char *filename, int number_of_dimensions,
   micreate_ident(ident_str, sizeof(ident_str));
   miset_attribute(handle, MI_ROOT_PATH, "ident", MI_TYPE_STRING,
                   strlen(ident_str), ident_str);
+  miset_attribute(handle, MI_ROOT_PATH, "minc_version", MI_TYPE_STRING,
+                  strlen(VERSION), VERSION);
 
   _miset_volume_class(handle, handle->volume_class);
 
