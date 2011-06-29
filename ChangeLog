@@ -1,4 +1,10 @@
 
+2011-06-29  Andrew L Janke  <a.janke@gmail.com
+   * configure.in: changed typo from enable to disable minc2
+
+2011-05-30  Andrew L Janke  <a.janke@gmail.com>
+   * progs/minccalc: added imax() and imin() operators
+
 2011-04-29  Andrew L Janke  <a.janke@gmail.com>
    * libsrc2/volume.c: added minc_version global
    * libsrc/netcdf_convenience.c: added minc_version global

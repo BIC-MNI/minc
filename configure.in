@@ -16,7 +16,6 @@ AC_PROG_MAKE_SET
 AM_PROG_CC_C_O
 AC_PROG_F77
 AM_PROG_LEX
-AM_PROG_LEX
 AC_PROG_YACC
 
 AC_HEADER_TIME
@@ -42,7 +41,7 @@ smr_WITH_BUILD_PATH
 mni_REQUIRE_LIB(m,[#include <math.h>],[double x = sqrt(3.);])
 mni_REQUIRE_LIB(netcdf,[#include <netcdf.h>],[int i = ncopen("",0);])
 AC_ARG_ENABLE(disminc2,
-    [  --disable-minc2          enable HDF5 (MINC 2) functionality],
+    [  --disable-minc2         disable HDF5 (MINC 2) functionality],
     [ case "${disableval}" in
       yes) disminc2=true ;;
       no)  disminc2=false ;;
