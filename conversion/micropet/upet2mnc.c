@@ -548,6 +548,17 @@ upet_to_minc(char *hdr_fname, char *img_fname, char *out_fname,
     ci.frame_nbytes = 1;
     ci.frame_nvoxels = 1;
 
+    ci.frame_nvoxels = 1;
+
+    /* When we read voxels, we need COMBINED_SCALE_FACTOR() to have a sane
+     * value for all modalities. Set defaults for these in case the modality
+     * does not define one of these factors. For example, a CT (modality 2)
+     * will not define isotope_branching_fraction or calibration_factor.
+     */
+    ci.scale_factor = 1.0;
+    ci.calibration_factor = 1.0;
+    ci.isotope_branching_fraction = 1.0;
+
     /* Collect the headers */
     while (fgets(line_buf, sizeof(line_buf), ci.hdr_fp) != NULL) {
         if (line_buf[0] == '#') /*  */
