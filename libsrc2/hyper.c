@@ -731,7 +731,6 @@ miget_real_value_hyperslab(mihandle_t volume,
     int nctype;
     int i;
 
-    int i;
     int ndims = volume->number_of_dims;
     midimhandle_t hdim;
 
