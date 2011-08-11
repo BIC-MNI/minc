@@ -162,7 +162,7 @@ int propagate_nan = TRUE;
 static int check_dim_info = TRUE;
 static int copy_all_header = DEFAULT_BOOL;
 static int use_nan_for_illegal_values = TRUE;
-static int max_buffer_size_in_kb = 4 * 1024;
+static int max_buffer_size_in_kb = 0;
 static double valid_range[2] = {0.0, 0.0};
 double value_for_illegal_operations = DEFAULT_DBL;
 static nc_type datatype = MI_ORIGINAL_TYPE;
@@ -412,7 +412,12 @@ int main(int argc, char *argv[]){
    set_loop_datatype(loop_options, datatype, is_signed, 
                      valid_range[0], valid_range[1]);
    set_loop_copy_all_header(loop_options, copy_all_header);
-   set_loop_buffer_size(loop_options, (long) 1024 * max_buffer_size_in_kb);
+   
+   /* only set buffer size if specified */
+   if(max_buffer_size_in_kb != 0){
+      set_loop_buffer_size(loop_options, (long) 1024 * max_buffer_size_in_kb);
+      }
+   
    set_loop_check_dim_info(loop_options, check_dim_info);
    voxel_loop(nfiles, infiles, nout, outfiles, arg_string, loop_options,
               do_math, NULL);
