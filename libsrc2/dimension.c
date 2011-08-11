@@ -105,7 +105,7 @@ micopy_dimension(midimhandle_t dim_ptr, midimhandle_t *new_dim_ptr)
     handle->step = 0.0;
   }
   //check to make sure string is not empty or null
-  if (dim_ptr->units == NULL  || *dim_ptr->unit == '\0') {
+  if (dim_ptr->units == NULL  || *dim_ptr->units == '\0') {
     handle->units = strdup("mm");
   }
   else {
