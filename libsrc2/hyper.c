@@ -731,6 +731,11 @@ miget_real_value_hyperslab(mihandle_t volume,
     int nctype;
     int i;
 
+    int i;
+    int ndims = volume->number_of_dims;
+    midimhandle_t hdim;
+
+
     file_id = volume->hdf_id;
 
     var_id = ncvarid(file_id, MIimage);
