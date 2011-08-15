@@ -579,6 +579,7 @@ MNCAPI int milog_set_verbosity(int);
 
 /* default voxel loop buffer size */
 #define MI2_DEF_BUFF_SIZE 4096
+#define MI2_DEF_MAX_MEM 104857
 
 #if MINC2
 
