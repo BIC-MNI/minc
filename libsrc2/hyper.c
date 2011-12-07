@@ -729,6 +729,11 @@ miget_real_value_hyperslab(mihandle_t volume,
     int result;
     int is_signed;
     int nctype;
+    int i;
+
+    int ndims = volume->number_of_dims;
+    midimhandle_t hdim;
+
 
     file_id = volume->hdf_id;
 
@@ -744,7 +749,30 @@ miget_real_value_hyperslab(mihandle_t volume,
     miicv_setstr(icv, MI_ICV_SIGN, is_signed ? MI_SIGNED : MI_UNSIGNED);
     miicv_setint(icv, MI_ICV_DO_RANGE, TRUE);
     miicv_setint(icv, MI_ICV_DO_NORM, TRUE);
+    miicv_setint(icv, MI_ICV_DO_DIM_CONV, FALSE);
+    //figure out whether we need to flip image    L.B May 18/2011
+    for (i=0; i < volume->number_of_dims; i++)
+      {
+        midimhandle_t hdim;
 
+	hdim = volume->dim_handles[i];
+	switch (hdim->flipping_order) {
+	case MI_FILE_ORDER:
+	  miicv_setint(icv, MI_ICV_DO_DIM_CONV, FALSE);
+	   break;
+	case MI_COUNTER_FILE_ORDER:
+	case MI_POSITIVE:
+	  if (hdim->step < 0)
+	    miicv_setint(icv, MI_ICV_DO_DIM_CONV, TRUE);
+	  break;
+	case MI_NEGATIVE: 
+	  if (hdim->step > 0)
+	    miicv_setint(icv, MI_ICV_DO_DIM_CONV, TRUE);
+	  break;
+	default:
+	  return;
+	}
+      }
     result = miicv_attach(icv, file_id, var_id);
     if (result == MI_NOERROR) {
 	result = mirw_hyperslab_icv(MIRW_OP_READ,

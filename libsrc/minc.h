@@ -577,6 +577,10 @@ MNCAPI int miicv_attach(int icvid, int cdfid, int varid);
 MNCAPI void milog_init(const char *);
 MNCAPI int milog_set_verbosity(int);
 
+/* default voxel loop buffer size */
+#define MI2_DEF_BUFF_SIZE 4096
+#define MI2_DEF_MAX_MEM 104857
+
 #if MINC2
 
 /* New functions, not directly part of compatibility layer. */

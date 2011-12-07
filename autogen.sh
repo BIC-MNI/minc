@@ -7,11 +7,14 @@ EOF
     exit 1
 fi
 
-# On Mac OS X, the GNU libtool is named 'glibtool'.
-HOSTOS=`uname`
-LIBTOOLIZE=libtoolize
-if test "$HOSTOS"x = Darwinx; then
+# some systems need libtoolize, some glibtoolize 
+echo -n "testing for glibtoolize ... "
+if glibtoolize --version >/dev/null 2>&1; then
   LIBTOOLIZE=glibtoolize
+  echo using glibtoolize 
+else
+  LIBTOOLIZE=libtoolize
+  echo using libtoolize 
 fi
 
 aclocal -I m4

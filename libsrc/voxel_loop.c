@@ -357,6 +357,8 @@ MNCAPI void voxel_loop(int num_input_files, char *input_files[],
    int need_to_free_loop_options;
    int old_ncopts;
 
+   (void)fprintf(stderr, "About to loop, max_buffer is %d\n", loop_options->total_copy_space);
+   
    /* Save ncopts and set it to default value */
    old_ncopts = ncopts;
    ncopts = NC_OPTS_VAL;
@@ -2687,7 +2689,12 @@ MNCAPI Loop_Options *create_loop_options(void)
    loop_options->convert_input_to_scalar = FALSE;
    loop_options->output_vector_size = 0;
    loop_options->input_mincid = MI_ERROR;
-   loop_options->total_copy_space = 4 * 1024 * 1024;
+   
+   loop_options->total_copy_space = miget_cfg_int(MICFG_MAXBUF) * 1024;
+   if(loop_options->total_copy_space == 0){
+      loop_options->total_copy_space = MI2_DEF_BUFF_SIZE * 1024;
+      }
+   
    loop_options->loop_dimension = NULL;
    loop_options->num_all_inputs = 0;
    loop_options->input_file_function = NULL;
