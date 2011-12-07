@@ -1,7 +1,7 @@
 %{
 #include <string.h>
 #include "node.h"
-#include "y.tab.h"
+#include "gram.h"
 
 int lexpos = 0;
 #define setpos() yylval.pos = lexpos; lexpos += yyleng
@@ -19,6 +19,8 @@ sqrt           setpos(); return SQRT;
 abs            setpos(); return ABS;
 max            setpos(); return MAX;
 min            setpos(); return MIN;
+imax           setpos(); return IMAX;
+imin           setpos(); return IMIN;
 exp            setpos(); return EXP;
 log            setpos(); return LOG;
 sin            setpos(); return SIN;

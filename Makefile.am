@@ -81,7 +81,7 @@ noinst_HEADERS = \
 	progs/Proglib/minc_def.h \
 	progs/minccalc/errx.h \
 	progs/minccalc/node.h \
-	progs/minccalc/y.tab.h \
+	progs/minccalc/gram.h \
 	progs/mincresample/mincresample.h \
 	progs/mincreshape/mincreshape.h \
 	libsrc2/minc2_private.h \
