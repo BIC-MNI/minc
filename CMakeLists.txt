@@ -28,19 +28,17 @@ SET(PACKAGE_NAME "minc")
 SET(PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 SET(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 
+OPTION(BUILD_MINC2      "Support minc2 file format" ON)
 
 # yes, build as minc2
-SET(MINC2 "1")
+IF(BUILD_MINC2)
+  SET(MINC2 "1")
+ENDIF(BUILD_MINC2)
+
 ADD_DEFINITIONS(-DHAVE_CONFIG_H)
 
 # aliases
 SET(VERSION "${PACKAGE_VERSION}")
-
-# progs needed to build
-#SET(FLEX_FIND_REQUIRED)
-#SET(BISON_FIND_REQUIRED)
-#FIND_PACKAGE(BISON)
-#FIND_PACKAGE(FLEX)
 
 # check for prereqs
 INCLUDE(CheckFunctionExists)
@@ -53,10 +51,14 @@ CHECK_INCLUDE_FILES(float.h HAVE_FLOAT_H)
 
 # netcdf and HDF5
 SET(NETCDF_FIND_REQUIRED TRUE)
-SET(HDF5_FIND_REQUIRED TRUE)
-FIND_PACKAGE(HDF5)
 FIND_PACKAGE(NETCDF)
-INCLUDE_DIRECTORIES( ${NETCDF_INCLUDE_DIR} ${HDF5_INCLUDE_DIR} )
+INCLUDE_DIRECTORIES( ${NETCDF_INCLUDE_DIR} )
+
+IF(BUILD_MINC2)
+  SET(HDF5_FIND_REQUIRED TRUE)
+  INCLUDE_DIRECTORIES( ${HDF5_INCLUDE_DIR} )
+ENDIF(BUILD_MINC2)
+FIND_PACKAGE(HDF5)
 
 # config files for build
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/config.h.cmake ${CMAKE_SOURCE_DIR}/config.h)
@@ -68,9 +70,15 @@ CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/epm-header.in ${CMAKE_SOURCE_DIR}/epm-header)
 INCLUDE_DIRECTORIES(
    ${CMAKE_CURRENT_SOURCE_DIR}
    ${CMAKE_SOURCE_DIR}/libsrc
-   ${CMAKE_SOURCE_DIR}/libsrc2
    ${CMAKE_SOURCE_DIR}/volume_io/Include
    )
+
+IF(BUILD_MINC2)
+  INCLUDE_DIRECTORIES(
+   ${CMAKE_SOURCE_DIR}/libsrc2
+   )
+ENDIF(BUILD_MINC2)
+
 
 # some variables
 SET(minc1_LIB_SRCS
@@ -105,26 +113,52 @@ SET(minc2_LIB_SRCS
    libsrc2/volume.c
    )
 
+SET(minc_LIB minc)
+
+IF(BUILD_MINC2)
+  SET(minc_LIB_SRCS ${minc1_LIB_SRCS} ${minc2_LIB_SRCS})
+  SET(minc_LIB minc2)
+  ADD_LIBRARY(minc2 STATIC ${minc_LIB_SRCS} )
+  INSTALL(TARGETS minc2 DESTINATION lib)
+
+  INSTALL(FILES libsrc/minc.h libsrc/ParseArgv.h 
+    libsrc/voxel_loop.h 
+    libsrc/nd_loop.h
+    libsrc/time_stamp.h
+    libsrc/minc_compat.h
+    volume_io/Include/volume_io.h
+    libsrc2/minc2.h
+    libsrc/minc_simple.h
+    DESTINATION include
+    )
+
+  SET_TARGET_PROPERTIES(minc2 PROPERTIES VERSION ${PACKAGE_VERSION} SOVERSION ${CPACK_PACKAGE_VERSION_MAJOR})
+
+ELSE(BUILD_MINC2)
+
+    SET(minc_LIB_SRCS ${minc1_LIB_SRCS} )
+    SET(minc_LIB minc)
+    ADD_LIBRARY(minc STATIC ${minc1_LIB_SRCS} )
+    INSTALL(TARGETS minc DESTINATION lib)
+
+    INSTALL(FILES libsrc/minc.h libsrc/ParseArgv.h 
+      libsrc/voxel_loop.h 
+      libsrc/nd_loop.h
+      libsrc/time_stamp.h
+      libsrc/minc_compat.h
+      volume_io/Include/volume_io.h
+      libsrc/minc_simple.h
+      DESTINATION include
+      )
+
+    SET_TARGET_PROPERTIES(minc PROPERTIES VERSION ${PACKAGE_VERSION} SOVERSION ${CPACK_PACKAGE_VERSION_MAJOR})
+
+ENDIF(BUILD_MINC2)
 
 # build the main minc2 library
-ADD_LIBRARY(minc2 STATIC ${minc1_LIB_SRCS} ${minc2_LIB_SRCS})
-INSTALL(TARGETS minc2 DESTINATION lib)
-INSTALL(FILES libsrc/minc.h libsrc/ParseArgv.h 
-   libsrc/voxel_loop.h 
-   libsrc/nd_loop.h
-   libsrc/time_stamp.h
-   libsrc/minc_compat.h
-   volume_io/Include/volume_io.h
-   libsrc2/minc2.h
-   libsrc/minc_simple.h
-   DESTINATION include
-   )
-
-SET_TARGET_PROPERTIES(minc2 PROPERTIES VERSION ${PACKAGE_VERSION} SOVERSION ${CPACK_PACKAGE_VERSION_MAJOR})
-
 
 # volume_io2
-SET(volume_io2_LIB_SRCS
+SET(volume_io_LIB_SRCS
    volume_io/Geometry/colour.c
    volume_io/Geometry/colour_def.c
    volume_io/Geometry/gaussian.c
@@ -161,9 +195,17 @@ SET(volume_io2_LIB_SRCS
    volume_io/Volumes/volumes.c
    )
 
-# build and install volume_io2 library
-ADD_LIBRARY(volume_io2 STATIC ${volume_io2_LIB_SRCS})
-INSTALL(TARGETS volume_io2 DESTINATION lib)
+IF(BUILD_MINC2)
+  # build and install volume_io2 library
+  ADD_LIBRARY(volume_io2 STATIC ${volume_io_LIB_SRCS})
+  INSTALL(TARGETS volume_io2 DESTINATION lib)
+  SET_TARGET_PROPERTIES(volume_io2 PROPERTIES VERSION ${PACKAGE_VERSION} SOVERSION ${CPACK_PACKAGE_VERSION_MAJOR})
+ELSE(BUILD_MINC2)
+  ADD_LIBRARY(volume_io STATIC ${volume_io_LIB_SRCS})
+  INSTALL(TARGETS volume_io DESTINATION lib)
+  SET_TARGET_PROPERTIES(volume_io PROPERTIES VERSION ${PACKAGE_VERSION} SOVERSION ${CPACK_PACKAGE_VERSION_MAJOR})
+ENDIF(BUILD_MINC2)
+
 INSTALL(FILES volume_io/Include/volume_io/alloc.h
 	volume_io/Include/volume_io/arrays.h 
 	volume_io/Include/volume_io/basic.h 
@@ -182,12 +224,8 @@ INSTALL(FILES volume_io/Include/volume_io/alloc.h
 	volume_io/Include/volume_io/volume_cache.h
    DESTINATION include/volume_io)
 
-SET_TARGET_PROPERTIES(volume_io2 PROPERTIES VERSION ${PACKAGE_VERSION} SOVERSION ${CPACK_PACKAGE_VERSION_MAJOR})
-
-
 # now build the progs subdir
 ADD_SUBDIRECTORY( progs )
-
 
 # and then the conversion subdir
 ADD_SUBDIRECTORY( conversion )
