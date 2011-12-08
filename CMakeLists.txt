@@ -16,8 +16,8 @@ SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake-modules")
 # Packaging defines
 SET(CPACK_GENERATOR TGZ)
 SET(CPACK_PACKAGE_VERSION_MAJOR 2)
-SET(CPACK_PACKAGE_VERSION_MINOR 0)
-SET(CPACK_PACKAGE_VERSION_PATCH 17)
+SET(CPACK_PACKAGE_VERSION_MINOR 1)
+SET(CPACK_PACKAGE_VERSION_PATCH 1)
 INCLUDE(CPack)
 
 
@@ -29,6 +29,8 @@ SET(PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINO
 SET(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 
 OPTION(BUILD_MINC2      "Support minc2 file format" ON)
+OPTION(BUILD_TOOLS      "Build minc tools (mincreshape,mincresample, etc)" ON)
+OPTION(BUILD_CONVERTERS "Build minc conversion programs (mnc2nii, nii2mnc , dcm2mnc...)" ON)
 
 ADD_DEFINITIONS(-DHAVE_CONFIG_H)
 
@@ -226,9 +228,12 @@ INSTALL(FILES volume_io/Include/volume_io/alloc.h
 	volume_io/Include/volume_io/volume_cache.h
    DESTINATION include/volume_io)
 
+IF(BUILD_TOOLS)
 # now build the progs subdir
 ADD_SUBDIRECTORY( progs )
+ENDIF(BUILD_TOOLS)
 
+IF(BUILD_CONVERTERS)
 # and then the conversion subdir
 ADD_SUBDIRECTORY( conversion )
-
+ENDIF(BUILD_CONVERTERS)
