@@ -31,6 +31,7 @@ SET(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 OPTION(BUILD_MINC2      "Support minc2 file format" ON)
 OPTION(BUILD_TOOLS      "Build minc tools (mincreshape,mincresample, etc)" ON)
 OPTION(BUILD_CONVERTERS "Build minc conversion programs (mnc2nii, nii2mnc , dcm2mnc...)" ON)
+OPTION(BUILD_EZMINC     "Build C++ interface library EZminc" ON)
 
 ADD_DEFINITIONS(-DHAVE_CONFIG_H)
 
@@ -237,3 +238,7 @@ IF(BUILD_CONVERTERS)
 # and then the conversion subdir
 ADD_SUBDIRECTORY( conversion )
 ENDIF(BUILD_CONVERTERS)
+
+IF(BUILD_EZMINC)
+ADD_SUBDIRECTORY( ezminc )
+ENDIF(BUILD_EZMINC)
