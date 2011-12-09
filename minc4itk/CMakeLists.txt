@@ -1,3 +1,5 @@
+FIND_PACKAGE(ITK REQUIRED)
+
 IF(NOT ITK_LIBRARIES)
   MESSAGE( FATAL_ERROR "ITK libraries are not found!")
 ENDIF(NOT ITK_LIBRARIES)
@@ -19,14 +21,6 @@ INCLUDE_DIRECTORIES(
 	${ITK_INCLUDE_DIRS}
 	)
     
-
-IF(USE_MINC2)
-  ADD_DEFINITIONS( -DMINC2 )
-  LINK_LIBRARIES(volume_io2 minc2 netcdf hdf5 z)
-ELSE(USE_MINC2)
-  LINK_LIBRARIES(volume_io minc netcdf)
-ENDIF(USE_MINC2)
-
 SET( MINC4ITK_HEADERS
     itkMincImageIOFactory.h
     minc_general_transform.h
