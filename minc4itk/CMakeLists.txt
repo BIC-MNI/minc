@@ -9,13 +9,9 @@ IF(NOT ITK_INCLUDE_DIRS)
 ENDIF(NOT ITK_INCLUDE_DIRS	)
 
 #OPTION(BUILD_ITK_PLUGIN    "Build ITK plugin" OFF)
+OPTION(BUILD_MINC4ITK_EXAMPLES   "Build minc4itk examples" ON)
 
-LINK_LIBRARIES(
-    ${ITK_LIBRARIES}
-    itkvnl_algo 
-    itkvnl 
-    m 
-    z )
+LINK_DIRECTORIES(${ITK_LIBRARY_DIRS})
 
 INCLUDE_DIRECTORIES(
 	${ITK_INCLUDE_DIRS}
@@ -41,6 +37,8 @@ TARGET_LINK_LIBRARIES( minc4itk
     ${ITK_LIBRARIES}
     itkvnl_algo 
     itkvnl 
+    ${minc_LIB}
+    ${volume_io_LIB}
     m 
     z )
 
@@ -53,3 +51,7 @@ TARGET_LINK_LIBRARIES( minc4itk
 
 INSTALL(TARGETS minc4itk ARCHIVE DESTINATION lib)
 INSTALL(FILES  ${MINC4ITK_HEADERS} DESTINATION include)
+
+IF(BUILD_MINC4ITK_EXAMPLES)
+add_subdirectory(examples)
+ENDIF(BUILD_MINC4ITK_EXAMPLES)
