@@ -1,5 +1,9 @@
+2011-12-20  Andrew L Janke <a.janke@gmail.com>
+   * libsrc/netcdf_convenience.c: changed execute_decompress_command()
+      to always decompress the whole file as the approach used for
+      netCDF files for header_only does not work with HDF5 MINC2 files
 
-2011-06-29  Andrew L Janke  <a.janke@gmail.com
+2011-06-29  Andrew L Janke  <a.janke@gmail.com>
    * configure.in: changed typo from enable to disable minc2
 
 2011-05-30  Andrew L Janke  <a.janke@gmail.com>

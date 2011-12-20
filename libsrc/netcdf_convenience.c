@@ -229,7 +229,7 @@ static int mi_h5_files = 0;
 @INPUT      : command - command to execute
               infile - input file
               outfile - output file
-              header_only - TRUE if only header of minc file is needed
+              header_only - ignored
 @OUTPUT     : (none)
 @RETURNS    : status of decompress command (zero = success)
 @DESCRIPTION: Routine to execute a decompression command on a minc file.
@@ -244,18 +244,9 @@ static int mi_h5_files = 0;
 PRIVATE int execute_decompress_command(char *command, char *infile, 
                                        char *outfile, int header_only)
 {
-   int oldncopts;
    char whole_command[1024];
    int status;
-   FILE *pipe, *output;
-   char buffer[1024];
-   int successful_ncopen;
-   int ibuf;
-   int nread;
-   int processid;
 
-#define BYTES_PER_OPEN (1024*64)
-#define NUM_BUFFERS_PER_OPEN ((BYTES_PER_OPEN - 1) / sizeof(buffer) + 1)
 
 #if !(HAVE_WORKING_FORK && HAVE_SYSTEM && HAVE_POPEN)
 
@@ -263,105 +254,12 @@ PRIVATE int execute_decompress_command(char *command, char *infile,
 
 #else      /* Unix */
 
-
-   if (!header_only) {        /* Decompress the whole file */
-
-      (void) sprintf(whole_command, "exec %s %s > %s 2> /dev/null", 
-                     command, infile, outfile);
-      status = system(whole_command);
-   }
-   else {                     /* We just need to decompress enough for
-                                 the header */
-
-      /* Set up the command and open the pipe (we defer opening the output
-         file until we have read something) */
-      (void) sprintf(whole_command, "exec %s %s 2> /dev/null", 
-                     command, infile);
-      pipe = popen(whole_command, "r");
-      output = NULL;
-
-      /* Loop until we have successfully opened the minc file (the header
-         is all there) */
-      successful_ncopen = FALSE;
-      while (!successful_ncopen && !feof(pipe)) {
-
-         /* Loop, copying buffers from pipe to file. If the file hasn't been
-            opened, then open it */
-         for (ibuf=0; (ibuf < NUM_BUFFERS_PER_OPEN) && 
-              ((nread = 
-                fread(buffer, sizeof(char), sizeof(buffer), pipe)) > 0); 
-              ibuf++) {
-            if (output == NULL) {
-               output = fopen(outfile, "w");
-               if (output == NULL) {
-                  (void) fclose(pipe);
-                  return 1;
-               }
-            }
-            if (fwrite(buffer, sizeof(char), nread, output) != nread) {
-               (void) fclose(output);
-               (void) fclose(pipe);
-               return 1;
-            }
-         }      /* End of for loop, copying from pipe to output */
-         if (fflush(output)) {
-            (void) fclose(output);
-            (void) fclose(pipe);
-            return 1;
-         }
-
-#if MINC2
-	 successful_ncopen = hdf_access(outfile);
-	 if (successful_ncopen) {
-             break;
-         }
-#endif /* MINC2 */
-
-         /* Try to open minc file. There seems to be a bug in NetCDF 2.3.2 -
-            when the header is not all present in the file, we get a core
-            dump if ncopts does not have NC_FATAL set. There error is
-            reported to be in NC_free_var (var.c:54), called from 
-            NC_free_array (array.c:348). This is all called from 
-            NC_new_cdf (cdf.c:84), in NC_free_cdf, just after the error
-            return from xdr_cdf. The work-around is to fork, set fatal
-            and check the return status of the child. */
-         oldncopts = ncopts; ncopts = 0;
-         processid = fork();
-         if (!processid) {           /* Child */
-
-            /* Close all filehandles to avoid buffer flushing problems */
-            {
-               int f;
-               f=getdtablesize()-1; /* could use OPEN_MAX-1 instead */
-               if (f < 2) f = 2;    /* At least close 0,1,2 */
-               for (; f >= 0; f--) {
-                  (void) close(f);
-               }
-            }
-
-            /* Try the open */
-            ncopts = NC_FATAL;
-            status = ncopen(outfile, NC_NOWRITE);
-            (void) ncclose(status);
-            exit(0);
-
-         }
-
-         /* Parent gets status from child */
-         (void) waitpid(processid, &status, 0);
-         if (status == 0) {
-            successful_ncopen = TRUE;
-         }
-         ncopts = oldncopts;
-
-      }       /* End of while, waiting for successful ncopen */
-
-      (void) fclose(output);
-      (void) fclose(pipe);
-
-      status = !successful_ncopen;
-
-   }          /* End of if !header_only else */
+   /* we now ignore header_only and always uncompress the whole
+    * file as the previous "header only" hack that used to work
+    * on MINC1 files doesn't work reliably with MINC2 */
+   (void) sprintf(whole_command, "exec %s %s > %s 2> /dev/null", 
+                  command, infile, outfile);
+   status = system(whole_command);
 
    /* Return the status */
    return status;
