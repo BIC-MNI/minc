@@ -2,12 +2,11 @@
 #
 # Andrew Janke - a.janke@gmail.com
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
-PROJECT(libminc2)
+PROJECT(minc2)
 
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake-modules")
-
 
 #ADD_SUBDIRECTORY( testdir )
 #ADD_SUBDIRECTORY( doc )
@@ -21,10 +20,10 @@ SET(CPACK_PACKAGE_VERSION_PATCH 1)
 INCLUDE(CPack)
 
 
-SET(PACKAGE "minc")
+SET(PACKAGE "minc2")
 SET(PACKAGE_BUGREPORT "a.janke@gmail.com")
 
-SET(PACKAGE_NAME "minc")
+SET(PACKAGE_NAME "minc2")
 SET(PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 SET(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 
@@ -32,6 +31,7 @@ OPTION(BUILD_MINC2      "Support minc2 file format" ON)
 OPTION(BUILD_TOOLS      "Build minc tools (mincreshape,mincresample, etc)" ON)
 OPTION(BUILD_CONVERTERS "Build minc conversion programs (mnc2nii, nii2mnc , dcm2mnc...)" ON)
 OPTION(BUILD_EZMINC     "Build C++ interface library EZminc" ON)
+
 IF(BUILD_EZMINC)
 OPTION(BUILD_MINC4ITK   "Build ITK interface" ON)
 ENDIF(BUILD_EZMINC)
@@ -45,7 +45,7 @@ SET(VERSION "${PACKAGE_VERSION}")
 # check for prereqs
 INCLUDE(CheckFunctionExists)
 
-CHECK_FUNCTION_EXISTS(mkstemp HAVE_MKSTEMP)
+CHECK_FUNCTION_EXISTS(mkstemp  HAVE_MKSTEMP)
 CHECK_FUNCTION_EXISTS(strerror HAVE_STRERROR)
 
 INCLUDE(CheckIncludeFiles)
@@ -240,13 +240,58 @@ ENDIF(BUILD_TOOLS)
 
 IF(BUILD_CONVERTERS)
 # and then the conversion subdir
-ADD_SUBDIRECTORY( conversion )
+  ADD_SUBDIRECTORY( conversion )
 ENDIF(BUILD_CONVERTERS)
 
 IF(BUILD_EZMINC)
-ADD_SUBDIRECTORY( ezminc )
+  ADD_SUBDIRECTORY( ezminc )
 ENDIF(BUILD_EZMINC)
 
 IF(BUILD_MINC4ITK AND BUILD_EZMINC)
-ADD_SUBDIRECTORY( minc4itk )
+  ADD_SUBDIRECTORY( minc4itk )
 ENDIF(BUILD_MINC4ITK AND BUILD_EZMINC)
+
+# config for the build directory
+set(MINC2_USE_FILE_CONFIG   ${CMAKE_CURRENT_BINARY_DIR}/UseMINC2.cmake)
+
+set(MINC2_INCLUDE_DIRS_CONFIG    
+   ${CMAKE_CURRENT_SOURCE_DIR}
+   ${CMAKE_SOURCE_DIR}/libsrc
+   ${CMAKE_SOURCE_DIR}/volume_io/Include
+)
+
+IF(BUILD_MINC2)
+  set(MINC2_INCLUDE_DIRS_CONFIG
+    ${MINC2_INCLUDE_DIRS_CONFIG}
+    ${CMAKE_SOURCE_DIR}/libsrc2
+  )
+ENDIF(BUILD_MINC2)
+
+set(MINC2_LIBRARY_DIRS_CONFIG ${CMAKE_CURRENT_BINARY_DIR})
+
+configure_file(MINC2Config.cmake.in
+  MINC2Config.cmake @ONLY IMMEDIATE)
+
+configure_file(UseMINC2.cmake.in
+  UseMINC2.cmake @ONLY)
+
+# config for install dir
+set(MINC2_USE_FILE_CONFIG "${ITK_INSTALL_PREFIX}/lib/MINC2/UseMINC2.cmake")
+
+set(MINC2_INCLUDE_DIRS_CONFIG    
+   ${ITK_INSTALL_PREFIX}/include
+)
+
+set(MINC2_LIBRARY_DIRS_CONFIG ${ITK_INSTALL_PREFIX}/lib)
+
+configure_file(MINC2Config.cmake.in
+  CMakeFiles/MINC2Config.cmake @ONLY IMMEDIATE)
+
+configure_file(UseMINC2.cmake.in
+  CMakeFiles/UseMINC2.cmake @ONLY)
+
+install(FILES CMakeFiles/UseMINC2.cmake CMakeFiles/MINC2Config.cmake
+  DESTINATION lib/MINC2
+  COMPONENT Development)
+
+# config for the install directory
