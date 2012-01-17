@@ -1,6 +1,7 @@
 # CMakeFiles.txt for the MINC2 library
 #
 # Andrew Janke - a.janke@gmail.com
+# Vladimir S. FONOV - vladimir.fonov@gmail.com
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
@@ -50,6 +51,28 @@ CHECK_FUNCTION_EXISTS(strerror HAVE_STRERROR)
 
 INCLUDE(CheckIncludeFiles)
 CHECK_INCLUDE_FILES(float.h HAVE_FLOAT_H)
+
+
+IF(BUILD_EZMINC)
+  set(MINC2_INCLUDE_DIRS_CONFIG    
+    ${CMAKE_SOURCE_DIR}/ezminc
+  )
+  INCLUDE_DIRECTORIES(
+    ${CMAKE_SOURCE_DIR}/ezminc
+   )
+ENDIF(BUILD_EZMINC)
+
+IF(BUILD_MINC4ITK AND BUILD_EZMINC)
+  set(MINC2_INCLUDE_DIRS_CONFIG    
+    ${CMAKE_SOURCE_DIR}/minc4itk
+  )
+
+  INCLUDE_DIRECTORIES(
+    ${CMAKE_SOURCE_DIR}/minc4itk
+   )
+ENDIF(BUILD_MINC4ITK AND BUILD_EZMINC)
+
+
 
 # netcdf and HDF5
 FIND_PACKAGE(NETCDF REQUIRED)
@@ -235,7 +258,7 @@ INSTALL(FILES volume_io/Include/volume_io/alloc.h
 
 IF(BUILD_TOOLS)
 # now build the progs subdir
-ADD_SUBDIRECTORY( progs )
+  ADD_SUBDIRECTORY( progs )
 ENDIF(BUILD_TOOLS)
 
 IF(BUILD_CONVERTERS)
@@ -270,27 +293,27 @@ ENDIF(BUILD_MINC2)
 set(MINC2_LIBRARY_DIRS_CONFIG ${CMAKE_CURRENT_BINARY_DIR})
 
 configure_file(MINC2Config.cmake.in
-  MINC2Config.cmake @ONLY IMMEDIATE)
+  ${CMAKE_CURRENT_BINARY_DIR}/MINC2Config.cmake @ONLY )
 
 configure_file(UseMINC2.cmake.in
-  UseMINC2.cmake @ONLY)
+  ${CMAKE_CURRENT_BINARY_DIR}/UseMINC2.cmake @ONLY)
 
 # config for install dir
-set(MINC2_USE_FILE_CONFIG "${ITK_INSTALL_PREFIX}/lib/MINC2/UseMINC2.cmake")
+set(MINC2_USE_FILE_CONFIG "${CMAKE_INSTALL_PREFIX}/lib/MINC2/UseMINC2.cmake")
 
 set(MINC2_INCLUDE_DIRS_CONFIG    
-   ${ITK_INSTALL_PREFIX}/include
+   ${CMAKE_INSTALL_PREFIX}/include
 )
 
-set(MINC2_LIBRARY_DIRS_CONFIG ${ITK_INSTALL_PREFIX}/lib)
+set(MINC2_LIBRARY_DIRS_CONFIG ${CMAKE_INSTALL_PREFIX}/lib)
 
 configure_file(MINC2Config.cmake.in
-  CMakeFiles/MINC2Config.cmake @ONLY IMMEDIATE)
+  ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/MINC2Config.cmake @ONLY )
 
 configure_file(UseMINC2.cmake.in
-  CMakeFiles/UseMINC2.cmake @ONLY)
+  ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/UseMINC2.cmake @ONLY)
 
-install(FILES CMakeFiles/UseMINC2.cmake CMakeFiles/MINC2Config.cmake
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/UseMINC2.cmake ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/MINC2Config.cmake
   DESTINATION lib/MINC2
   COMPONENT Development)
 
