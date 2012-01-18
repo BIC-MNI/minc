@@ -598,7 +598,7 @@ VIOAPI  Minc_file  initialize_minc_input_from_minc_id(
           file->n_slab_dims++;  /* integral number of complete dimensions */
         } else {
           slab_size *= MIN( file->sizes_in_file[d],
-                            (hsize_t)( MI_MAX_VAR_BUFFER_SIZE / ( slab_size * unit_size ) ) );
+                            (size_t)( MI_MAX_VAR_BUFFER_SIZE / ( slab_size * unit_size ) ) );
           full_dim = 0;
         }
       }

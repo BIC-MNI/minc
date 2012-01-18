@@ -1430,7 +1430,7 @@ static  Status  output_the_volume(
           file->n_slab_dims++;  /* integral number of complete dimensions */
         } else {
           count[d] = MIN( volume_count[to_volume_index[d]], 
-                          (hsize_t)( MI_MAX_VAR_BUFFER_SIZE / ( slab_size * unit_size ) ) );
+                          (size_t)( MI_MAX_VAR_BUFFER_SIZE / ( slab_size * unit_size ) ) );
           n_steps *= (int)( ( volume_count[to_volume_index[d]] + count[d] - 1 ) / count[d] );
         }
         slab_size *= count[d];
