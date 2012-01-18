@@ -8,7 +8,7 @@ INCLUDE(ExternalProject)
 
 PROJECT(minc2)
 
-#SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake-modules")
+SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake-modules")
 ENABLE_TESTING()
 INCLUDE(CTest)
 
