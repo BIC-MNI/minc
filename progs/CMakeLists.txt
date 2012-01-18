@@ -7,7 +7,7 @@
 #LINK_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/..)
 INCLUDE_DIRECTORIES(Proglib)
 
-LINK_LIBRARIES( ${minc_LIB} )
+LINK_LIBRARIES( ${MINC_LIBS} )
 ADD_DEFINITIONS(-DHAVE_CONFIG_H)
 
 #SET(BISON_FIND_REQUIRED)
@@ -85,7 +85,7 @@ ADD_EXECUTABLE(minc_modify_header minc_modify_header/minc_modify_header.c)
 ADD_EXECUTABLE(mincresample mincresample/mincresample.c
                                mincresample/resample_volumes.c
                                Proglib/convert_origin_to_start.c)
-TARGET_LINK_LIBRARIES(mincresample ${volume_io_LIB} ${minc_LIB})
+TARGET_LINK_LIBRARIES(mincresample ${VOLUME_IO_LIB} ${MINC_LIBS})
 
 ADD_EXECUTABLE(mincreshape mincreshape/mincreshape.c
                               mincreshape/copy_data.c)
@@ -98,20 +98,20 @@ ADD_EXECUTABLE(rawtominc rawtominc/rawtominc.c
                             Proglib/convert_origin_to_start.c)
 
 ADD_EXECUTABLE(voxeltoworld coordinates/voxeltoworld.c)
-TARGET_LINK_LIBRARIES(voxeltoworld ${volume_io_LIB} ${minc_LIB})
+TARGET_LINK_LIBRARIES(voxeltoworld ${VOLUME_IO_LIB} ${MINC_LIBS})
 
 ADD_EXECUTABLE(worldtovoxel coordinates/worldtovoxel.c)
-TARGET_LINK_LIBRARIES(worldtovoxel ${volume_io_LIB} ${minc_LIB})
+TARGET_LINK_LIBRARIES(worldtovoxel ${VOLUME_IO_LIB} ${MINC_LIBS})
 
 
 ADD_EXECUTABLE(transformtags xfm/transformtags.c)
-TARGET_LINK_LIBRARIES(transformtags ${volume_io_LIB} ${minc_LIB})
+TARGET_LINK_LIBRARIES(transformtags ${VOLUME_IO_LIB} ${MINC_LIBS})
 
 ADD_EXECUTABLE(xfmconcat xfm/xfmconcat.c)
-TARGET_LINK_LIBRARIES(xfmconcat ${volume_io_LIB} ${minc_LIB})
+TARGET_LINK_LIBRARIES(xfmconcat ${VOLUME_IO_LIB} ${MINC_LIBS})
 
 ADD_EXECUTABLE(xfminvert xfm/xfminvert.c)
-TARGET_LINK_LIBRARIES(xfminvert ${volume_io_LIB} ${minc_LIB})
+TARGET_LINK_LIBRARIES(xfminvert ${VOLUME_IO_LIB} ${MINC_LIBS})
 
 # install progs
 INSTALL(TARGETS

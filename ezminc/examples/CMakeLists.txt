@@ -7,7 +7,7 @@ ADD_EXECUTABLE(volume_msq_dist volume_msq_dist.cpp)
 ADD_EXECUTABLE(volume_similarity volume_similarity.cpp)
 
 INSTALL(TARGETS
-  fuzzy_volume_similarity
-  volume_similarity
+   fuzzy_volume_similarity
+   volume_similarity
    DESTINATION bin)
 
