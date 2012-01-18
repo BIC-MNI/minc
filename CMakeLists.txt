@@ -70,6 +70,8 @@ ENDIF(USE_SYSTEM_NETCDF)
 
 IF(BUILD_MINC2)
   IF(USE_SYSTEM_HDF5 )
+#     SET(HDF5_FIND_COMPONENTS "C")
+#     SET(HDF5_USE_STATIC_LIBRARIES ON)
     FIND_PACKAGE(HDF5 REQUIRED)
   ELSE(USE_SYSTEM_HDF5)
 
@@ -383,8 +385,13 @@ configure_file(UseMINC2.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/UseMINC2.cmake @ONLY)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/UseMINC2.cmake ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/MINC2Config.cmake
-  DESTINATION lib/MINC2
+  DESTINATION lib
   COMPONENT Development)
+
+# install(FILES 
+#   cmake-modules/FindHDF5.cmake cmake-modules/FindNETCDF.cmake
+#   DESTINATION lib
+#   COMPONENT Development)
 
 # testing
 
