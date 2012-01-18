@@ -3,11 +3,7 @@
 # Andrew Janke - a.janke@gmail.com
 
 #LINK_DIRECTORIES()
-IF(BUILD_MINC2)
-  LINK_LIBRARIES( minc2 ${NETCDF_LIBRARY} ${HDF5_LIBRARY} )
-ELSE(BUILD_MINC2)
-  LINK_LIBRARIES( minc ${NETCDF_LIBRARY} )
-ENDIF(BUILD_MINC2)
+LINK_LIBRARIES( ${MINC_LIBS} m)
 
 ADD_DEFINITIONS(-DHAVE_CONFIG_H)
 
@@ -47,11 +43,7 @@ ADD_EXECUTABLE(minctoecat
    minctoecat/machine_indep.c
    )
 
-IF(BUILD_MINC2)
-  TARGET_LINK_LIBRARIES(minctoecat volume_io2 minc2)
-ELSE(BUILD_MINC2)
-  TARGET_LINK_LIBRARIES(minctoecat volume_io minc)
-ENDIF(BUILD_MINC2)
+TARGET_LINK_LIBRARIES(minctoecat ${VOLUME_IO_LIB} ${MINC_LIBS} m)
 
 
 ADD_EXECUTABLE(mnc2nii
@@ -59,25 +51,29 @@ ADD_EXECUTABLE(mnc2nii
    nifti1/nifti1_io.c
    nifti1/znzlib.c
    )
+TARGET_LINK_LIBRARIES(mnc2nii ${VOLUME_IO_LIB} ${MINC_LIBS} m)
+
 ADD_EXECUTABLE(nii2mnc
    nifti1/nii2mnc.c
    nifti1/nifti1_io.c
    nifti1/znzlib.c
    )
-
-IF(BUILD_MINC2)
-  TARGET_LINK_LIBRARIES(nii2mnc volume_io2 minc2)
-ELSE(BUILD_MINC2)
-  TARGET_LINK_LIBRARIES(nii2mnc volume_io minc)
-ENDIF(BUILD_MINC2)
+TARGET_LINK_LIBRARIES(nii2mnc ${VOLUME_IO_LIB} ${MINC_LIBS} m)
 
 ADD_EXECUTABLE(upet2mnc
    micropet/upet2mnc.c
    )
 
+IF(BUILD_MINC2)
+
 ADD_EXECUTABLE(vff2mnc
    vff2mnc/vff2mnc.c
    )
+INSTALL(TARGETS
+   vff2mnc
+   DESTINATION bin)
+
+ENDIF(BUILD_MINC2)
 
 
 # install progs
@@ -88,5 +84,4 @@ INSTALL(TARGETS
    mnc2nii
    nii2mnc
    upet2mnc
-   vff2mnc
    DESTINATION bin)
