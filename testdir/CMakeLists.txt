@@ -16,13 +16,16 @@ ADD_EXECUTABLE(test_speed test_speed.c)
 ADD_EXECUTABLE(test_xfm test_xfm.c)
 
 ADD_EXECUTABLE(create_grid_xfm create_grid_xfm.c)
-TARGET_LINK_LIBRARIES(create_grid_xfm ${VOLUME_IO_LIB} ${MINC_LIBS})
+TARGET_LINK_LIBRARIES(create_grid_xfm ${VOLUME_IO_LIB} ${MINC_LIBS} m)
 
 MACRO(minc_test cmd)
   # minc 1 version
   add_test(${cmd}-1 ${CMAKE_CURRENT_SOURCE_DIR}/run_test_cmake.sh ${CMAKE_CURRENT_BINARY_DIR}/${cmd} ${CMAKE_CURRENT_SOURCE_DIR}/${cmd}.out)
+  IF(BUILD_MINC2)
   # minc 2 version
   add_test(${cmd}-2 ${CMAKE_CURRENT_SOURCE_DIR}/run_test2_cmake.sh ${CMAKE_CURRENT_BINARY_DIR}/${cmd} ${CMAKE_CURRENT_SOURCE_DIR}/${cmd}.out)
+  ENDIF(BUILD_MINC2)
+
 ENDMACRO(minc_test)
 
 
@@ -48,4 +51,4 @@ add_test(test_mconv test_mconv)
 #add_test(test_speed test_speed)
 #add_test(test_xfm test_xfm)
 
-TARGET_LINK_LIBRARIES(test_xfm ${VOLUME_IO_LIB} ${MINC_LIBS})
+TARGET_LINK_LIBRARIES(test_xfm ${VOLUME_IO_LIB} ${MINC_LIBS} m)

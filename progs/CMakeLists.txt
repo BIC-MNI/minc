@@ -19,6 +19,7 @@ FIND_PACKAGE(FLEX)
 # all the progs
 ADD_EXECUTABLE(invert_raw_image mincview/invert_raw_image.c)
 ADD_EXECUTABLE(mincaverage mincaverage/mincaverage.c)
+TARGET_LINK_LIBRARIES(mincaverage m)
 
 IF(BISON_FOUND AND FLEX_FOUND)
   include_directories(${CMAKE_CURRENT_BINARY_DIR} minccalc)
@@ -40,7 +41,7 @@ IF(BISON_FOUND AND FLEX_FOUND)
                   ${BISON_gram_OUTPUTS}
                  )
 
-  TARGET_LINK_LIBRARIES(minccalc ${FLEX_LIBRARIES})
+  TARGET_LINK_LIBRARIES(minccalc ${FLEX_LIBRARIES} m)
 
   INSTALL( TARGETS minccalc  DESTINATION bin)
 
@@ -77,41 +78,51 @@ ADD_EXECUTABLE(mincexpand mincexpand/mincexpand.c)
 ADD_EXECUTABLE(mincextract mincextract/mincextract.c)
 ADD_EXECUTABLE(mincinfo mincinfo/mincinfo.c)
 ADD_EXECUTABLE(minclookup minclookup/minclookup.c)
+TARGET_LINK_LIBRARIES(minclookup m)
+
 ADD_EXECUTABLE(mincmakescalar mincmakescalar/mincmakescalar.c)
+TARGET_LINK_LIBRARIES(mincmakescalar m)
+
 ADD_EXECUTABLE(mincmakevector mincmakevector/mincmakevector.c)
 ADD_EXECUTABLE(mincmath mincmath/mincmath.c)
+TARGET_LINK_LIBRARIES(mincmath m)
+
 ADD_EXECUTABLE(minc_modify_header minc_modify_header/minc_modify_header.c)
 
 ADD_EXECUTABLE(mincresample mincresample/mincresample.c
                                mincresample/resample_volumes.c
                                Proglib/convert_origin_to_start.c)
-TARGET_LINK_LIBRARIES(mincresample ${VOLUME_IO_LIB} ${MINC_LIBS})
+TARGET_LINK_LIBRARIES(mincresample ${VOLUME_IO_LIB} ${MINC_LIBS} m)
 
 ADD_EXECUTABLE(mincreshape mincreshape/mincreshape.c
                               mincreshape/copy_data.c)
 
 ADD_EXECUTABLE(mincstats mincstats/mincstats.c)
+TARGET_LINK_LIBRARIES(mincstats m)
+
 ADD_EXECUTABLE(minctoraw minctoraw/minctoraw.c)
 ADD_EXECUTABLE(mincwindow mincwindow/mincwindow.c)
 
 ADD_EXECUTABLE(rawtominc rawtominc/rawtominc.c
                             Proglib/convert_origin_to_start.c)
+TARGET_LINK_LIBRARIES(rawtominc m)
+
 
 ADD_EXECUTABLE(voxeltoworld coordinates/voxeltoworld.c)
-TARGET_LINK_LIBRARIES(voxeltoworld ${VOLUME_IO_LIB} ${MINC_LIBS})
+TARGET_LINK_LIBRARIES(voxeltoworld ${VOLUME_IO_LIB} ${MINC_LIBS} m)
 
 ADD_EXECUTABLE(worldtovoxel coordinates/worldtovoxel.c)
-TARGET_LINK_LIBRARIES(worldtovoxel ${VOLUME_IO_LIB} ${MINC_LIBS})
+TARGET_LINK_LIBRARIES(worldtovoxel ${VOLUME_IO_LIB} ${MINC_LIBS} m)
 
 
 ADD_EXECUTABLE(transformtags xfm/transformtags.c)
-TARGET_LINK_LIBRARIES(transformtags ${VOLUME_IO_LIB} ${MINC_LIBS})
+TARGET_LINK_LIBRARIES(transformtags ${VOLUME_IO_LIB} ${MINC_LIBS} m)
 
 ADD_EXECUTABLE(xfmconcat xfm/xfmconcat.c)
-TARGET_LINK_LIBRARIES(xfmconcat ${VOLUME_IO_LIB} ${MINC_LIBS})
+TARGET_LINK_LIBRARIES(xfmconcat ${VOLUME_IO_LIB} ${MINC_LIBS} m)
 
 ADD_EXECUTABLE(xfminvert xfm/xfminvert.c)
-TARGET_LINK_LIBRARIES(xfminvert ${VOLUME_IO_LIB} ${MINC_LIBS})
+TARGET_LINK_LIBRARIES(xfminvert ${VOLUME_IO_LIB} ${MINC_LIBS} m)
 
 # install progs
 INSTALL(TARGETS
