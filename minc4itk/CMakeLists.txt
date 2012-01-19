@@ -38,8 +38,8 @@ TARGET_LINK_LIBRARIES( minc4itk
     ${ITK_LIBRARIES}
     itkvnl_algo 
     itkvnl 
-    ${MINC_LIBS}
-    ${VOLUME_IO_LIB}
+    ${VOLUME_IO_LIBRARY}
+    ${MINC2_LIBRARIES}
     m 
     z )
 
