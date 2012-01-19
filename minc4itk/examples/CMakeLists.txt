@@ -1,8 +1,6 @@
 LINK_LIBRARIES( minc4itk )
 
 
-
-
 ADD_EXECUTABLE(itk_convert itk_convert.cpp)
 ADD_EXECUTABLE(itk_distance itk_distance.cpp)
 ADD_EXECUTABLE(itk_dti itk_dti.cpp)

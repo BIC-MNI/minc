@@ -1,5 +1,5 @@
 
-LINK_LIBRARIES( ${MINC_LIBS} )
+LINK_LIBRARIES(${MINC2_LIBRARIES})
 
 ADD_EXECUTABLE(minc_tst minc.c)
 ADD_EXECUTABLE(icv icv.c)
@@ -16,7 +16,7 @@ ADD_EXECUTABLE(test_speed test_speed.c)
 ADD_EXECUTABLE(test_xfm test_xfm.c)
 
 ADD_EXECUTABLE(create_grid_xfm create_grid_xfm.c)
-TARGET_LINK_LIBRARIES(create_grid_xfm ${VOLUME_IO_LIB} ${MINC_LIBS} m)
+TARGET_LINK_LIBRARIES(create_grid_xfm ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
 
 MACRO(minc_test cmd)
   # minc 1 version
@@ -51,4 +51,4 @@ add_test(test_mconv test_mconv)
 #add_test(test_speed test_speed)
 #add_test(test_xfm test_xfm)
 
-TARGET_LINK_LIBRARIES(test_xfm ${VOLUME_IO_LIB} ${MINC_LIBS} m)
+TARGET_LINK_LIBRARIES(test_xfm ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
