@@ -55,7 +55,7 @@ ELSE(USE_SYSTEM_NETCDF)
   ExternalProject_Add(NETCDF 
     SOURCE_DIR NETCDF
     URL "ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-4.0.1.tar.gz"
-    URL_MD5 a251453c5477599f050fa4e593295186
+    URL_MD5 "a251453c5477599f050fa4e593295186"
     BUILD_IN_SOURCE 1
     INSTALL_DIR "${CMAKE_INSTALL_PREFIX}"
     BUILD_COMMAND   make 
@@ -78,7 +78,7 @@ IF(BUILD_MINC2)
     ExternalProject_Add(HDF5
       SOURCE_DIR HDF5
       URL "http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.7/src/hdf5-1.8.7.tar.gz"
-      URL_MD5 37711d4bcb72997e93d495f97c76c33a
+      URL_MD5 "37711d4bcb72997e93d495f97c76c33a"
       BUILD_IN_SOURCE 1
       INSTALL_DIR     "${CMAKE_INSTALL_PREFIX}"
       BUILD_COMMAND   make 
