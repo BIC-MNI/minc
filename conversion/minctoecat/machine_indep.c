@@ -61,7 +61,7 @@ int off;
 }
 
 #if defined(__alpha) || defined(_WIN32) /* LITTLE_ENDIAN : alpha, intel */
-ftovaxf(f, bufr)
+void ftovaxf(f, bufr)
 float f;
 unsigned short *bufr;
 {
@@ -84,7 +84,7 @@ unsigned short *bufr;
 	bufr[1] =  ret >>16;
 }
 #else  /* BIG ENDIAN : sun hp sgi*/
-ftovaxf(orig,number)
+void ftovaxf(orig,number)
   unsigned short number[2];
   float orig;
 {
