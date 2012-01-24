@@ -63,7 +63,7 @@ template<class ImageType> void load_and_save_image(IOBase* base,
 				std::cout<<(*it).first.c_str()<<" type: "<< typeid(*bs).name()<<std::endl;
 		}
   }
-    
+
   //TODO: convert metadata to and from minc format for DTI 
   /* WRITING */
   if(verbose)
