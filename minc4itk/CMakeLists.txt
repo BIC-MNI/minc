@@ -13,7 +13,7 @@ IF(BUILD_SHARED_LIBS AND NOT ITK_BUILD_SHARED)
   message(WARNING "Building Shared library but ITK is linked statically!")
 ENDIF(BUILD_SHARED_LIBS AND NOT ITK_BUILD_SHARED)
 
-#OPTION(BUILD_ITK_PLUGIN    "Build ITK plugin" OFF)
+OPTION(BUILD_ITK_PLUGIN    "Build ITK plugin" OFF)
 OPTION(BUILD_MINC4ITK_EXAMPLES   "Build minc4itk examples" ON)
 
 LINK_DIRECTORIES(${ITK_LIBRARY_DIRS})
@@ -48,11 +48,12 @@ TARGET_LINK_LIBRARIES( minc4itk
     z )
 
 #VF ITK plugin is disabled for now
-#IF(BUILD_ITK_PLUGIN)
-#ADD_LIBRARY( minc4itk_plugin SHARED minc4itk_plugin.cxx)
-#TARGET_LINK_LIBRARIES(  minc4itk_plugin minc4itk)
-#INSTALL(TARGETS minc4itk_plugin LIBRARY DESTINATION lib)
-#ENDIF(BUILD_ITK_PLUGIN)
+IF(BUILD_ITK_PLUGIN)
+message(WARNING "ITK IO plugin might not work as expected!")
+ADD_LIBRARY( minc4itk_plugin SHARED minc4itk_plugin.cxx)
+TARGET_LINK_LIBRARIES(  minc4itk_plugin minc4itk)
+INSTALL(TARGETS minc4itk_plugin LIBRARY DESTINATION lib)
+ENDIF(BUILD_ITK_PLUGIN)
 
 INSTALL(TARGETS minc4itk ${LIBRARY_INSTALL} DESTINATION lib)
 INSTALL(FILES  ${MINC4ITK_HEADERS} DESTINATION include)

@@ -16,7 +16,7 @@
 
 void show_usage (const char *name)
 {
-  std::cerr 
+  std::cerr  
       << "Usage: "<<name<<" <input> <output> " << std::endl
       << "--clobber clobber output files"<<std::endl
       << "--verbose be verbose"<<std::endl
