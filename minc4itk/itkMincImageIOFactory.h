@@ -51,7 +51,13 @@ public:
   static void RegisterOneFactory(void)
   {
     MincImageIOFactory::Pointer metaFactory = MincImageIOFactory::New();
+    
+#if ( ITK_VERSION_MAJOR > 3 )
+    //try to be higher priority then built-in HDF5 IO class
+    ObjectFactoryBase::RegisterFactory(metaFactory, ObjectFactoryBase::INSERT_AT_FRONT );
+#else
     ObjectFactoryBase::RegisterFactory(metaFactory);
+#endif 
   }
 
 protected:
@@ -62,9 +68,9 @@ protected:
 private:
   MincImageIOFactory(const Self&); //purposely not implemented
   void operator=(const Self&); //purposely not implemented
-
 };
 
+void RegisterMincIO(void);
 
 } // end namespace itk
 

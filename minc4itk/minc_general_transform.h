@@ -48,7 +48,10 @@ namespace minc
     typedef typename itk::Transform < TScalarType, NInputDimensions, NOutputDimensions> Superclass;
     typedef typename itk::SmartPointer< Self >   Pointer;
     typedef typename itk::SmartPointer< const Self >  ConstPointer;
-    
+
+#if ( ITK_VERSION_MAJOR > 3 ) 
+    typedef typename Superclass::NumberOfParametersType  NumberOfParametersType;
+#endif // ( ITK_VERSION_MAJOR > 3 ) 
     
     /** New method for creating an object using a factory. */
     itkNewMacro(Self);

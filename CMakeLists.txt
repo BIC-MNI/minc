@@ -33,7 +33,6 @@ OPTION(BUILD_MINC2      "Support minc2 file format" ON)
 OPTION(BUILD_TOOLS      "Build minc tools (mincreshape,mincresample, etc)" ON)
 OPTION(BUILD_CONVERTERS "Build minc conversion programs (mnc2nii, nii2mnc , dcm2mnc...)" ON)
 OPTION(BUILD_EZMINC     "Build C++ interface library EZminc" ON)
-
 OPTION(USE_SYSTEM_NETCDF "Use System NETCDF > 3.6.3" OFF)
 
 IF(BUILD_EZMINC)
@@ -43,8 +42,6 @@ ENDIF(BUILD_EZMINC)
 IF(BUILD_MINC2)
  OPTION(USE_SYSTEM_HDF5 "Use System HDF5 > 1.8 " OFF)
 ENDIF(BUILD_MINC2)
-
-
 
 # external packages
 IF(USE_SYSTEM_NETCDF)
@@ -82,7 +79,7 @@ IF(BUILD_MINC2)
       INSTALL_DIR     "${CMAKE_INSTALL_PREFIX}"
       BUILD_COMMAND   make 
       INSTALL_COMMAND make install 
-      CONFIGURE_COMMAND ./configure --prefix=${CMAKE_INSTALL_PREFIX} --enable-production --with-pic --disable-shared --disable-cxx --disable-f77 --disable-f90 --disable-examples --disable-hl --disable-docs
+      CONFIGURE_COMMAND ./configure --prefix=${CMAKE_INSTALL_PREFIX}  --with-pic --disable-shared --disable-cxx --disable-f77 --disable-f90 --disable-examples --disable-hl --disable-docs
     )
 
     SET(HDF5_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include )
