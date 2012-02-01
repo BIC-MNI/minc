@@ -321,7 +321,7 @@ namespace minc
   //! save array to the text file
   void save_parameters(const char *file,const itk::Array<double> &param);
   //! read array from the text file, up to components
-  void load_parameters(const char *file,itk::Array<double> &param,int no);
+  void load_parameters(const char *file,itk::Array<double> &param,size_t no);
   //! make sure that all voxels are 0 or 1
   void normalize_mask(mask3d::Pointer img);
   

@@ -201,9 +201,9 @@ namespace minc
   static void split_string(char *str,std::vector<std::string>& lst,const char *delim=" ")
   {
     lst.clear();
-    char *str2, *token;
+    char *str2;
     char *saveptr;
-    while(str2=strtok_r(str,delim,&saveptr))
+    while( (str2=strtok_r(str,delim,&saveptr)) )
     {
       str=NULL;
       lst.push_back(str2);
@@ -481,7 +481,6 @@ namespace minc
         tag_point tag;
 
         split_string(tmp,lst," ");
-        int skip=0;
         
         if(lst.size()<3) continue;
         
@@ -528,11 +527,11 @@ namespace minc
     if(p.empty()) // probably this is not right!
       REPORT_ERROR("Can't read parameters!");
     param.SetSize(p.size());
-    for(int i=0;i<p.size();i++)
+    for(size_t i=0;i<p.size();i++)
       param[i]=p[i];
   }
   
-  void load_parameters(const char *file,itk::Array<double> &param,int n)
+  void load_parameters(const char *file,itk::Array<double> &param,size_t n)
   {
     std::vector<double> p;
     ifstream in(file);
@@ -544,7 +543,7 @@ namespace minc
     param.SetSize(n);
     param.Fill(0);
     
-    for(int i=0;i<p.size() && i<n;i++)
+    for(size_t i=0;i<p.size() && i<n;i++)
       param[i]=p[i];
   }
 
@@ -555,7 +554,7 @@ namespace minc
     if(!out.good())
       REPORT_ERROR("Can't open the file for writing!");
     out.precision(40);
-    for(int i=0;i<param.Size();i++)
+    for(size_t i=0;i<param.Size();i++)
       out<<param[i]<<endl;
   }
   

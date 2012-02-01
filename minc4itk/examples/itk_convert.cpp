@@ -84,7 +84,7 @@ template<class ImageType> void load_and_save_image(IOBase* base,
   if(center)//move origin to the center of the image
   {
     typename ImageType::RegionType r=img->GetLargestPossibleRegion();
-    std::vector<double> corner[3];
+    //std::vector<double> corner[3];
     
     typename ImageType::IndexType idx;
     typename ImageType::PointType c;
@@ -171,8 +171,8 @@ int main(int argc,char **argv)
  
   try
   {
-    //registering the MINC_IO factory
-    itk::ObjectFactoryBase::RegisterFactory(itk::MincImageIOFactory::New());
+    itk::RegisterMincIO();
+    
     /* READING */
     if(verbose) 
       std::cout<<"Reading "<<input.c_str()<<"..."<<std::endl;
@@ -202,33 +202,33 @@ int main(int argc,char **argv)
     {
       if(verbose) std::cout<<"Writing 3D image..."<<std::endl;
       switch(ct)
-      {
-	case itk::ImageIOBase::UCHAR :
-	  load_and_save_image<itk::Image<unsigned char, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta);
-	  break;
-	case itk::ImageIOBase::CHAR :
-	  load_and_save_image<itk::Image<char, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta);
-	  break;
-	case itk::ImageIOBase::USHORT :
-	  load_and_save_image<itk::Image<unsigned short, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta);
-	  break;
-	case itk::ImageIOBase::SHORT :
-	  load_and_save_image<itk::Image<short, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta);
-	  break;
-	case itk::ImageIOBase::INT :
-	  load_and_save_image<itk::Image<int, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta);
-	  break; 
-	case itk::ImageIOBase::UINT:
-	  load_and_save_image<itk::Image<unsigned int, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta);
-	  break; 
-	case itk::ImageIOBase::FLOAT :
-	  load_and_save_image<itk::Image<float, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta);
-	  break; 
-	case itk::ImageIOBase::DOUBLE:
-	  load_and_save_image<itk::Image<double, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta);
-	  break; 
-	default:
-	  itk::ExceptionObject("Unsupported component type");
+      { 
+        case itk::ImageIOBase::UCHAR :
+          load_and_save_image<itk::Image<unsigned char, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta);
+          break;
+        case itk::ImageIOBase::CHAR :
+          load_and_save_image<itk::Image<char, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta);
+          break;
+        case itk::ImageIOBase::USHORT :
+          load_and_save_image<itk::Image<unsigned short, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta);
+          break;
+        case itk::ImageIOBase::SHORT :
+          load_and_save_image<itk::Image<short, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta);
+          break;
+        case itk::ImageIOBase::INT :
+          load_and_save_image<itk::Image<int, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta);
+          break; 
+        case itk::ImageIOBase::UINT:
+          load_and_save_image<itk::Image<unsigned int, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta);
+           break; 
+        case itk::ImageIOBase::FLOAT :
+          load_and_save_image<itk::Image<float, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta);
+          break; 
+        case itk::ImageIOBase::DOUBLE:
+          load_and_save_image<itk::Image<double, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta);
+          break; 
+        default:
+          itk::ExceptionObject("Unsupported component type");
       }
     } else if((nd==4 && nc==1)) {
       if(verbose) std::cout<<"Writing 4D image..."<<std::endl;
