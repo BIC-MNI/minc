@@ -30,18 +30,31 @@ SET(PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINO
 SET(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 
 option(BUILD_SHARED_LIBS "Build minc2 with shared libraries." OFF)
-OPTION(BUILD_MINC2      "Support minc2 file format" ON)
-OPTION(BUILD_TOOLS      "Build minc tools (mincreshape,mincresample, etc)" ON)
-OPTION(BUILD_CONVERTERS "Build minc conversion programs (mnc2nii, nii2mnc , dcm2mnc...)" ON)
-OPTION(BUILD_EZMINC     "Build C++ interface library EZminc" ON)
+OPTION(BUILD_MINC2       "Support minc2 file format" ON)
+OPTION(BUILD_TOOLS       "Build minc tools (mincreshape,mincresample, etc)" ON)
+OPTION(BUILD_CONVERTERS  "Build minc conversion programs (mnc2nii, nii2mnc , dcm2mnc...)" ON)
+OPTION(BUILD_EZMINC      "Build C++ interface library EZminc" ON)
 OPTION(USE_SYSTEM_NETCDF "Use System NETCDF > 3.6.3" OFF)
 
-IF(BUILD_EZMINC)
+
+FIND_PACKAGE(ITK QUIET)
+
+IF(BUILD_EZMINC AND ITK_FOUND)
   OPTION(BUILD_MINC4ITK   "Build ITK interface" ON)
-ENDIF(BUILD_EZMINC)
+ENDIF(BUILD_EZMINC AND ITK_FOUND)
 
 IF(BUILD_MINC2)
- OPTION(USE_SYSTEM_HDF5 "Use System HDF5 > 1.8 " OFF)
+ IF(ITK_FOUND AND ITK_VERSION_MAJOR VERSION_EQUAL 4) # check if using ITK HDF5 library
+
+  IF(ITKHDF5_LOADED)#ITK_MODULES_ENABLED MATCHES "ITKHDF5"
+  message(WARNING "ITK compiled with HDF5 support!")
+    SET(USE_ITK_HDF5 ON)
+  ENDIF(ITKHDF5_LOADED)#ITK_MODULES_ENABLED MATCHES "ITKHDF5"
+
+ ELSE(ITK_FOUND AND ITK_VERSION_MAJOR VERSION_EQUAL 4) # check if using ITK HDF5 library
+  OPTION(USE_SYSTEM_HDF5 "Use System HDF5 > 1.8 " OFF)
+ ENDIF(ITK_FOUND AND ITK_VERSION_MAJOR VERSION_EQUAL 4) # check if using ITK HDF5 library
+
 ENDIF(BUILD_MINC2)
 
 IF(BUILD_SHARED_LIBS)
@@ -74,27 +87,33 @@ ENDIF(USE_SYSTEM_NETCDF)
 
 
 IF(BUILD_MINC2)
-  IF(USE_SYSTEM_HDF5 )
-#     SET(HDF5_FIND_COMPONENTS "C")
-#     SET(HDF5_USE_STATIC_LIBRARIES ON)
-    FIND_PACKAGE(HDF5 REQUIRED)
-  ELSE(USE_SYSTEM_HDF5)
+  IF(USE_ITK_HDF5)
+    SET(HDF5_INCLUDE_DIR ${ITKHDF5_INCLUDE_DIRS})
+    SET(HDF5_LIBRARY ${ITKHDF5_LIBRARIES})
+    SET(ZLIB_LIBRARIES ${ITKZLIB_LIBRARIES})
+  ELSE(USE_ITK_HDF5)
+    FIND_PACKAGE(ZLIB REQUIRED)
 
-    ExternalProject_Add(HDF5
-      SOURCE_DIR HDF5
-      URL "http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.7/src/hdf5-1.8.7.tar.gz"
-      URL_MD5 "37711d4bcb72997e93d495f97c76c33a"
-      BUILD_IN_SOURCE 1
-      INSTALL_DIR     "${CMAKE_INSTALL_PREFIX}"
-      BUILD_COMMAND   make 
-      INSTALL_COMMAND make install 
-      CONFIGURE_COMMAND ./configure --prefix=${CMAKE_INSTALL_PREFIX}  --with-pic --disable-shared --disable-cxx --disable-f77 --disable-f90 --disable-examples --disable-hl --disable-docs
-    )
+    IF(USE_SYSTEM_HDF5 )
+      FIND_PACKAGE(HDF5 REQUIRED)
+    ELSE(USE_SYSTEM_HDF5)
 
-    SET(HDF5_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include )
-    SET(HDF5_LIBRARY  ${CMAKE_INSTALL_PREFIX}/lib/libhdf5.a )
+      ExternalProject_Add(HDF5
+        SOURCE_DIR HDF5
+        URL "http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.7/src/hdf5-1.8.7.tar.gz"
+        URL_MD5 "37711d4bcb72997e93d495f97c76c33a"
+        BUILD_IN_SOURCE 1
+        INSTALL_DIR     "${CMAKE_INSTALL_PREFIX}"
+        BUILD_COMMAND   make 
+        INSTALL_COMMAND make install 
+        CONFIGURE_COMMAND ./configure --prefix=${CMAKE_INSTALL_PREFIX}  --with-pic --disable-shared --disable-cxx --disable-f77 --disable-f90 --disable-examples --disable-hl --disable-docs
+      )
 
-  ENDIF(USE_SYSTEM_HDF5)
+      SET(HDF5_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include )
+      SET(HDF5_LIBRARY  ${CMAKE_INSTALL_PREFIX}/lib/libhdf5.a )
+
+    ENDIF(USE_SYSTEM_HDF5)
+  ENDIF(USE_ITK_HDF5)
 ENDIF(BUILD_MINC2)
 
 
@@ -136,7 +155,6 @@ ENDIF(BUILD_MINC4ITK AND BUILD_EZMINC)
 # netcdf and HDF5
 
 IF(BUILD_MINC2)
-  FIND_PACKAGE(ZLIB REQUIRED)
   SET(MINC2 "1")
 ELSE(BUILD_MINC2)
   SET(MINC2 "0")
@@ -257,7 +275,6 @@ IF(NOT USE_SYSTEM_NETCDF)
     ADD_DEPENDENCIES(${MINC2_LIBRARY} NETCDF)
 ENDIF(NOT USE_SYSTEM_NETCDF)
 
-
 # build the main minc2 library
 
 # volume_io2
@@ -351,9 +368,9 @@ IF(BUILD_MINC4ITK AND BUILD_EZMINC)
 ENDIF(BUILD_MINC4ITK AND BUILD_EZMINC)
 
 # config for the build directory
-set(MINC2_USE_FILE_CONFIG   ${CMAKE_CURRENT_BINARY_DIR}/UseMINC2.cmake)
+set(MINC2_USE_FILE_CONFIG  ${CMAKE_CURRENT_BINARY_DIR}/UseMINC2.cmake)
 
-set(MINC2_INCLUDE_DIRS_CONFIG    
+set(MINC2_INCLUDE_DIRS_CONFIG
    ${CMAKE_CURRENT_SOURCE_DIR}
    ${CMAKE_SOURCE_DIR}/libsrc
    ${CMAKE_SOURCE_DIR}/volume_io/Include
@@ -366,6 +383,14 @@ IF(BUILD_MINC2)
   )
 ENDIF(BUILD_MINC2)
 
+IF(BUILD_EZMINC)
+  SET(EZMINC_LIBRARIES minc_io ${MINC2_LIBRARIES})
+ENDIF(BUILD_EZMINC)
+
+IF(BUILD_MINC4ITK)
+  SET(MINC4ITK_LIBRARIES minc4itk ${EZMINC_LIBRARIES})
+ENDIF(BUILD_MINC4ITK)
+
 set(MINC2_LIBRARY_DIRS_CONFIG ${CMAKE_CURRENT_BINARY_DIR})
 
 configure_file(MINC2Config.cmake.in
@@ -377,7 +402,7 @@ configure_file(UseMINC2.cmake.in
 # config for install dir
 set(MINC2_USE_FILE_CONFIG "${CMAKE_INSTALL_PREFIX}/lib/UseMINC2.cmake")
 
-set(MINC2_INCLUDE_DIRS_CONFIG    
+set(MINC2_INCLUDE_DIRS_CONFIG
    ${CMAKE_INSTALL_PREFIX}/include
 )
 
