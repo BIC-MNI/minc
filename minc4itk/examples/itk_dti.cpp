@@ -75,6 +75,8 @@ int main(int argc,char **argv)
   
   try
   {
+    itk::RegisterMincIO();
+
     std::cout<<"Reading "<<argv[1]<<"..."<<std::endl;
     
     typedef itk::MincImageIO ImageIOType;
@@ -88,7 +90,7 @@ int main(int argc,char **argv)
     double_vector bvalues,direction_x,direction_y,direction_z;
 
     //making sure that all vcrtors contain the same number of parameters (just in case)
-    if(!itk::ExposeMetaData<double_vector>( img->GetMetaDataDictionary() , "acquisition:bvalues",bvalues) ||
+    if( !itk::ExposeMetaData<double_vector>( img->GetMetaDataDictionary() , "acquisition:bvalues",bvalues) ||
         !itk::ExposeMetaData<double_vector>( img->GetMetaDataDictionary() , "acquisition:direction_x",direction_x) ||
         !itk::ExposeMetaData<double_vector>( img->GetMetaDataDictionary() , "acquisition:direction_y",direction_y) ||
         !itk::ExposeMetaData<double_vector>( img->GetMetaDataDictionary() , "acquisition:direction_z",direction_z))
@@ -96,6 +98,7 @@ int main(int argc,char **argv)
       std::cerr<<"Image doesn't have information on DTI gradients, can't process!"<<std::endl;
       return 2;
     }
+    
     if(bvalues.size()!=direction_x.size() || 
        bvalues.size()!=direction_y.size() ||
        bvalues.size()!=direction_z.size() )

@@ -93,7 +93,8 @@ int main (int argc, char **argv)
     
   try
   {
-    itk::ObjectFactoryBase::RegisterFactory(itk::MincImageIOFactory::New());
+    itk::RegisterMincIO();
+
     itk::ImageFileReader<minc::mask3d >::Pointer reader = itk::ImageFileReader<minc::mask3d >::New();
     
     //initializing the reader

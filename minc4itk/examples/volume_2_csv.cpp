@@ -93,6 +93,8 @@ int main (int argc, char **argv)
   
 	try
   {
+    itk::RegisterMincIO();
+
 		minc::mask3d::Pointer  mask(minc::mask3d::New());
     
     //creating a minc reader
