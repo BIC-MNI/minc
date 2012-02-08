@@ -166,7 +166,50 @@ void convert_meta_minc_to_nrrd(itk::MetaDataDictionary& dict,bool verbose=false)
 
 void convert_meta_nrrd_to_minc(itk::MetaDataDictionary& dict,bool verbose=false)
 {
-  //TODO: finish this
+  //1. get b-value
+  
+  std::string b_value_,gradient_value_;
+  double bval=0.0,vect3d[3],vmag=0.0;
+  double_vector bvalues,direction_x,direction_y,direction_z;
+  
+  if(itk::ExposeMetaData<std::string>( dict,"DWMRI_b-value", b_value_))
+  {
+    int i=0;
+    while(true)
+    {
+        bval=atof(b_value_.c_str());
+        
+        std::ostringstream ossKey;
+        ossKey << "DWMRI_gradient_" << std::setw(4) << std::setfill('0') << i++;
+        if(itk::ExposeMetaData<std::string>( dict,ossKey.str(), gradient_value_))
+        {
+          std::istringstream iss(gradient_value_);
+          iss >> vect3d[0] >> vect3d[1] >> vect3d[2];
+          
+          direction_x.push_back(vect3d[0]);
+          direction_y.push_back(vect3d[1]);
+          direction_z.push_back(vect3d[2]);
+          
+          //? normalize to unit vector and modulate bvalue instead?
+          vmag=::sqrt(vect3d[0]*vect3d[0]+vect3d[1]*vect3d[1]+vect3d[2]*vect3d[2]);
+          if(vmag<0.1) //Zero
+            bvalues.push_back(0.0); 
+          else
+            bvalues.push_back(bval); 
+        } else {
+          break;
+        }
+    }
+    if(!bvalues.empty())
+    {
+      itk::EncapsulateMetaData<double_vector>( dict , "acquisition:bvalues",bvalues);
+      itk::EncapsulateMetaData<double_vector>( dict , "acquisition:direction_x",direction_x);
+      itk::EncapsulateMetaData<double_vector>( dict , "acquisition:direction_y",direction_y);
+      itk::EncapsulateMetaData<double_vector>( dict , "acquisition:direction_z",direction_z);
+      itk::EncapsulateMetaData<double_vector>( dict , "acquisition:direction_z",direction_z);
+      itk::EncapsulateMetaData<double>( dict ,        "acquisition:b_value", bval);
+    }
+  }
 }
 
 
