@@ -357,7 +357,7 @@ MNCAPI void voxel_loop(int num_input_files, char *input_files[],
    int need_to_free_loop_options;
    int old_ncopts;
 
-   (void)fprintf(stderr, "About to loop, max_buffer is %d\n", loop_options->total_copy_space);
+   //(void)fprintf(stderr, "About to loop, max_buffer is %d\n", loop_options->total_copy_space);
    
    /* Save ncopts and set it to default value */
    old_ncopts = ncopts;
