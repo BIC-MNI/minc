@@ -125,8 +125,8 @@ main(int argc, char *argv[])
 #if HAVE_DIRENT_H
       
       if (stat(G.dirname, &st) != 0 || !S_ISDIR(st.st_mode)) {
-	print("Option -addattrs requires directory as argument!!!\n");
-	exit(EXIT_FAILURE);
+        fprintf(stderr,"Option -addattrs requires directory as argument!!!\n");
+        exit(EXIT_FAILURE);
       }
 #endif 
     }

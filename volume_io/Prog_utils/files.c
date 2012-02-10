@@ -13,6 +13,10 @@
 ---------------------------------------------------------------------------- */
 
 #include  <internal_volume_io.h>
+
+#if HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif /* HAVE_SYS_TYPES_H */
 #if HAVE_PWD_H
 #include  <pwd.h>
 #endif /* HAVE_PWD_H */
@@ -20,6 +24,7 @@
 #if HAVE_UNISTD_H
 #include  <unistd.h>
 #endif /* HAVE_UNISTD_H */
+
 #include  <errno.h>
 
 
@@ -533,8 +538,8 @@ VIOAPI  Status  move_file(
 static  STRING  get_user_home_directory(
     STRING   user_name )
 {
-#if HAVE_GETPWNAM
-    struct   passwd  *p;
+#if HAVE_GETPWNAM 
+    struct passwd  *p;
 
     p = getpwnam( user_name );
 

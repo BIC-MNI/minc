@@ -249,7 +249,8 @@ PRIVATE int execute_decompress_command(char *command, char *infile,
 
 
 #if !(HAVE_WORKING_FORK && HAVE_SYSTEM && HAVE_POPEN)
-
+   fprintf(stderr,"Can't decompress %s because system is not available!\n",infile);
+   
    return 1;
 
 #else      /* Unix */
@@ -1941,4 +1942,3 @@ miget_cfg_str(const char *name)
     }
     return (strdup(buffer));
 }
-
