@@ -36,8 +36,8 @@ void show_usage (const char *name)
       << "--inv-z invert Z axis"<<std::endl
       << "--center set origin to the center of the image"<<std::endl
       << "--show-meta show meta information (if present)"<<std::endl
-      << "--dti - assume that we are dealing with DTI scan"<<std::endl
-      
+      << "--dwi - assume that we are dealing with DWI scan"<<std::endl
+      << "--use-b-matrix - convert b-matrix (if present) into DWI gradient directions and b-value, implies DWI"<<std::endl
       << "--char   - save as signed char"<<std::endl
       << "--byte   - save as unsigned char"<<std::endl
       << "--short  - save as signed short"<<std::endl
@@ -52,266 +52,398 @@ void show_usage (const char *name)
 typedef itk::ImageIOBase IOBase;
 typedef itk::SmartPointer<IOBase> IOBasePointer;
 
-void convert_meta_minc_to_nrrd(itk::MetaDataDictionary& dict,bool verbose=false)
+class ImageConverterBase
 {
-  // let's try converting DTI-related meta-information
-  double_vector bvalues,direction_x,direction_y,direction_z;
+protected:
+  bool assume_dti;
+  bool use_b_matrix;
+  std::string history;
+  bool verbose;
+  bool inv_x;
+  bool inv_y;
+  bool inv_z;
+  bool center;
+  bool show_meta;
   
-  if(itk::ExposeMetaData<double_vector>( dict , "acquisition:bvalues",bvalues) &&
-      itk::ExposeMetaData<double_vector>( dict , "acquisition:direction_x",direction_x) &&
-      itk::ExposeMetaData<double_vector>( dict , "acquisition:direction_y",direction_y) &&
-      itk::ExposeMetaData<double_vector>( dict , "acquisition:direction_z",direction_z))
+public:
+  void setup(bool _verbose=false,
+              bool _assume_dti=false,
+              bool _use_b_matrix=false,
+              bool _inv_x=false,bool _inv_y=false,bool _inv_z=false, 
+              bool _center=false, 
+              bool _show_meta=false,
+              const std::string _history="")
   {
-    //We have got MINC-style DTI metadata
-    if(bvalues.size()!=direction_x.size() || 
-       bvalues.size()!=direction_y.size() ||
-       bvalues.size()!=direction_z.size() )
+    assume_dti=_assume_dti;
+    use_b_matrix=_use_b_matrix;
+    history=_history;
+    verbose=_verbose;
+    inv_x=_inv_x;
+    inv_y=_inv_y;
+    inv_z=_inv_z;
+    center=_center;
+    show_meta=_show_meta;
+  }
+  
+  virtual void load_and_save_image(IOBase* base,const char *fname)=0;
+
+  virtual ~ImageConverterBase()
+  {}
+};
+
+template<class TInputImage,class TOutputImage=TInputImage> class ImageConverter: public ImageConverterBase
+{
+protected:
+public:
+  
+  
+  ~ImageConverter()
+  {}
+  
+  ImageConverter()
+  {
+    setup();
+  }
+    
+ 
+  void convert_meta_minc_to_nrrd(itk::MetaDataDictionary& dict)
+  {
+    // let's try converting DTI-related meta-information
+    double_vector bvalues,direction_x,direction_y,direction_z;
+    
+    if( itk::ExposeMetaData<double_vector>( dict , "acquisition:bvalues",bvalues) &&
+        itk::ExposeMetaData<double_vector>( dict , "acquisition:direction_x",direction_x) &&
+        itk::ExposeMetaData<double_vector>( dict , "acquisition:direction_y",direction_y) &&
+        itk::ExposeMetaData<double_vector>( dict , "acquisition:direction_z",direction_z))
     {
-      std::cerr<<"WARNING: Different number of components of DTI directions"<<std::endl
-               <<" Skipping DTI metadata conversion!"<<std::endl;
-    } else {
-      double max_b_value=*std::max_element(bvalues.begin(),bvalues.end());
-      if(verbose)
+      //We have got MINC-style DTI metadata
+      if(bvalues.size()!=direction_x.size() || 
+        bvalues.size()!=direction_y.size() ||
+        bvalues.size()!=direction_z.size() )
       {
-        std::cout<<"Found maximum B-value:"<<max_b_value<<std::endl;
-      }
-      
-      itk::EncapsulateMetaData<std::string>( dict,
-        "modality",
-        "DWMRI");      
-      
-      //TODO: find out if we can get this info from minc 
-      // using identity for now
-      std::vector< std::vector< double > > measurement_frame(3,std::vector< double >(3));
-      measurement_frame[0][0]=1.0;
-      measurement_frame[1][1]=1.0;
-      measurement_frame[2][2]=1.0;
-      
-      
-      itk::EncapsulateMetaData< std::vector< std::vector< double > > >( dict,
-        "NRRD_measurement frame",
-        measurement_frame);      
-
-      
-      //TODO: deal with NRRD_thicknesses ?
-      
-      std::ostringstream ossKey;
-      ossKey<<std::setw(9) << std::setiosflags(std::ios::fixed)
-        << std::setprecision(6) << std::setiosflags(std::ios::right) << max_b_value;
-      
-        
-      itk::EncapsulateMetaData<std::string>( dict,
-        "NRRD_centerings[0]","cell");
-      itk::EncapsulateMetaData<std::string>( dict,
-        "NRRD_centerings[1]","cell");
-      itk::EncapsulateMetaData<std::string>( dict,
-        "NRRD_centerings[2]","cell");
-      
-      itk::EncapsulateMetaData<std::string>( dict,
-        "NRRD_kinds[0]","space");
-      itk::EncapsulateMetaData<std::string>( dict,
-        "NRRD_kinds[1]","space");
-      itk::EncapsulateMetaData<std::string>( dict,
-        "NRRD_kinds[2]","space");
-
-      
-      itk::EncapsulateMetaData<std::string>( dict,
-        "DWMRI_b-value",
-        ossKey.str());
-      
-      
-      int zero_b_value_cnt=0;
-      for(int i=0;i<bvalues.size();i++)
-      {
-        double direction[3]={direction_x[i],direction_y[i],direction_z[i]};
-        double bval=bvalues[i];
-        double b_scale=1.0;
-        
-        if(fabs(bval)<1e-3) 
-          zero_b_value_cnt++;
-        else
+        std::cerr<<"WARNING: Different number of components of DTI directions"<<std::endl
+                <<" Skipping DTI metadata conversion!"<<std::endl;
+      } else {
+        double max_b_value=*std::max_element(bvalues.begin(),bvalues.end());
+        if(verbose)
         {
-          b_scale=::sqrt(bval/max_b_value);
-          
-          direction[0]*=b_scale;
-          direction[1]*=b_scale;
-          direction[2]*=b_scale;
+          std::cout<<"Found maximum B-value:"<<max_b_value<<std::endl;
         }
         
-        std::ostringstream ossKey;
-        ossKey << "DWMRI_gradient_" << std::setw(4) << std::setfill('0') << i;
-
-        std::ostringstream ossMetaString;
-        ossMetaString << std::setw(9) << std::setiosflags(std::ios::fixed)
-          << std::setprecision(6) << std::setiosflags(std::ios::right)
-          << direction[0]
-        << "    "
-          << std::setw(9) << std::setiosflags(std::ios::fixed)
-          << std::setprecision(6) << std::setiosflags(std::ios::right)
-          << direction[1]
-        << "    "
-          << std::setw(9) << std::setiosflags(std::ios::fixed)
-          << std::setprecision(6) << std::setiosflags(std::ios::right)
-          << direction[2];
-
-        // std::cout<<ossKey.str()<<ossMetaString.str()<<std::endl;
         itk::EncapsulateMetaData<std::string>( dict,
-          ossKey.str(), ossMetaString.str() );
-      }
-      if(verbose)
-        std::cout<<"Found "<<zero_b_value_cnt<<" Zero b-value components"<<std::endl;
-    }
-  }
-}
+          "modality",
+          "DWMRI");      
+        
+        //TODO: find out if we can get this info from minc 
+        // using identity for now
+        std::vector< std::vector< double > > measurement_frame(3,std::vector< double >(3));
+        measurement_frame[0][0]=1.0;
+        measurement_frame[1][1]=1.0;
+        measurement_frame[2][2]=1.0;
+        
+        
+        itk::EncapsulateMetaData< std::vector< std::vector< double > > >( dict,
+          "NRRD_measurement frame",
+          measurement_frame);      
 
-void convert_meta_nrrd_to_minc(itk::MetaDataDictionary& dict,bool verbose=false)
-{
-  //1. get b-value
-  
-  std::string b_value_,gradient_value_;
-  double bval=0.0,vect3d[3],vmag=0.0;
-  double_vector bvalues,direction_x,direction_y,direction_z;
-  
-  if(itk::ExposeMetaData<std::string>( dict,"DWMRI_b-value", b_value_))
-  {
-    int i=0;
-    while(true)
-    {
-        bval=atof(b_value_.c_str());
+        
+        //TODO: deal with NRRD_thicknesses ?
         
         std::ostringstream ossKey;
-        ossKey << "DWMRI_gradient_" << std::setw(4) << std::setfill('0') << i++;
-        if(itk::ExposeMetaData<std::string>( dict,ossKey.str(), gradient_value_))
+        ossKey<<std::setw(9) << std::setiosflags(std::ios::fixed)
+          << std::setprecision(6) << std::setiosflags(std::ios::right) << max_b_value;
+        
+          
+        itk::EncapsulateMetaData<std::string>( dict,
+          "NRRD_centerings[0]","cell");
+        itk::EncapsulateMetaData<std::string>( dict,
+          "NRRD_centerings[1]","cell");
+        itk::EncapsulateMetaData<std::string>( dict,
+          "NRRD_centerings[2]","cell");
+        
+        itk::EncapsulateMetaData<std::string>( dict,
+          "NRRD_kinds[0]","space");
+        itk::EncapsulateMetaData<std::string>( dict,
+          "NRRD_kinds[1]","space");
+        itk::EncapsulateMetaData<std::string>( dict,
+          "NRRD_kinds[2]","space");
+
+        
+        itk::EncapsulateMetaData<std::string>( dict,
+          "DWMRI_b-value",
+          ossKey.str());
+        
+        
+        size_t zero_b_value_cnt=0;
+        for(size_t i=0;i<bvalues.size();i++)
         {
-          std::istringstream iss(gradient_value_);
-          iss >> vect3d[0] >> vect3d[1] >> vect3d[2];
+          double direction[3]={direction_x[i],direction_y[i],direction_z[i]};
+          double bval=bvalues[i];
+          double b_scale=1.0;
           
-          direction_x.push_back(vect3d[0]);
-          direction_y.push_back(vect3d[1]);
-          direction_z.push_back(vect3d[2]);
-          
-          //? normalize to unit vector and modulate bvalue instead?
-          vmag=::sqrt(vect3d[0]*vect3d[0]+vect3d[1]*vect3d[1]+vect3d[2]*vect3d[2]);
-          if(vmag<0.1) //Zero
-            bvalues.push_back(0.0); 
+          if(fabs(bval)<1e-3) 
+            zero_b_value_cnt++;
           else
-            bvalues.push_back(bval); 
-        } else {
-          break;
+          {
+            b_scale=::sqrt(bval/max_b_value);
+            
+            direction[0]*=b_scale;
+            direction[1]*=b_scale;
+            direction[2]*=b_scale;
+          }
+          
+          std::ostringstream ossKey;
+          ossKey << "DWMRI_gradient_" << std::setw(4) << std::setfill('0') << i;
+
+          std::ostringstream ossMetaString;
+          ossMetaString << std::setw(9) << std::setiosflags(std::ios::fixed)
+            << std::setprecision(6) << std::setiosflags(std::ios::right)
+            << direction[0]
+          << "    "
+            << std::setw(9) << std::setiosflags(std::ios::fixed)
+            << std::setprecision(6) << std::setiosflags(std::ios::right)
+            << direction[1]
+          << "    "
+            << std::setw(9) << std::setiosflags(std::ios::fixed)
+            << std::setprecision(6) << std::setiosflags(std::ios::right)
+            << direction[2];
+
+          // std::cout<<ossKey.str()<<ossMetaString.str()<<std::endl;
+          itk::EncapsulateMetaData<std::string>( dict,
+            ossKey.str(), ossMetaString.str() );
         }
-    }
-    if(!bvalues.empty())
-    {
-      itk::EncapsulateMetaData<double_vector>( dict , "acquisition:bvalues",bvalues);
-      itk::EncapsulateMetaData<double_vector>( dict , "acquisition:direction_x",direction_x);
-      itk::EncapsulateMetaData<double_vector>( dict , "acquisition:direction_y",direction_y);
-      itk::EncapsulateMetaData<double_vector>( dict , "acquisition:direction_z",direction_z);
-      itk::EncapsulateMetaData<double_vector>( dict , "acquisition:direction_z",direction_z);
-      itk::EncapsulateMetaData<double>( dict ,        "acquisition:b_value", bval);
+        if(verbose)
+          std::cout<<"Found "<<zero_b_value_cnt<<" Zero b-value components"<<std::endl;
+      }
     }
   }
-}
 
-
-
-template<class ImageType> void load_and_save_image(IOBase* base,
-                    const char *fname,
-                    bool inv_x=false,
-                    bool inv_y=false,
-                    bool inv_z=false,
-                    bool center=false,
-                    bool verbose=false,
-                    bool show_meta=false,
-                    bool assume_dti=false,
-                    const std::string& history=""
-                                                  )
-{
-  typename itk::ImageFileReader<ImageType >::Pointer reader = itk::ImageFileReader<ImageType >::New();
-  typename itk::FlipImageFilter<ImageType >::Pointer flip=itk::FlipImageFilter<ImageType >::New();
-  
-  reader->SetImageIO(base);
-  reader->SetFileName(base->GetFileName());
-  reader->Update();
-  
-  typename ImageType::Pointer img=reader->GetOutput();
-  itk::MetaDataDictionary &thisDic=img->GetMetaDataDictionary();
-
-  if(show_meta)
+  void convert_meta_nrrd_to_minc(itk::MetaDataDictionary& dict)
   {
+    //1. get b-value
     
-    //let's write some meta information if there is any 
-    for(itk::MetaDataDictionary::ConstIterator it=thisDic.Begin();it!=thisDic.End();++it)
+    std::string b_value_,gradient_value_;
+    double bval=0.0,vect3d[3],vmag=0.0;
+    double_vector bvalues,direction_x,direction_y,direction_z;
+    
+    if(itk::ExposeMetaData<std::string>( dict,"DWMRI_b-value", b_value_))
     {
-			itk::MetaDataObjectBase *bs=(*it).second;
-			itk::MetaDataObject<std::string> * str=dynamic_cast<itk::MetaDataObject<std::string> *>(bs);
-			if(str)
-				std::cout<<(*it).first.c_str()<<" = "<< str->GetMetaDataObjectValue().c_str()<<std::endl;
-			else
-				std::cout<<(*it).first.c_str()<<" type: "<< typeid(*bs).name()<<std::endl;
-		}
+      int i=0;
+      while(true)
+      {
+          bval=atof(b_value_.c_str());
+          
+          std::ostringstream ossKey;
+          ossKey << "DWMRI_gradient_" << std::setw(4) << std::setfill('0') << i++;
+          if(itk::ExposeMetaData<std::string>( dict,ossKey.str(), gradient_value_))
+          {
+            std::istringstream iss(gradient_value_);
+            iss >> vect3d[0] >> vect3d[1] >> vect3d[2];
+            
+            direction_x.push_back(vect3d[0]);
+            direction_y.push_back(vect3d[1]);
+            direction_z.push_back(vect3d[2]);
+            
+            //? normalize to unit vector and modulate bvalue instead?
+            vmag=::sqrt(vect3d[0]*vect3d[0]+vect3d[1]*vect3d[1]+vect3d[2]*vect3d[2]);
+            if(vmag<0.1) //Zero
+              bvalues.push_back(0.0); 
+            else
+              bvalues.push_back(bval); 
+          } else {
+            break;
+          }
+      }
+      if(!bvalues.empty())
+      {
+        itk::EncapsulateMetaData<double_vector>( dict , "acquisition:bvalues",bvalues);
+        itk::EncapsulateMetaData<double_vector>( dict , "acquisition:direction_x",direction_x);
+        itk::EncapsulateMetaData<double_vector>( dict , "acquisition:direction_y",direction_y);
+        itk::EncapsulateMetaData<double_vector>( dict , "acquisition:direction_z",direction_z);
+        itk::EncapsulateMetaData<double>( dict ,        "acquisition:b_value", bval);
+      }
+    }
+  }
+
+
+
+  double decompose_b_matrix(const double_vector& b_matrix, 
+                          double_vector & bvalues,
+                          double_vector & direction_x, 
+                          double_vector & direction_y,
+                          double_vector & direction_z)
+  {
+    size_t elements=b_matrix.size();
+    if(elements%6) //should be divisible by 6 
+      std::cerr<<"Number of elements in b_matrix is not divisible by 6 , probably an error!"<<std::endl;
+    elements/=6;
+    
+    bvalues.resize(elements);
+    direction_x.resize(elements);
+    direction_y.resize(elements);
+    direction_z.resize(elements);
+
+    vnl_matrix_fixed<double, 3, 3> bMatrix;
+    double max_bval=0;
+    
+    for(size_t i=0;i<elements;i++)
+    {
+      //Code from DicomToNrrdConverter
+      // UNC comments: The principal eigenvector of the bmatrix is to be extracted as
+      // it's the gradient direction and trace of the matrix is the b-value
+
+      // UNC comments: Fill out the 3x3 bmatrix with the 6 components read from the 
+      // DICOM header.
+      bMatrix[0][0] = b_matrix[i*6+0];
+      bMatrix[0][1] = b_matrix[i*6+1];
+      bMatrix[0][2] = b_matrix[i*6+2];
+      bMatrix[1][1] = b_matrix[i*6+3];
+      bMatrix[1][2] = b_matrix[i*6+4];
+      bMatrix[2][2] = b_matrix[i*6+5];
+      bMatrix[1][0] = bMatrix[0][1];
+      bMatrix[2][0] = bMatrix[0][2];
+      bMatrix[2][1] = bMatrix[1][2];
+
+      double bvalue = bMatrix[0][0] + bMatrix[1][1] + bMatrix[2][2];
+      
+      if(bvalue>max_bval) max_bval=bvalue;
+      
+      // UNC comments: The b-value si the trace of the bmatrix
+      // UNC comments: Even if the bmatrix is null, the svd decomposition set the 1st eigenvector
+      // to (1,0,0). So we force the gradient direction to 0 if the bvalue is null
+      if(bvalue == 0.0 ) //TODO: threshold?
+      {
+        direction_x[i] = 0.0;
+        direction_y[i] = 0.0;
+        direction_z[i] = 0.0;
+        bvalues[i] = 0.0;
+      } else {
+        // UNC comments: Computing the decomposition
+        vnl_svd<double> svd(bMatrix);
+
+        // UNC comments: Extracting the principal eigenvector i.e. the gradient direction
+        
+        direction_x[i] = svd.U(0,0);
+        direction_y[i] = svd.U(1,0);
+        direction_z[i] = svd.U(2,0);
+        bvalues[i] = bvalue;
+      }
+    }
+    return max_bval;
   }
   
-
-  //making sure that all vcrtors contain the same number of parameters (just in case)
-  if( thisDic.HasKey( "acquisition:bvalues") &&
-      thisDic.HasKey( "acquisition:direction_x") &&
-      thisDic.HasKey( "acquisition:direction_y") &&
-      thisDic.HasKey( "acquisition:direction_z"))
+  virtual void load_and_save_image(IOBase* base,const char *fname)
   {
-    convert_meta_minc_to_nrrd(thisDic,verbose);
-  } else if ( thisDic.HasKey("DWMRI_b-value")  ) {
-    //We have got NRRD-style DTI metadata
-    convert_meta_nrrd_to_minc(thisDic,verbose);
+    typename itk::ImageFileReader<TInputImage >::Pointer reader = itk::ImageFileReader<TInputImage >::New();
+    typename itk::FlipImageFilter<TInputImage >::Pointer flip=itk::FlipImageFilter<TInputImage >::New();
+    
+    reader->SetImageIO(base);
+    reader->SetFileName(base->GetFileName());
+    reader->Update();
+    
+    typename TInputImage::Pointer img=reader->GetOutput();
+    itk::MetaDataDictionary &thisDic=img->GetMetaDataDictionary();
+
+    if(show_meta)
+    {
+      
+      //let's write some meta information if there is any 
+      for(itk::MetaDataDictionary::ConstIterator it=thisDic.Begin();it!=thisDic.End();++it)
+      {
+        itk::MetaDataObjectBase *bs=(*it).second;
+        itk::MetaDataObject<std::string> * str=dynamic_cast<itk::MetaDataObject<std::string> *>(bs);
+        if(str)
+          std::cout<<(*it).first.c_str()<<" = "<< str->GetMetaDataObjectValue().c_str()<<std::endl;
+        else
+          std::cout<<(*it).first.c_str()<<" type: "<< typeid(*bs).name()<<std::endl;
+      }
+    }
+    
+    if( thisDic.HasKey( "acquisition:b_matrix" ) && use_b_matrix )
+    { 
+      double_vector bmatrix;
+      
+      if( itk::ExposeMetaData<double_vector>( thisDic , "acquisition:b_matrix",bmatrix))
+      {
+        double_vector bvalues,direction_x,direction_y,direction_z;
+        double bval=decompose_b_matrix(bmatrix,bvalues,direction_x,direction_y,direction_z);
+        
+        if(!bvalues.empty())
+        {
+          itk::EncapsulateMetaData<double_vector>( thisDic , "acquisition:bvalues"    ,bvalues);
+          itk::EncapsulateMetaData<double_vector>( thisDic , "acquisition:direction_x",direction_x);
+          itk::EncapsulateMetaData<double_vector>( thisDic , "acquisition:direction_y",direction_y);
+          itk::EncapsulateMetaData<double_vector>( thisDic , "acquisition:direction_z",direction_z);
+          itk::EncapsulateMetaData<double>(        thisDic , "acquisition:b_value"    ,bval);
+        }
+      }
+    }
+    
+    //making sure that all vcrtors contain the same number of parameters (just in case)
+    if( thisDic.HasKey( "acquisition:bvalues") &&
+        thisDic.HasKey( "acquisition:direction_x") &&
+        thisDic.HasKey( "acquisition:direction_y") &&
+        thisDic.HasKey( "acquisition:direction_z"))
+    {
+      convert_meta_minc_to_nrrd(thisDic);
+    } else if ( thisDic.HasKey("DWMRI_b-value")  ) {
+      //We have got NRRD-style DTI metadata
+      convert_meta_nrrd_to_minc(thisDic);
+    }
+    
+    
+
+    if(verbose)
+      std::cout<<"Writing "<<fname<<"..."<<std::endl;
+    
+    if(inv_x||inv_y||inv_z)
+    {
+      typename itk::FlipImageFilter<TInputImage >::FlipAxesArrayType arr;
+      arr[0]=inv_x;
+      arr[1]=inv_y;
+      arr[2]=inv_z;
+      flip->SetFlipAxes(arr);
+      flip->SetInput(img);
+      flip->Update();
+      img=flip->GetOutput();
+    }
+    
+    if(center)//move origin to the center of the image
+    {
+      typename TInputImage::RegionType r=img->GetLargestPossibleRegion();
+      //std::vector<double> corner[3];
+      
+      typename TInputImage::IndexType idx;
+      typename TInputImage::PointType c;
+      
+      idx[0]=r.GetIndex()[0]+r.GetSize()[0]/2.0;
+      idx[1]=r.GetIndex()[1]+r.GetSize()[1]/2.0;
+      idx[2]=r.GetIndex()[2]+r.GetSize()[2]/2.0;
+      
+      img->TransformIndexToPhysicalPoint(idx,c);
+      
+      typename TInputImage::PointType org=img->GetOrigin();
+      
+      org[0]-=c[0];
+      org[1]-=c[1];
+      org[2]-=c[2];
+      
+      img->SetOrigin(org);
+    }  
+    if(!history.empty())
+      minc::append_history(img,history);
+
+    typename itk::ImageFileWriter< TInputImage >::Pointer writer = itk::ImageFileWriter<TInputImage >::New();
+    writer->SetFileName(fname);
+    writer->SetInput( img );
+    writer->Update();
+    
   }
-  
-  
 
-  if(verbose)
-    std::cout<<"Writing "<<fname<<"..."<<std::endl;
-  
-  if(inv_x||inv_y||inv_z)
-  {
-    typename itk::FlipImageFilter<ImageType >::FlipAxesArrayType arr;
-    arr[0]=inv_x;
-    arr[1]=inv_y;
-    arr[2]=inv_z;
-    flip->SetFlipAxes(arr);
-    flip->SetInput(img);
-    flip->Update();
-    img=flip->GetOutput();
-  }
-  
-  if(center)//move origin to the center of the image
-  {
-    typename ImageType::RegionType r=img->GetLargestPossibleRegion();
-    //std::vector<double> corner[3];
-    
-    typename ImageType::IndexType idx;
-    typename ImageType::PointType c;
-    
-    idx[0]=r.GetIndex()[0]+r.GetSize()[0]/2.0;
-    idx[1]=r.GetIndex()[1]+r.GetSize()[1]/2.0;
-    idx[2]=r.GetIndex()[2]+r.GetSize()[2]/2.0;
-    
-    img->TransformIndexToPhysicalPoint(idx,c);
-    
-    typename ImageType::PointType org=img->GetOrigin();
-    
-    org[0]-=c[0];
-    org[1]-=c[1];
-    org[2]-=c[2];
-    
-    img->SetOrigin(org);
-  }  
-  if(!history.empty())
-    minc::append_history(img,history);
+};
 
-  typename itk::ImageFileWriter< ImageType >::Pointer writer = itk::ImageFileWriter<ImageType >::New();
-  writer->SetFileName(fname);
-  writer->SetInput( img );
-  writer->Update();
-  
-}
+
+
 
 int main(int argc,char **argv)
 {
@@ -322,6 +454,7 @@ int main(int argc,char **argv)
   int assume_dti=0;
   char *_history = time_stamp(argc, argv);
   std::string history=_history;
+  int use_b_matrix=0;
   
   int store_char=0,store_uchar=0,store_short=0,store_ushort=0,store_float=0,store_int=0,store_uint=0,store_double=0;
   
@@ -337,6 +470,8 @@ int main(int argc,char **argv)
     {"center", no_argument, &center, 1},
     {"show-meta", no_argument, &show_meta, 1},
     {"dti", no_argument, &assume_dti, 1},
+    {"dwi", no_argument, &assume_dti, 1},
+    {"use-b-matrix",no_argument, &use_b_matrix, 1},
     
     {"float", no_argument, &store_float, 1},
     {"double", no_argument, &store_double, 1},
@@ -392,8 +527,10 @@ int main(int argc,char **argv)
   {
     itk::RegisterMincIO();
     
+    if(use_b_matrix) assume_dti=1;
+    
     /* READING */
-    if(verbose) 
+    if( verbose ) 
       std::cout<<"Reading "<<input.c_str()<<"..."<<std::endl;
     
     //try to figure out what we have got
@@ -412,8 +549,8 @@ int main(int argc,char **argv)
     
     if(verbose)
     {
-      std::cout<<"dimensions:"<<nd<<std::endl
-               <<"components:"<<nc<<std::endl
+      std::cout<<"dimensions:"<< nd << std::endl
+               <<"components:"<< nc << std::endl
                <<"type:"<<ct_s.c_str()<<std::endl;
     }
     
@@ -434,34 +571,36 @@ int main(int argc,char **argv)
     else if(store_double)
       ct=itk::ImageIOBase::DOUBLE;
     
+    ImageConverterBase *converter=NULL;
+    
     if(nd==3 && nc==1)
     {
       if(verbose) std::cout<<"Writing 3D image..."<<std::endl;
       switch(ct)
       { 
         case itk::ImageIOBase::UCHAR :
-          load_and_save_image<itk::Image<unsigned char, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta,assume_dti,history);
+          converter=new ImageConverter<itk::Image<unsigned char, 3> >();
           break;
         case itk::ImageIOBase::CHAR :
-          load_and_save_image<itk::Image<char, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta,assume_dti,history);
+          converter=new ImageConverter<itk::Image<char, 3> >();
           break;
         case itk::ImageIOBase::USHORT :
-          load_and_save_image<itk::Image<unsigned short, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta,assume_dti,history);
+          converter=new ImageConverter<itk::Image<unsigned short, 3> >();
           break;
         case itk::ImageIOBase::SHORT :
-          load_and_save_image<itk::Image<short, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta,assume_dti,history);
+          converter=new ImageConverter<itk::Image<short, 3> >();
           break;
         case itk::ImageIOBase::INT :
-          load_and_save_image<itk::Image<int, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta,assume_dti,history);
+          converter=new ImageConverter<itk::Image<int, 3> >();
           break; 
         case itk::ImageIOBase::UINT:
-          load_and_save_image<itk::Image<unsigned int, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta,assume_dti,history);
+          converter=new ImageConverter<itk::Image<unsigned int, 3> >();
            break; 
         case itk::ImageIOBase::FLOAT :
-          load_and_save_image<itk::Image<float, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta,assume_dti,history);
+          converter=new ImageConverter<itk::Image<float, 3> >();
           break; 
         case itk::ImageIOBase::DOUBLE:
-          load_and_save_image<itk::Image<double, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta,assume_dti,history);
+          converter=new ImageConverter<itk::Image<double, 3> >();
           break; 
         default:
           itk::ExceptionObject("Unsupported component type");
@@ -471,28 +610,28 @@ int main(int argc,char **argv)
         switch(ct)
         {
           case itk::ImageIOBase::UCHAR:
-            load_and_save_image<itk::Image<unsigned char, 4> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta,assume_dti,history);
+            converter=new ImageConverter<itk::Image<unsigned char, 4> >();
             break;
           case itk::ImageIOBase::CHAR:
-            load_and_save_image<itk::Image<char, 4> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta,assume_dti,history);
+            converter=new ImageConverter<itk::Image<char, 4> >();
             break;
           case itk::ImageIOBase::USHORT:
-            load_and_save_image<itk::Image<unsigned short, 4> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta,assume_dti,history);
+            converter=new ImageConverter<itk::Image<unsigned short, 4> >();
             break;
           case itk::ImageIOBase::SHORT:
-            load_and_save_image<itk::Image<short, 4> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta,assume_dti,history);
+            converter=new ImageConverter<itk::Image<short, 4> >();
             break;
           case itk::ImageIOBase::INT:
-            load_and_save_image<itk::Image<int, 4> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta,assume_dti,history);
+            converter=new ImageConverter<itk::Image<int, 4> >();
             break; 
           case itk::ImageIOBase::UINT:
-            load_and_save_image<itk::Image<unsigned int, 4> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta,assume_dti,history);
+            converter=new ImageConverter<itk::Image<unsigned int, 4> >();
             break; 
           case itk::ImageIOBase::FLOAT:
-            load_and_save_image<itk::Image<float, 4> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta,assume_dti,history);
+            converter=new ImageConverter<itk::Image<float, 4> >();
             break; 
           case itk::ImageIOBase::DOUBLE:
-            load_and_save_image<itk::Image<double, 4> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta,assume_dti,history);
+            converter=new ImageConverter<itk::Image<double, 4> >();
             break; 
           default:
             itk::ExceptionObject("Unsupported component type");
@@ -503,28 +642,28 @@ int main(int argc,char **argv)
         switch(ct)
         {
           case itk::ImageIOBase::UCHAR:
-            load_and_save_image<itk::VectorImage<unsigned char, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta,assume_dti,history);
+            converter=new ImageConverter<itk::VectorImage<unsigned char, 3> >();
             break;
           case itk::ImageIOBase::CHAR:
-            load_and_save_image<itk::VectorImage<char, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta,assume_dti,history);
+            converter=new ImageConverter<itk::VectorImage<char, 3> >();
             break;
           case itk::ImageIOBase::USHORT:
-            load_and_save_image<itk::VectorImage<unsigned short, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta,assume_dti,history);
+            converter=new ImageConverter<itk::VectorImage<unsigned short, 3> >();
             break;
           case itk::ImageIOBase::SHORT:
-            load_and_save_image<itk::VectorImage<short, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta,assume_dti,history);
+            converter=new ImageConverter<itk::VectorImage<short, 3> >();
             break;
           case itk::ImageIOBase::INT:
-            load_and_save_image<itk::VectorImage<int, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta,assume_dti,history);
+            converter=new ImageConverter<itk::VectorImage<int, 3> >();
             break; 
           case itk::ImageIOBase::UINT:
-            load_and_save_image<itk::VectorImage<unsigned int, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta,assume_dti,history);
+            converter=new ImageConverter<itk::VectorImage<unsigned int, 3> >();
             break; 
           case itk::ImageIOBase::FLOAT:
-            load_and_save_image<itk::VectorImage<float, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta,assume_dti,history);
+            converter=new ImageConverter<itk::VectorImage<float, 3> >();
             break; 
           case itk::ImageIOBase::DOUBLE:
-            load_and_save_image<itk::VectorImage<double, 3> >(io,output.c_str(),inv_x,inv_y,inv_z,center,verbose,show_meta,assume_dti,history);
+            converter=new ImageConverter<itk::VectorImage<double, 3> >();
             break; 
           default:
             itk::ExceptionObject("Unsupported component type");
@@ -533,6 +672,12 @@ int main(int argc,char **argv)
         throw itk::ExceptionObject("Unsupported number of dimensions");
     }
     
+    if(converter)
+    {
+      converter->setup(verbose,assume_dti,use_b_matrix,inv_x,inv_y,inv_z,center,show_meta,history);
+      converter->load_and_save_image(io,output.c_str());
+      delete converter;
+    }
   }
   
   catch( itk::ExceptionObject & err )
