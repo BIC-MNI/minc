@@ -8,6 +8,7 @@
 #include <itkFlipImageFilter.h>
 #include <itkMetaDataObject.h>
 #include <itkMetaDataDictionary.h>
+#include <itkCastImageFilter.h>
 
 #include "itkMincImageIOFactory.h"
 #include "itkMincImageIO.h"
@@ -31,21 +32,32 @@ void show_usage (const char *name)
       << "Usage: "<<name<<" <input> <output> " << std::endl
       << "--clobber clobber output files"<<std::endl
       << "--verbose be verbose"<<std::endl
+      << "--show-meta show meta information (if present)"<<std::endl
+      << " Spatial transformation flags:"<<std::endl
       << "--inv-x invert X axis"<<std::endl
       << "--inv-y invert Y axis"<<std::endl
       << "--inv-z invert Z axis"<<std::endl
       << "--center set origin to the center of the image"<<std::endl
-      << "--show-meta show meta information (if present)"<<std::endl
+      << " DWI related flags "<<std::endl
       << "--dwi - assume that we are dealing with DWI scan"<<std::endl
       << "--use-b-matrix - convert b-matrix (if present) into DWI gradient directions and b-value, implies DWI"<<std::endl
-      << "--char   - save as signed char"<<std::endl
-      << "--byte   - save as unsigned char"<<std::endl
-      << "--short  - save as signed short"<<std::endl
-      << "--ushort - save as unsigned short"<<std::endl
-      << "--int    - save as signed int"<<std::endl
-      << "--uint   - save as unsigned int"<<std::endl
-      << "--float  - save as float"<<std::endl
-      << "--double - save as double"<<std::endl
+      << "--dwi-flip-z - flip Z component of DWI gradient direction (for compatibility with MINC)"<<std::endl
+      << " Data conversion flags: "<<std::endl
+      << "--char   - cast data as signed char"<<std::endl
+      << "--byte   - cast data as unsigned char"<<std::endl
+      << "--short  - cast data as signed short"<<std::endl
+      << "--ushort - cast data as unsigned short"<<std::endl
+      << "--int    - cast data as signed int"<<std::endl
+      << "--uint   - cast data as unsigned int"<<std::endl
+      << "--float  - cast data as float"<<std::endl
+      << "--double - cast data as double"<<std::endl
+      << " MINC file format related flags:" << std::endl
+      << "--mbyte   - save pixel value using signed char"<<std::endl
+      << "--mshort  - save pixel value using short"<<std::endl
+      << "--mint    - save pixel value using int"<<std::endl
+      << "--mfloat  - save pixel value using float"<<std::endl
+      << "--mdouble - save pixel value using double"<<std::endl
+      
 ;
 }
 
@@ -57,6 +69,7 @@ class ImageConverterBase
 protected:
   bool assume_dti;
   bool use_b_matrix;
+  bool dwi_flip_z;
   std::string history;
   bool verbose;
   bool inv_x;
@@ -64,18 +77,23 @@ protected:
   bool inv_z;
   bool center;
   bool show_meta;
+  int  minc_type;
   
 public:
   void setup(bool _verbose=false,
               bool _assume_dti=false,
               bool _use_b_matrix=false,
+              bool _dwi_flip_z=false,
               bool _inv_x=false,bool _inv_y=false,bool _inv_z=false, 
               bool _center=false, 
               bool _show_meta=false,
-              const std::string _history="")
+              const std::string _history="",
+              int _minc_type=-1
+            )
   {
     assume_dti=_assume_dti;
     use_b_matrix=_use_b_matrix;
+    dwi_flip_z=_dwi_flip_z;
     history=_history;
     verbose=_verbose;
     inv_x=_inv_x;
@@ -83,28 +101,33 @@ public:
     inv_z=_inv_z;
     center=_center;
     show_meta=_show_meta;
+    minc_type=_minc_type;
   }
   
-  virtual void load_and_save_image(IOBase* base,const char *fname)=0;
+  virtual void load_and_save_image(IOBase* base,const char *fname,itk::ImageIOBase::IOComponentType oct)=0;
 
   virtual ~ImageConverterBase()
   {}
 };
 
-template<class TInputImage,class TOutputImage=TInputImage> class ImageConverter: public ImageConverterBase
+template<class TInputImage> class ImageConverter: public ImageConverterBase
 {
 protected:
+  
+  typedef TInputImage InputImageType;
+  typedef typename InputImageType::PixelType InputImagePixelType;
+  
 public:
   
-  
   ~ImageConverter()
-  {}
+  {
+    
+  }
   
   ImageConverter()
   {
     setup();
   }
-    
  
   void convert_meta_minc_to_nrrd(itk::MetaDataDictionary& dict)
   {
@@ -189,7 +212,7 @@ public:
             
             direction[0]*=b_scale;
             direction[1]*=b_scale;
-            direction[2]*=b_scale;
+            direction[2]*=(dwi_flip_z&&!use_b_matrix)?-b_scale:b_scale;
           }
           
           std::ostringstream ossKey;
@@ -221,9 +244,8 @@ public:
   void convert_meta_nrrd_to_minc(itk::MetaDataDictionary& dict)
   {
     //1. get b-value
-    
     std::string b_value_,gradient_value_;
-    double bval=0.0,vect3d[3],vmag=0.0;
+    double bval=0.0,vect3d[3];
     double_vector bvalues,direction_x,direction_y,direction_z;
     
     if(itk::ExposeMetaData<std::string>( dict,"DWMRI_b-value", b_value_))
@@ -240,20 +262,27 @@ public:
             std::istringstream iss(gradient_value_);
             iss >> vect3d[0] >> vect3d[1] >> vect3d[2];
             
-            direction_x.push_back(vect3d[0]);
-            direction_y.push_back(vect3d[1]);
-            direction_z.push_back(vect3d[2]);
+            //? normalize to unit vector and modulate bvalue
+            double b_scale=vect3d[0]*vect3d[0]+vect3d[1]*vect3d[1]+vect3d[2]*vect3d[2];
+            double vmag=::sqrt(b_scale);
             
-            //? normalize to unit vector and modulate bvalue instead?
-            vmag=::sqrt(vect3d[0]*vect3d[0]+vect3d[1]*vect3d[1]+vect3d[2]*vect3d[2]);
             if(vmag<0.1) //Zero
+            {
               bvalues.push_back(0.0); 
-            else
-              bvalues.push_back(bval); 
+              direction_x.push_back(0.0);
+              direction_y.push_back(0.0);
+              direction_z.push_back(0.0);
+            } else {
+              bvalues.push_back(bval*b_scale);
+              direction_x.push_back(vect3d[0]/vmag);
+              direction_y.push_back(vect3d[1]/vmag);
+              direction_z.push_back(((dwi_flip_z&&!use_b_matrix)?-vect3d[2]:vect3d[2])/vmag);
+            }
           } else {
             break;
           }
       }
+      
       if(!bvalues.empty())
       {
         itk::EncapsulateMetaData<double_vector>( dict , "acquisition:bvalues",bvalues);
@@ -325,17 +354,18 @@ public:
         
         direction_x[i] = svd.U(0,0);
         direction_y[i] = svd.U(1,0);
-        direction_z[i] = svd.U(2,0);
+        direction_z[i] = dwi_flip_z?svd.U(2,0):svd.U(2,0);
         bvalues[i] = bvalue;
       }
     }
     return max_bval;
   }
-  
-  virtual void load_and_save_image(IOBase* base,const char *fname)
+
+  template<class TOutputImage> void _load_and_save_image(IOBase* base,const char *fname)
   {
     typename itk::ImageFileReader<TInputImage >::Pointer reader = itk::ImageFileReader<TInputImage >::New();
     typename itk::FlipImageFilter<TInputImage >::Pointer flip=itk::FlipImageFilter<TInputImage >::New();
+    
     
     reader->SetImageIO(base);
     reader->SetFileName(base->GetFileName());
@@ -390,8 +420,6 @@ public:
       //We have got NRRD-style DTI metadata
       convert_meta_nrrd_to_minc(thisDic);
     }
-    
-    
 
     if(verbose)
       std::cout<<"Writing "<<fname<<"..."<<std::endl;
@@ -432,18 +460,56 @@ public:
     }  
     if(!history.empty())
       minc::append_history(img,history);
-
-    typename itk::ImageFileWriter< TInputImage >::Pointer writer = itk::ImageFileWriter<TInputImage >::New();
-    writer->SetFileName(fname);
-    writer->SetInput( img );
-    writer->Update();
     
+    typename itk::CastImageFilter< TInputImage, TOutputImage >::Pointer cast=itk::CastImageFilter< TInputImage, TOutputImage >::New();
+    
+    cast->SetInput(img);
+    
+    typename itk::ImageFileWriter< TOutputImage >::Pointer writer = itk::ImageFileWriter<TOutputImage >::New();
+    writer->SetFileName(fname);
+    cast->Update();
+    
+    if(minc_type!=-1) 
+      minc::set_minc_storage_type(cast->GetOutput(),(nc_type)minc_type,minc_type!=NC_BYTE); //store byte as unsigned only
+    
+    writer->SetInput( cast->GetOutput() );
+    writer->Update();
   }
+  
 
+  virtual void load_and_save_image(IOBase* io,const char *fname,itk::ImageIOBase::IOComponentType oct)
+  {
+    switch(oct)
+    {
+      case itk::ImageIOBase::UCHAR:
+        this->_load_and_save_image<itk::VectorImage<unsigned char, InputImageType::ImageDimension> >(io,fname);
+        break;
+      case itk::ImageIOBase::CHAR:
+        this->_load_and_save_image<itk::VectorImage<char, InputImageType::ImageDimension> >(io,fname);
+        break;
+      case itk::ImageIOBase::USHORT:
+        _load_and_save_image<itk::VectorImage<unsigned short, InputImageType::ImageDimension> >(io,fname);
+        break;
+      case itk::ImageIOBase::SHORT:
+        _load_and_save_image<itk::VectorImage<short, InputImageType::ImageDimension> >(io,fname);
+        break;
+      case itk::ImageIOBase::INT:
+        _load_and_save_image<itk::VectorImage<int, InputImageType::ImageDimension> >(io,fname);
+        break; 
+      case itk::ImageIOBase::UINT:
+        _load_and_save_image<itk::VectorImage<unsigned int, InputImageType::ImageDimension> >(io,fname);
+        break; 
+      case itk::ImageIOBase::FLOAT:
+        _load_and_save_image<itk::VectorImage<float, InputImageType::ImageDimension> >(io,fname);
+        break; 
+      case itk::ImageIOBase::DOUBLE:
+        _load_and_save_image<itk::VectorImage<double, InputImageType::ImageDimension> >(io,fname);
+        break; 
+      default:
+        itk::ExceptionObject("Unsupported component type");
+    }
+  }
 };
-
-
-
 
 int main(int argc,char **argv)
 {
@@ -455,6 +521,8 @@ int main(int argc,char **argv)
   char *_history = time_stamp(argc, argv);
   std::string history=_history;
   int use_b_matrix=0;
+  int dwi_flip_z=0;
+  int minc_type=-1;
   
   int store_char=0,store_uchar=0,store_short=0,store_ushort=0,store_float=0,store_int=0,store_uint=0,store_double=0;
   
@@ -472,6 +540,7 @@ int main(int argc,char **argv)
     {"dti", no_argument, &assume_dti, 1},
     {"dwi", no_argument, &assume_dti, 1},
     {"use-b-matrix",no_argument, &use_b_matrix, 1},
+    {"dwi-flip-z",no_argument, &dwi_flip_z, 1},
     
     {"float", no_argument, &store_float, 1},
     {"double", no_argument, &store_double, 1},
@@ -481,7 +550,13 @@ int main(int argc,char **argv)
     {"ushort", no_argument, &store_ushort, 1},
     {"int", no_argument, &store_int, 1},
     {"uint", no_argument, &store_uint, 1},
-    
+
+    {"mfloat",  no_argument, &minc_type, NC_FLOAT},
+    {"mdouble", no_argument, &minc_type, NC_DOUBLE},
+    {"mbyte",   no_argument, &minc_type, NC_BYTE},
+    {"mshort",  no_argument, &minc_type, NC_SHORT},
+    {"mint",    no_argument, &minc_type, NC_INT},
+ 
     {0, 0, 0, 0}
   };
     
@@ -545,137 +620,114 @@ int main(int argc,char **argv)
     size_t nd = io->GetNumberOfDimensions();
     size_t nc = io->GetNumberOfComponents();
     itk::ImageIOBase::IOComponentType  ct = io->GetComponentType();
+    itk::ImageIOBase::IOComponentType  oct = ct;
+    
+  
+    if(store_char)
+      oct=itk::ImageIOBase::CHAR;
+    else if(store_uchar)
+      oct=itk::ImageIOBase::UCHAR;
+    else if(store_short)
+      oct=itk::ImageIOBase::SHORT;
+    else if(store_ushort)
+      oct=itk::ImageIOBase::USHORT;
+    else if(store_int)
+      oct=itk::ImageIOBase::INT;
+    else if(store_uint)
+      oct=itk::ImageIOBase::UINT;
+    else if(store_float)
+      oct=itk::ImageIOBase::FLOAT;
+    else if(store_double)
+      oct=itk::ImageIOBase::DOUBLE;
+    
     std::string ct_s = io->GetComponentTypeAsString(ct);
+    std::string oct_s = io->GetComponentTypeAsString(oct);
+
     
     if(verbose)
     {
       std::cout<<"dimensions:"<< nd << std::endl
                <<"components:"<< nc << std::endl
-               <<"type:"<<ct_s.c_str()<<std::endl;
+               <<"input type:"<< ct_s.c_str() <<std::endl
+               <<"output type:"<<oct_s.c_str()<<std::endl;
     }
     
-    if(store_char)
-      ct=itk::ImageIOBase::CHAR;
-    else if(store_uchar)
-      ct=itk::ImageIOBase::UCHAR;
-    else if(store_short)
-      ct=itk::ImageIOBase::SHORT;
-    else if(store_ushort)
-      ct=itk::ImageIOBase::USHORT;
-    else if(store_int)
-      ct=itk::ImageIOBase::INT;
-    else if(store_uint)
-      ct=itk::ImageIOBase::UINT;
-    else if(store_float)
-      ct=itk::ImageIOBase::FLOAT;
-    else if(store_double)
-      ct=itk::ImageIOBase::DOUBLE;
     
     ImageConverterBase *converter=NULL;
     
-    if(nd==3 && nc==1)
+    if(nd==3 || assume_dti)
     {
       if(verbose) std::cout<<"Writing 3D image..."<<std::endl;
       switch(ct)
       { 
         case itk::ImageIOBase::UCHAR :
-          converter=new ImageConverter<itk::Image<unsigned char, 3> >();
+          converter=new ImageConverter<itk::VectorImage<unsigned char, 3> >();
           break;
         case itk::ImageIOBase::CHAR :
-          converter=new ImageConverter<itk::Image<char, 3> >();
+          converter=new ImageConverter<itk::VectorImage<char, 3> >();
           break;
         case itk::ImageIOBase::USHORT :
-          converter=new ImageConverter<itk::Image<unsigned short, 3> >();
+          converter=new ImageConverter<itk::VectorImage<unsigned short, 3> >();
           break;
         case itk::ImageIOBase::SHORT :
-          converter=new ImageConverter<itk::Image<short, 3> >();
+          converter=new ImageConverter<itk::VectorImage<short, 3> >();
           break;
         case itk::ImageIOBase::INT :
-          converter=new ImageConverter<itk::Image<int, 3> >();
+          converter=new ImageConverter<itk::VectorImage<int, 3> >();
           break; 
         case itk::ImageIOBase::UINT:
-          converter=new ImageConverter<itk::Image<unsigned int, 3> >();
+          converter=new ImageConverter<itk::VectorImage<unsigned int, 3> >();
            break; 
         case itk::ImageIOBase::FLOAT :
-          converter=new ImageConverter<itk::Image<float, 3> >();
+          converter=new ImageConverter<itk::VectorImage<float, 3> >();
           break; 
         case itk::ImageIOBase::DOUBLE:
-          converter=new ImageConverter<itk::Image<double, 3> >();
+          converter=new ImageConverter<itk::VectorImage<double, 3> >();
           break; 
         default:
           itk::ExceptionObject("Unsupported component type");
       }
-    } else if((nd==4 && nc==1 && !assume_dti)) {
+    } else if(nd==4  ) { //|| (nd==3 && nc>1)
       if(verbose) std::cout<<"Writing 4D image..."<<std::endl;
         switch(ct)
         {
           case itk::ImageIOBase::UCHAR:
-            converter=new ImageConverter<itk::Image<unsigned char, 4> >();
+            converter=new ImageConverter<itk::VectorImage<unsigned char, 4> >();
             break;
           case itk::ImageIOBase::CHAR:
-            converter=new ImageConverter<itk::Image<char, 4> >();
+            converter=new ImageConverter<itk::VectorImage<char, 4> >();
             break;
           case itk::ImageIOBase::USHORT:
-            converter=new ImageConverter<itk::Image<unsigned short, 4> >();
+            converter=new ImageConverter<itk::VectorImage<unsigned short, 4> >();
             break;
           case itk::ImageIOBase::SHORT:
-            converter=new ImageConverter<itk::Image<short, 4> >();
+            converter=new ImageConverter<itk::VectorImage<short, 4> >();
             break;
           case itk::ImageIOBase::INT:
-            converter=new ImageConverter<itk::Image<int, 4> >();
+            converter=new ImageConverter<itk::VectorImage<int, 4> >();
             break; 
           case itk::ImageIOBase::UINT:
-            converter=new ImageConverter<itk::Image<unsigned int, 4> >();
+            converter=new ImageConverter<itk::VectorImage<unsigned int, 4> >();
             break; 
           case itk::ImageIOBase::FLOAT:
-            converter=new ImageConverter<itk::Image<float, 4> >();
+            converter=new ImageConverter<itk::VectorImage<float, 4> >();
             break; 
           case itk::ImageIOBase::DOUBLE:
-            converter=new ImageConverter<itk::Image<double, 4> >();
+            converter=new ImageConverter<itk::VectorImage<double, 4> >();
             break; 
           default:
             itk::ExceptionObject("Unsupported component type");
         }
-    } else if(((nd==3 && nc>1) || assume_dti)) {
-        if(verbose) std::cout<<"Writing multicomponent 3D image..."<<std::endl;
-
-        switch(ct)
-        {
-          case itk::ImageIOBase::UCHAR:
-            converter=new ImageConverter<itk::VectorImage<unsigned char, 3> >();
-            break;
-          case itk::ImageIOBase::CHAR:
-            converter=new ImageConverter<itk::VectorImage<char, 3> >();
-            break;
-          case itk::ImageIOBase::USHORT:
-            converter=new ImageConverter<itk::VectorImage<unsigned short, 3> >();
-            break;
-          case itk::ImageIOBase::SHORT:
-            converter=new ImageConverter<itk::VectorImage<short, 3> >();
-            break;
-          case itk::ImageIOBase::INT:
-            converter=new ImageConverter<itk::VectorImage<int, 3> >();
-            break; 
-          case itk::ImageIOBase::UINT:
-            converter=new ImageConverter<itk::VectorImage<unsigned int, 3> >();
-            break; 
-          case itk::ImageIOBase::FLOAT:
-            converter=new ImageConverter<itk::VectorImage<float, 3> >();
-            break; 
-          case itk::ImageIOBase::DOUBLE:
-            converter=new ImageConverter<itk::VectorImage<double, 3> >();
-            break; 
-          default:
-            itk::ExceptionObject("Unsupported component type");
-        }
-    } else {
+    } 
+    else {
         throw itk::ExceptionObject("Unsupported number of dimensions");
     }
     
     if(converter)
     {
-      converter->setup(verbose,assume_dti,use_b_matrix,inv_x,inv_y,inv_z,center,show_meta,history);
-      converter->load_and_save_image(io,output.c_str());
+      converter->setup(verbose,assume_dti,use_b_matrix,dwi_flip_z,inv_x,inv_y,inv_z,center,show_meta,history,minc_type);
+      converter->load_and_save_image(io,output.c_str(),oct);
+      
       delete converter;
     }
   }
