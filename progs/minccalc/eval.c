@@ -20,7 +20,7 @@
 scalar_t   eval_index(int, int *, node_t, vector_t, scalar_t);
 scalar_t   eval_sum(int, int *, node_t, vector_t);
 scalar_t   eval_prod(int, int *, node_t, vector_t);
-scalar_t   eval_max(int, int *, node_t, vector_t, double);
+scalar_t   eval_max(int, int *, node_t, vector_t, double, int);
 vector_t   eval_vector(int, int *, node_t, sym_t);
 vector_t   gen_vector(int, int *, node_t, sym_t);
 vector_t   gen_range(int, int *, node_t, sym_t);
@@ -315,13 +315,25 @@ scalar_t eval_scalar(int width, int *eval_flags, node_t n, sym_t sym){
       
    case NODETYPE_MAX:
       v = eval_vector(width, eval_flags, n->expr[0], sym);
-      s = eval_max(width, eval_flags, n, v, 1.0);
+      s = eval_max(width, eval_flags, n, v, 1.0, 0);
       vector_free(v);
       return s;
       
    case NODETYPE_MIN:
       v = eval_vector(width, eval_flags, n->expr[0], sym);
-      s = eval_max(width, eval_flags, n, v, -1.0);
+      s = eval_max(width, eval_flags, n, v, -1.0, 0);
+      vector_free(v);
+      return s;
+      
+   case NODETYPE_IMAX:
+      v = eval_vector(width, eval_flags, n->expr[0], sym);
+      s = eval_max(width, eval_flags, n, v, 1.0, 1);
+      vector_free(v);
+      return s;
+      
+   case NODETYPE_IMIN:
+      v = eval_vector(width, eval_flags, n->expr[0], sym);
+      s = eval_max(width, eval_flags, n, v, -1.0, 1);
       vector_free(v);
       return s;
       
@@ -532,27 +544,29 @@ scalar_t eval_prod(int width, int *eval_flags, node_t n, vector_t v)
 }
 
 /* Find the maximum of a vector. Sign should be +1.0 for maxima search
-   and -1.0 for minima search */
+   and -1.0 for minima search.
+   type should be 0 for value and 1 for index */
 scalar_t eval_max(int width, int *eval_flags, 
-                  node_t n, vector_t v, double sign)
+                  node_t n, vector_t v, double sign, int type)
 {
    int i, ivalue;
    scalar_t result;
-   double value, ans;
+   double value, max, idx;
 
    result = new_scalar(width);
    for (ivalue=0; ivalue < width; ivalue++) {
       if (eval_flags != NULL && !eval_flags[ivalue]) continue;
-      result->vals[ivalue] = ans = INVALID_VALUE;
+      result->vals[ivalue] = max = INVALID_VALUE;
       for (i = 0; i < v->len; i++) {
          value = v->el[i]->vals[ivalue];
          if (value != INVALID_VALUE) {
-            if (ans == INVALID_VALUE || (sign*(value-ans) > 0.0)) {
-               ans = value;
+            if (max == INVALID_VALUE || (sign*(value-max) > 0.0)) {
+               max = value;
+               idx = (double)i;
             }
          }
       }
-      result->vals[ivalue] = ans;
+      result->vals[ivalue] = (type == 0) ? max : idx;
    }
    return result;
 }

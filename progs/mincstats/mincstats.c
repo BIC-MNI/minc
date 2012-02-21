@@ -521,7 +521,7 @@ otsu_threshold(float histo[], float hist_centre[], int hist_bins)
     double sigma_T;
     double mu_T;
     double mu_k;
-    int sum;
+    double sum;
     int k_low, k_high;
     double mu_0, mu_1, mu;
 
@@ -530,12 +530,12 @@ otsu_threshold(float histo[], float hist_centre[], int hist_bins)
         return (0.0);
     }
 
-    sum = 0;
+    sum = 0.0;
     for (i = 0; i < hist_bins; i++)
-        sum += histo[i];
+        sum += (double)histo[i];
 
     for (i = 0; i < hist_bins; i++)
-        p[i] = histo[i] * 1.0 / sum;
+        p[i] = (double)histo[i] / sum;
 
     mu_T = 0.0;
     for (i = 0; i < hist_bins; i++)

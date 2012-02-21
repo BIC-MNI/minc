@@ -17,6 +17,8 @@ nodenames[] = {
         { NODETYPE_LEN,      "len" },
         { NODETYPE_MAX,      "max" },
         { NODETYPE_MIN,      "min" },
+        { NODETYPE_IMAX,     "imax" },
+        { NODETYPE_IMIN,     "imin" },
         { NODETYPE_IDENT,    "ident" },
         { NODETYPE_REAL,     "real" },
         { NODETYPE_LET,      "let" },

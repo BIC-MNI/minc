@@ -228,6 +228,8 @@ supplied:
    prod - the product of the elements of
    max  - the maximum value of
    min  - the minimum value of
+   imax - the index of the maximum value of
+   imin - the index of the minimum value of
    V[s] - the s'th element of vector V with origin 0.
 
 Symbol names are introduced into a global symbol table by assignment
