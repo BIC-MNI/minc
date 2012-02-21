@@ -1,3 +1,8 @@
+
+2012-02-22  Andrew L Janke <a.janke@gmail.com>
+   * added a patch from Steve Robbins that factors references to PATH_MAX
+      out to fix a build problem on hurd
+
 2011-12-20  Andrew L Janke <a.janke@gmail.com>
    * libsrc/netcdf_convenience.c: changed execute_decompress_command()
       to always decompress the whole file as the approach used for
