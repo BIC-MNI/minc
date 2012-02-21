@@ -67,6 +67,7 @@ include_volume_io_HEADERS = \
 # not part of the installation.
 #
 noinst_HEADERS = \
+	libsrc/read_file_names.h \
 	libsrc/minc_basic.h \
 	libsrc/minc_config.h \
 	libsrc/minc_error.h \
@@ -425,6 +426,7 @@ byte_swap_SOURCES = conversion/image_filters/byte_swap.c
 libminc2_la_LDFLAGS = -version-info 2:3:1
 libminc2_la_SOURCES = \
 	libsrc/ParseArgv.c \
+	libsrc/read_file_names.c \
 	libsrc/dim_conversion.c \
 	libsrc/image_conversion.c \
 	libsrc/minc_convenience.c \
