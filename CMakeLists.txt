@@ -211,6 +211,7 @@ SET(minc1_LIB_SRCS
    libsrc/hdf_convenience.c
    libsrc/minc_compat.c
    libsrc/minc_simple.c
+   libsrc/read_file_names.c
    )
 
 SET(minc2_LIB_SRCS

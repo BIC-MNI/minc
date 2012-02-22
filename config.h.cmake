@@ -7,6 +7,8 @@
 #define PACKAGE_STRING "@PACKAGE_STRING@"
 #define VERSION PACKAGE_VERSION
 
+#define H5Acreate_vers 2
+
 #cmakedefine01 HAVE_MKSTEMP 
 #cmakedefine01 HAVE_STRERROR 
 #cmakedefine01 HAVE_FLOAT_H 
