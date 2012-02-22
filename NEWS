@@ -1,15 +1,19 @@
-New in Release 
+New in Release 2.1.10
 ---------------------
+* added imin() and imax() operators to minccalc
+* added a minc_version global to files created with minc
+* Fixed a few HDF5 error output bugs
+* mincview is now coded in sh, not csh also shifted from xv to display
 * Fixed bug in dicom_to_minc.c for segmentation fault on undefined sequence
   (initialization of gi_ptr->cur_size)
-* Free some memory after usage
+* Fixed some memory leaks (thanks Jim Nikelski) 
 * Added b-matrix field for Siemens diffusion scans (version >= VB
-  only).
+  only). (thanks to Ilana Leppert)
 * Made changes to ordering of slices: e.g. a descending acquisition
   now has negative slice step. This was an issue with MOSAIC, in
   which the ordering of the slices in the MOSAIC image is ascending,
   even though the acquisition is descending (version >= VA25 and
-  >= VB11).
+  >= VB11). (thanks to Ilana Leppert)
 
 New in Release 2.1.00
 ---------------------

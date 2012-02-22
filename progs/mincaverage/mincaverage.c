@@ -105,6 +105,7 @@
 #include <ParseArgv.h>
 #include <time_stamp.h>
 #include <voxel_loop.h>
+#include "read_file_names.h"
 
 /* Constants */
 
@@ -165,7 +166,6 @@ static void finish_average(void *caller_data, long num_voxels,
                           double *output_data[],
                           Loop_Info *loop_info);
 static int get_double_list(char *dst, char *key, char *nextarg);
-static char **read_file_names(char *filelist, int *num_files);
 
 /* Argument variables */
 static int clobber = FALSE;
@@ -1010,91 +1010,3 @@ static int get_double_list(char *dst, char *key, char *nextarg)
 
    return TRUE;
 }
-
-/* ----------------------------- MNI Header -----------------------------------
-@NAME       : read_file_names
-@INPUT      : filelist - name of file from which to read names
-@OUTPUT     : num_files - number of files read in
-@RETURNS    : Pointer to a NULL-terminated array of file names
-@DESCRIPTION: Reads in a list of file names from file filelist or stdin if 
-              "-" is specified. Returns NULL if an error occurs. If
-              no error occurs, then a pointer to an empty array is 
-              returned and num_files is zero.
-@METHOD     : 
-@GLOBALS    : 
-@CALLS      : 
-@CREATED    : March 8, 1995 (Peter Neelin)
-@MODIFIED   : 
----------------------------------------------------------------------------- */
-static char **read_file_names(char *filelist, int *num_files)
-{
-#define FILE_NAME_ALLOC_SIZE 10
-   char **files;
-   int array_size;
-   int nfiles;
-   FILE *fp;
-   char line[PATH_MAX+1];
-   int length;
-
-   /* Open the file */
-   if (strcmp(filelist, "-") == 0) {
-      fp = stdin;
-   }
-   else {
-      fp = fopen(filelist, "r");
-      if (fp == NULL) {
-         (void) fprintf(stderr, "Error opening file \"%s\"\n", filelist);
-         return NULL;
-      }
-   }
-
-   /* Allocate an initial array and NULL-terminate it */
-   array_size = FILE_NAME_ALLOC_SIZE;
-   files = malloc(sizeof(*files) * array_size);
-   if (files == NULL) {
-      (void) fprintf(stderr, "Error allocating memory\n");
-      return NULL;
-   }
-   nfiles = 0;
-   files[nfiles] = NULL;
-
-   /* Read in file names */
-   while (fgets(line, sizeof(line)/sizeof(line[0]), fp) != NULL) {
-
-      /* Remove a trailing newline and check that there is a name */
-      length = strlen(line);
-      if ((length > 0) && (line[length-1] == '\n')) {
-         line[length-1] = '\0';
-         length--;
-      }
-      if (length == 0) continue;
-
-      /* Make room for names if needed */
-      while (nfiles >= array_size-1) {
-         array_size += FILE_NAME_ALLOC_SIZE;
-         files = realloc(files, sizeof(*files) * array_size);
-         if (files == NULL) {
-            (void) fprintf(stderr, "Error allocating memory\n");
-            return NULL;
-         }
-      }
-
-      /* Save the name, making sure that the list is NULL-terminated */
-      files[nfiles] = strdup(line);
-      if (files[nfiles] == NULL) {
-         (void) fprintf(stderr, "Error allocating memory\n");
-         return NULL;
-      }
-      nfiles++;
-      files[nfiles] = NULL;
-   }
-
-   /* Close the file */
-   (void) fclose(fp);
-
-   /* Return the number of files */
-   *num_files = nfiles;
-
-   return files;
-}
-

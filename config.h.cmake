@@ -47,3 +47,6 @@
 #cmakedefine01 HAVE_ZLIB 
 #cmakedefine01 HAVE_STRINGS_H 
 #cmakedefine01 HAVE_STRING_H 
+
+#define H5Acreate_vers 2
+
