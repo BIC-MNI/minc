@@ -116,56 +116,6 @@ IF(BUILD_MINC2)
   ENDIF(USE_ITK_HDF5)
 ENDIF(BUILD_MINC2)
 
-IF(BUILD_MINC2)
- OPTION(USE_SYSTEM_HDF5 "Use System HDF5 > 1.8 " OFF)
-ENDIF(BUILD_MINC2)
-
-# external packages
-IF(USE_SYSTEM_NETCDF)
-  FIND_PACKAGE(NETCDF REQUIRED)
-  
-ELSE(USE_SYSTEM_NETCDF)
-  ExternalProject_Add(NETCDF 
-    SOURCE_DIR NETCDF
-    URL "ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-4.0.1.tar.gz"
-    URL_MD5 "a251453c5477599f050fa4e593295186"
-    BUILD_IN_SOURCE 1
-    INSTALL_DIR "${CMAKE_INSTALL_PREFIX}"
-    BUILD_COMMAND   make 
-    INSTALL_COMMAND make install 
-    CONFIGURE_COMMAND ./configure --prefix=${CMAKE_INSTALL_PREFIX} --with-pic --disable-netcdf4 --disable-hdf4 --disable-dap --disable-shared --disable-cxx --disable-f77 --disable-f90 --disable-examples --enable-v2 --disable-docs
-  )
-
-  SET(NETCDF_LIBRARY ${CMAKE_INSTALL_PREFIX}/lib/libnetcdf.a )
-  SET(NETCDF_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include )
-ENDIF(USE_SYSTEM_NETCDF)
-
-
-IF(BUILD_MINC2)
-  IF(USE_SYSTEM_HDF5 )
-#     SET(HDF5_FIND_COMPONENTS "C")
-#     SET(HDF5_USE_STATIC_LIBRARIES ON)
-    FIND_PACKAGE(HDF5 REQUIRED)
-  ELSE(USE_SYSTEM_HDF5)
-
-    ExternalProject_Add(HDF5
-      SOURCE_DIR HDF5
-      URL "http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.7/src/hdf5-1.8.7.tar.gz"
-      URL_MD5 "37711d4bcb72997e93d495f97c76c33a"
-      BUILD_IN_SOURCE 1
-      INSTALL_DIR     "${CMAKE_INSTALL_PREFIX}"
-      BUILD_COMMAND   make 
-      INSTALL_COMMAND make install 
-      CONFIGURE_COMMAND ./configure --prefix=${CMAKE_INSTALL_PREFIX}  --with-pic --disable-shared --disable-cxx --disable-f77 --disable-f90 --disable-examples --disable-hl --disable-docs
-    )
-
-    SET(HDF5_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include )
-    SET(HDF5_LIBRARY  ${CMAKE_INSTALL_PREFIX}/lib/libhdf5.a )
-
-  ENDIF(USE_SYSTEM_HDF5)
-ENDIF(BUILD_MINC2)
-
-
 ADD_DEFINITIONS(-DHAVE_CONFIG_H)
 
 # aliases
