@@ -149,9 +149,7 @@ public:
       } else {
         double max_b_value=*std::max_element(bvalues.begin(),bvalues.end());
         if(verbose)
-        {
           std::cout<<"Found maximum B-value:"<<max_b_value<<std::endl;
-        }
         
         itk::EncapsulateMetaData<std::string>( dict,
           "modality",
@@ -410,11 +408,13 @@ public:
     }
     
     //making sure that all vcrtors contain the same number of parameters (just in case)
-    if( thisDic.HasKey( "acquisition:bvalues") &&
+    if( thisDic.HasKey( "acquisition:bvalues"    ) &&
         thisDic.HasKey( "acquisition:direction_x") &&
         thisDic.HasKey( "acquisition:direction_y") &&
         thisDic.HasKey( "acquisition:direction_z"))
     {
+      if(verbose)
+        std::cout<<"Converting MINC-style DWI to NRRD style"<<std::endl;
       convert_meta_minc_to_nrrd(thisDic);
     } else if ( thisDic.HasKey("DWMRI_b-value")  ) {
       //We have got NRRD-style DTI metadata
@@ -457,7 +457,8 @@ public:
       org[2]-=c[2];
       
       img->SetOrigin(org);
-    }  
+    }
+    
     if(!history.empty())
       minc::append_history(img,history);
     
@@ -468,6 +469,8 @@ public:
     typename itk::ImageFileWriter< TOutputImage >::Pointer writer = itk::ImageFileWriter<TOutputImage >::New();
     writer->SetFileName(fname);
     cast->Update();
+    
+    cast->GetOutput()->SetMetaDataDictionary(thisDic);
     
     if(minc_type!=-1) 
       minc::set_minc_storage_type(cast->GetOutput(),(nc_type)minc_type,minc_type!=NC_BYTE); //store byte as unsigned only
