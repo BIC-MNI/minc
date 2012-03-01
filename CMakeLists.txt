@@ -3,7 +3,7 @@
 # Andrew Janke - a.janke@gmail.com
 # Vladimir S. FONOV - vladimir.fonov@gmail.com
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 INCLUDE(ExternalProject)
 
 PROJECT(minc2)
@@ -11,6 +11,14 @@ PROJECT(minc2)
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake-modules")
 ENABLE_TESTING()
 INCLUDE(CTest)
+
+IF(CMAKE_VERSION VERSION_GREATER 2.8.2)
+INCLUDE(BuildNETCDF)
+INCLUDE(BuildHDF5)
+SET(ENABLE_SUPERBUILD ON)
+ELSE(CMAKE_VERSION VERSION_GREATER 2.8.2)
+SET(ENABLE_SUPERBUILD OFF)
+ENDIF(CMAKE_VERSION VERSION_GREATER 2.8.2)
 
 #ADD_SUBDIRECTORY( doc )
 
@@ -34,8 +42,12 @@ OPTION(BUILD_MINC2       "Support minc2 file format" ON)
 OPTION(BUILD_TOOLS       "Build minc tools (mincreshape,mincresample, etc)" ON)
 OPTION(BUILD_CONVERTERS  "Build minc conversion programs (mnc2nii, nii2mnc , dcm2mnc...)" ON)
 OPTION(BUILD_EZMINC      "Build C++ interface library EZminc" ON)
-OPTION(USE_SYSTEM_NETCDF "Use System NETCDF > 3.6.3" OFF)
 
+IF(ENABLE_SUPERBUILD)
+OPTION(USE_SYSTEM_NETCDF "Use System NETCDF > 3.6.3" OFF)
+ELSE(ENABLE_SUPERBUILD)
+SET(USE_SYSTEM_NETCDF ON)
+ENDIF(ENABLE_SUPERBUILD)
 
 FIND_PACKAGE(ITK QUIET)
 
@@ -50,10 +62,14 @@ IF(BUILD_MINC2)
   message(WARNING "ITK compiled with HDF5 support!")
     SET(USE_ITK_HDF5 ON)
   ENDIF(ITKHDF5_LOADED)#ITK_MODULES_ENABLED MATCHES "ITKHDF5"
-
  ELSE(ITK_FOUND AND ITK_VERSION_MAJOR VERSION_EQUAL 4) # check if using ITK HDF5 library
-  OPTION(USE_SYSTEM_HDF5 "Use System HDF5 > 1.8 " OFF)
-  SET(USE_ITK_HDF5 OFF)
+ 
+  IF(ENABLE_SUPERBUILD)
+  OPTION(USE_SYSTEM_HDF5 "Use System HDF5 > 1.8" OFF)
+  ELSE(ENABLE_SUPERBUILD)
+  SET(USE_SYSTEM_HDF5 ON)
+  ENDIF(ENABLE_SUPERBUILD)
+  
  ENDIF(ITK_FOUND AND ITK_VERSION_MAJOR VERSION_EQUAL 4) # check if using ITK HDF5 library
 
 ENDIF(BUILD_MINC2)
@@ -71,19 +87,7 @@ IF(USE_SYSTEM_NETCDF)
   FIND_PACKAGE(NETCDF REQUIRED)
   
 ELSE(USE_SYSTEM_NETCDF)
-  ExternalProject_Add(NETCDF 
-    SOURCE_DIR NETCDF
-    URL "ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-4.0.1.tar.gz"
-    URL_MD5 "a251453c5477599f050fa4e593295186"
-    BUILD_IN_SOURCE 1
-    INSTALL_DIR "${CMAKE_INSTALL_PREFIX}"
-    BUILD_COMMAND   make 
-    INSTALL_COMMAND make install 
-    CONFIGURE_COMMAND ./configure --prefix=${CMAKE_INSTALL_PREFIX} --with-pic --disable-netcdf4 --disable-hdf4 --disable-dap --disable-shared --disable-cxx --disable-f77 --disable-f90 --disable-examples --enable-v2 --disable-docs
-  )
-
-  SET(NETCDF_LIBRARY ${CMAKE_INSTALL_PREFIX}/lib/libnetcdf.a )
-  SET(NETCDF_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include )
+  build_netcdf(${CMAKE_INSTALL_PREFIX})
 ENDIF(USE_SYSTEM_NETCDF)
 
 
@@ -92,28 +96,16 @@ IF(BUILD_MINC2)
     SET(HDF5_INCLUDE_DIR ${ITKHDF5_INCLUDE_DIRS})
     SET(HDF5_LIBRARY ${ITKHDF5_LIBRARIES})
     SET(ZLIB_LIBRARIES ${ITKZLIB_LIBRARIES})
+    
   ELSE(USE_ITK_HDF5)
     FIND_PACKAGE(ZLIB REQUIRED)
 
     IF(USE_SYSTEM_HDF5 )
       FIND_PACKAGE(HDF5 REQUIRED)
     ELSE(USE_SYSTEM_HDF5)
-
-      ExternalProject_Add(HDF5
-        SOURCE_DIR HDF5
-        URL "http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.7/src/hdf5-1.8.7.tar.gz"
-        URL_MD5 "37711d4bcb72997e93d495f97c76c33a"
-        BUILD_IN_SOURCE 1
-        INSTALL_DIR     "${CMAKE_INSTALL_PREFIX}"
-        BUILD_COMMAND   make 
-        INSTALL_COMMAND make install 
-        CONFIGURE_COMMAND ./configure --prefix=${CMAKE_INSTALL_PREFIX}  --with-pic --disable-shared --disable-cxx --disable-f77 --disable-f90 --disable-examples --disable-hl --disable-docs
-      )
-
-      SET(HDF5_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include )
-      SET(HDF5_LIBRARY  ${CMAKE_INSTALL_PREFIX}/lib/libhdf5.a )
-
+      build_hdf5(${CMAKE_INSTALL_PREFIX})
     ENDIF(USE_SYSTEM_HDF5)
+    
   ENDIF(USE_ITK_HDF5)
 ENDIF(BUILD_MINC2)
 
@@ -158,8 +150,7 @@ CHECK_INCLUDE_FILES(vfork.h     HAVE_VFORK_H)
 CHECK_INCLUDE_FILES(inttypes.h  HAVE_INTTYPES_H)
 CHECK_INCLUDE_FILES(string.h    HAVE_STRING_H)
 CHECK_INCLUDE_FILES(strings.h   HAVE_STRINGS_H)
-CHECK_INCLUDE_FILES(pwd.h   HAVE_PWD_H)
-
+CHECK_INCLUDE_FILES(pwd.h       HAVE_PWD_H)
 
 
 IF(ZLIB_FOUND)
