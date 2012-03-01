@@ -41,7 +41,8 @@ void show_usage (const char *name)
       << " DWI related flags "<<std::endl
       << "--dwi - assume that we are dealing with DWI scan"<<std::endl
       << "--use-b-matrix - convert b-matrix (if present) into DWI gradient directions and b-value, implies DWI"<<std::endl
-      << "--dwi-flip-z - flip Z component of DWI gradient direction (for compatibility with MINC)"<<std::endl
+      << "--minc-to-nrrd Convert minc style to nrrd style "<<std::endl
+      << "--nrrd-to-minc Convert nrrd style to minc style "<<std::endl
       << " Data conversion flags: "<<std::endl
       << "--char   - cast data as signed char"<<std::endl
       << "--byte   - cast data as unsigned char"<<std::endl
@@ -78,7 +79,8 @@ protected:
   bool center;
   bool show_meta;
   int  minc_type;
-  
+  bool minc_to_nrrd;
+  bool nrrd_to_minc;
 public:
   void setup(bool _verbose=false,
               bool _assume_dti=false,
@@ -88,7 +90,9 @@ public:
               bool _center=false, 
               bool _show_meta=false,
               const std::string _history="",
-              int _minc_type=-1
+              int _minc_type=-1,
+              bool _minc_to_nrrd=false,
+              bool _nrrd_to_minc=false
             )
   {
     assume_dti=_assume_dti;
@@ -102,6 +106,8 @@ public:
     center=_center;
     show_meta=_show_meta;
     minc_type=_minc_type;
+    minc_to_nrrd=_minc_to_nrrd;
+    nrrd_to_minc=_nrrd_to_minc;
   }
   
   virtual void load_and_save_image(IOBase* base,const char *fname,itk::ImageIOBase::IOComponentType oct)=0;
@@ -245,6 +251,10 @@ public:
     std::string b_value_,gradient_value_;
     double bval=0.0,vect3d[3];
     double_vector bvalues,direction_x,direction_y,direction_z;
+    
+    //remove B-matrix, it is of no use now
+    //if(dict.HasKey( "acquisition:b_matrix" ))
+      
     
     if(itk::ExposeMetaData<std::string>( dict,"DWMRI_b-value", b_value_))
     {
@@ -407,18 +417,23 @@ public:
       }
     }
     
-    //making sure that all vcrtors contain the same number of parameters (just in case)
+    //making sure that all vectors contain the same number of parameters (just in case)
     if( thisDic.HasKey( "acquisition:bvalues"    ) &&
         thisDic.HasKey( "acquisition:direction_x") &&
         thisDic.HasKey( "acquisition:direction_y") &&
-        thisDic.HasKey( "acquisition:direction_z"))
+        thisDic.HasKey( "acquisition:direction_z") && 
+        !nrrd_to_minc)
     {
       if(verbose)
         std::cout<<"Converting MINC-style DWI to NRRD style"<<std::endl;
       convert_meta_minc_to_nrrd(thisDic);
-    } else if ( thisDic.HasKey("DWMRI_b-value")  ) {
+    } else if ( thisDic.HasKey("DWMRI_b-value")  && !minc_to_nrrd  ) {
       //We have got NRRD-style DTI metadata
+      if(verbose)
+        std::cout<<"Converting NRRD-style DWI to MINC style"<<std::endl;
       convert_meta_nrrd_to_minc(thisDic);
+    } else if( nrrd_to_minc || minc_to_nrrd) {
+      std::cerr<<"ERROR: requested DWI headers are missing!"<<std::endl;
     }
 
     if(verbose)
@@ -526,6 +541,8 @@ int main(int argc,char **argv)
   int use_b_matrix=0;
   int dwi_flip_z=0;
   int minc_type=-1;
+  int nrrd_to_minc=0;
+  int minc_to_nrrd=0;
   
   int store_char=0,store_uchar=0,store_short=0,store_ushort=0,store_float=0,store_int=0,store_uint=0,store_double=0;
   
@@ -543,7 +560,8 @@ int main(int argc,char **argv)
     {"dti", no_argument, &assume_dti, 1},
     {"dwi", no_argument, &assume_dti, 1},
     {"use-b-matrix",no_argument, &use_b_matrix, 1},
-    {"dwi-flip-z",no_argument, &dwi_flip_z, 1},
+    {"nrrd-to-minc",no_argument, &nrrd_to_minc, 1},
+    {"minc-to-nrrd",no_argument, &minc_to_nrrd, 1},
     
     {"float", no_argument, &store_float, 1},
     {"double", no_argument, &store_double, 1},
@@ -600,7 +618,9 @@ int main(int argc,char **argv)
     std::cerr << output.c_str () << " Exists!" << std::endl;
     return 1;
   }
- 
+  if(nrrd_to_minc || minc_to_nrrd)
+    dwi_flip_z=1;
+  
   try
   {
     itk::RegisterMincIO();
@@ -728,7 +748,7 @@ int main(int argc,char **argv)
     
     if(converter)
     {
-      converter->setup(verbose,assume_dti,use_b_matrix,dwi_flip_z,inv_x,inv_y,inv_z,center,show_meta,history,minc_type);
+      converter->setup(verbose,assume_dti,use_b_matrix,dwi_flip_z,inv_x,inv_y,inv_z,center,show_meta,history,minc_type,minc_to_nrrd,nrrd_to_minc);
       converter->load_and_save_image(io,output.c_str(),oct);
       
       delete converter;
