@@ -33,14 +33,14 @@ OPTION(BUILD_MINC2      "Support minc2 file format" ON)
 OPTION(BUILD_TOOLS      "Build minc tools (mincreshape,mincresample, etc)" ON)
 OPTION(BUILD_CONVERTERS "Build minc conversion programs (mnc2nii, nii2mnc , dcm2mnc...)" ON)
 OPTION(BUILD_EZMINC     "Build C++ interface library EZminc" ON)
-OPTION(USE_SYSTEM_NETCDF "Use System NETCDF > 3.6.3" OFF)
+OPTION(USE_SYSTEM_NETCDF "Use System NETCDF > 3.6.3" ON)
 
 IF(BUILD_EZMINC)
 OPTION(BUILD_MINC4ITK   "Build ITK interface" ON)
 ENDIF(BUILD_EZMINC)
 
 IF(BUILD_MINC2)
- OPTION(USE_SYSTEM_HDF5 "Use System HDF5 > 1.8 " OFF)
+ OPTION(USE_SYSTEM_HDF5 "Use System HDF5 > 1.8 " ON)
 ENDIF(BUILD_MINC2)
 
 # external packages
