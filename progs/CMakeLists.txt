@@ -155,7 +155,7 @@ INSTALL(TARGETS
    DESTINATION bin)
 
 # perl and shell scripts
-INSTALL(FILES
+INSTALL(PROGRAMS
    mincdiff/mincdiff  
    mincedit/mincedit  
    mincheader/mincheader  
@@ -165,10 +165,11 @@ INSTALL(FILES
    DESTINATION bin )
 
 
-configure_file(minchistory/minchistory.in ${CMAKE_CURRENT_BINARY_DIR}/minchistory @ONLY)
-add_custom_target(minchistory chmod +x ${CMAKE_CURRENT_BINARY_DIR}/minchistory DEPENDS minchistory/minchistory.in)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/minchistory/minchistory.in ${CMAKE_CURRENT_BINARY_DIR}/minchistory.pl @ONLY)
+add_custom_target(minchistory.pl chmod +x ${CMAKE_CURRENT_BINARY_DIR}/minchistory.pl DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/minchistory/minchistory.in)
 
-INSTALL(FILES
-  ${CMAKE_CURRENT_BINARY_DIR}/minchistory
+INSTALL(PROGRAMS
+  ${CMAKE_CURRENT_BINARY_DIR}/minchistory.pl
   PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ  WORLD_EXECUTE WORLD_READ
-   DESTINATION bin )
+   DESTINATION bin 
+	RENAME minchistory )
