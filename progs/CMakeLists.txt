@@ -159,17 +159,25 @@ INSTALL(PROGRAMS
    mincdiff/mincdiff  
    mincedit/mincedit  
    mincheader/mincheader  
-   mincpik/mincpik  
    mincview/mincview
    PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ  WORLD_EXECUTE WORLD_READ
    DESTINATION bin )
 
-
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/minchistory/minchistory.in ${CMAKE_CURRENT_BINARY_DIR}/minchistory.pl @ONLY)
 add_custom_target(minchistory.pl chmod +x ${CMAKE_CURRENT_BINARY_DIR}/minchistory.pl DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/minchistory/minchistory.in)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mincpik/mincpik.in ${CMAKE_CURRENT_BINARY_DIR}/mincpik.pl @ONLY)
+add_custom_target(mincpik.pl chmod +x ${CMAKE_CURRENT_BINARY_DIR}/mincpik.pl DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/mincpik/mincpik.in)
+
 
 INSTALL(PROGRAMS
   ${CMAKE_CURRENT_BINARY_DIR}/minchistory.pl
   PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ  WORLD_EXECUTE WORLD_READ
    DESTINATION bin 
-	RENAME minchistory )
+  RENAME minchistory )
+
+INSTALL(PROGRAMS
+  ${CMAKE_CURRENT_BINARY_DIR}/mincpik.pl
+  PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ  WORLD_EXECUTE WORLD_READ
+   DESTINATION bin 
+  RENAME mincpik )
