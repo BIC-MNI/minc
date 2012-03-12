@@ -16,6 +16,8 @@ progs/minccomplete/minccomplete.man1: progs/minccomplete/minccomplete
 	$(POD2MAN) --section=1 $< > $@
 progs/minchistory/minchistory.man1: progs/minchistory/minchistory
 	$(POD2MAN) --section=1 $< > $@
+progs/mincpik/mincpik.man1: progs/mincpik/mincpik
+	$(POD2MAN) --section=1 $< > $@
 
 # Add these to the include searches.
 #
@@ -172,13 +174,13 @@ dist_bin_SCRIPTS = \
 	progs/mincdiff/mincdiff \
 	progs/mincedit/mincedit \
 	progs/mincheader/mincheader \
-	progs/mincpik/mincpik \
 	progs/mincview/mincview
 
 # Scripts that we process (to add version #s) before install
 bin_SCRIPTS = \
 	progs/minccomplete/minccomplete \
 	progs/minchistory/minchistory \
+	progs/mincpik/mincpik \
    progs/xfm/xfmflip
 
 # Programs we build and install.
@@ -243,6 +245,7 @@ EXTRA_DIST = \
 	$(m4_files) \
 	progs/minccomplete/minccomplete.in \
 	progs/minchistory/minchistory.in \
+	progs/mincpik/mincpik.in \
 	progs/xfm/xfmflip.in \
 	libsrc/strdup.c \
 	epm-header.in \
