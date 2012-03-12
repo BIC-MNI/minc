@@ -159,7 +159,6 @@ INSTALL(FILES
    mincdiff/mincdiff  
    mincedit/mincedit  
    mincheader/mincheader  
-   mincpik/mincpik  
    mincview/mincview
    PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ  WORLD_EXECUTE WORLD_READ
    DESTINATION bin )
@@ -167,6 +166,10 @@ INSTALL(FILES
 
 configure_file(minchistory/minchistory.in ${CMAKE_CURRENT_BINARY_DIR}/minchistory @ONLY)
 add_custom_target(minchistory chmod +x ${CMAKE_CURRENT_BINARY_DIR}/minchistory DEPENDS minchistory/minchistory.in)
+
+configure_file(mincpik/mincpik.in ${CMAKE_CURRENT_BINARY_DIR}/mincpik @ONLY)
+add_custom_target(mincpik chmod +x ${CMAKE_CURRENT_BINARY_DIR}/mincpik DEPENDS mincpik/mincpik.in)
+
 
 INSTALL(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/minchistory
