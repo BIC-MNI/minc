@@ -432,7 +432,7 @@ if(defined($opt{'anot_bar'})){
    $bw = int($bh/10);
    
    # get range if not defined
-   if(!defined(@{$opt{'image_range'}[0]})){
+   if(!defined($opt{'image_range'}[0])){
       print STDERR "Getting image range\n" if $opt{'verbose'};
       
       @buf = split(/\n/, `mincstats -min -max -quiet $infile`);
