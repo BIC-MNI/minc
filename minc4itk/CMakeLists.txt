@@ -1,4 +1,5 @@
 FIND_PACKAGE(ITK REQUIRED)
+INCLUDE(${ITK_USE_FILE})
 
 IF(NOT ITK_LIBRARIES)
   MESSAGE( FATAL_ERROR "ITK libraries are not found!")
@@ -37,8 +38,8 @@ TARGET_LINK_LIBRARIES( minc4itk
     ${ITK_LIBRARIES}
     itkvnl_algo 
     itkvnl 
-    ${minc_LIB}
-    ${volume_io_LIB}
+    ${VOLUME_IO_LIBRARY}
+    ${MINC2_LIBRARIES}
     m 
     z )
 

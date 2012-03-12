@@ -891,6 +891,7 @@ add_siemens_info(Acr_Group group_list)
     char *str_ptr2=NULL;
     int interpolation_flag;
     int enc_ix, num_encodings, num_b0; 
+    int EXT=0; /*special handling when an external diffusion vector file is used*/
 
     element = acr_find_group_element(group_list, SPI_Protocol2);
     if (element != NULL) {
@@ -1067,7 +1068,7 @@ add_siemens_info(Acr_Group group_list)
          * assumptions:
          *
          *  - diffusion protocol indicated by sDiffusion.ulMode = 0x100
-	 *  - bvalue is in sDiffusionalBValue[0]
+	 *  - bvalue is in sDiffusion.alBValue[0]
          *  - there is 1 b=0 scans and 12 diffusion directions
          *  - b=0 scan havs sequence name "ep_b0"
          *  - encoded scans have seq names "ep_b1000#1, ep_b1000#2, ..." etc.
@@ -1082,7 +1083,7 @@ add_siemens_info(Acr_Group group_list)
          * assumptions:
          *
          *  - diffusion protocol indicated by sDiffusion.ulMode = 0x80
-	 *  - bvalue is in sDiffusionalBValue[1]
+	 *  - bvalue is in sDiffusion.alBValue[1]
          *  - there is 1 b=0 scans and user defined number of diffusion directions
          *  - b=0 scan has sequence name "ep_b0"
          *  - encoded scans have seq names "ep_b1000#1, ep_b1000#2, ..." etc.
@@ -1100,7 +1101,7 @@ add_siemens_info(Acr_Group group_list)
 	  /*----MGH-----*/
 	  prot_find_string(protocol,"sWiPMemBlock.alFree[8]", str_buf);
 	  if ((atoi ((char*)str_buf))!= 0 ) { /*num b0 images for MGH sequence*/
-            
+		  
 	    /* get number of b=0 images*/
             num_b0 = atoi ((char*)str_buf);
 		  
@@ -1124,16 +1125,19 @@ add_siemens_info(Acr_Group group_list)
 		    	num_b0=1;
 	  
           	}
-	   	/*-----ICBM_WIP  with "Diffusion mode"=Free (5 b=0 scans) -----*/
+	   	/*-----ICBM_WIP  with "Diffusion mode"=Free (5 b=0 scans) or any time an external vectors file is used-----*/
 	  	else if(!strcmp(str_buf, "0x80")) {
+			EXT=1;
         	    	/* try to get b value */
             		prot_find_string(protocol, "sDiffusion.alBValue[0]", str_buf);
 	            	acr_insert_numeric(&group_list, EXT_Diffusion_b_value,
                                            (double)atoi(str_buf));
 		    	num_b0=0; 
-			/*there are 5 b=0 scans but they are not identified 
+			/*For ICBM there are 5 b=0 scans but they are not identified 
 			any differently than the diffusion weighted images, 
-			sDiffusion.lDiffDirections includes the b=0 images*/	  
+			sDiffusion.lDiffDirections includes the b=0 images. An external
+			DiffusionVectors file can include other b=0 and this messes up
+			the image count*/	  
           	}
 	   }  
 	    
@@ -1168,8 +1172,7 @@ add_siemens_info(Acr_Group group_list)
 			}
 	    else{
 		enc_ix = atoi(str_ptr2 + 1) + num_b0; /*should be in diffusion weighted images now*/
-            }
-	  
+            }  
 	    /* however with the current sequence, we get usable
             * time indices from floor(global_image_num/num_slices)*/ /*i'm not sure that works here*/
 	    
@@ -1206,8 +1209,15 @@ add_siemens_info(Acr_Group group_list)
 	    else{
 		enc_ix = atoi(str_ptr2 + 1) + num_b0; /*should be in diffusion weighted images now*/
             }
-                acr_insert_numeric(&group_list, ACR_Acquisition, (double)enc_ix);
+                
+	    acr_insert_numeric(&group_list, ACR_Acquisition, (double)enc_ix);
           }
+	  if (EXT==1) {
+	  /*if an external DiffusionVectors was used, the encoding index can be wrong
+	  because it does not take into account b=0 images within the acquisition. 
+	  Have to rely on ACR_Image 0020x0013 (but this field won't work for MGH sequence)*/
+		acr_insert_numeric(&group_list, ACR_Acquisition,acr_find_int(group_list, ACR_Image, 1) );  
+	  }
 	  
 	   /* BUG! TODO! FIXME!  In dcm2mnc.c the sequence name is
              * used as one of the criteria for starting a new
@@ -2121,7 +2131,7 @@ int
 prot_find_string(Acr_Element elem_ptr, const char *name_str, char *value)
 {
     static const char prot_head[] = "### ASCCONV BEGIN ###";
-    long cur_offset;
+    long cur_offset,tmp_offset;
     long max_offset;
     char *field_ptr;
     int  ix1, ix2;
@@ -2131,13 +2141,19 @@ prot_find_string(Acr_Element elem_ptr, const char *name_str, char *value)
     // Scan through the element containing the protocol, to find the 
     // ASCII dump of the MrProt structure.
     //
+    /*For some reason, some dicom files have 2 "ASCCONV BEGIN" tags, this screws up the search.
+     Keep the second one we find for now, don't know if this will always work for these dual-ASCCONV
+     files. IRL*/
+    
     for (cur_offset = 0; cur_offset < max_offset; cur_offset++) {
         if (!memcmp(elem_ptr->data_pointer + cur_offset,
                     prot_head, sizeof(prot_head) - 1)) {
-            break;
+		tmp_offset = cur_offset;
         }
     }
 
+    cur_offset = tmp_offset; /*set it to the last occurence of "ASCCONV BEGIN"*/   
+    
     /* bail if we didn't find the protocol
      */
     if (cur_offset == max_offset) {
@@ -2167,7 +2183,7 @@ dump_protocol_text(Acr_Element elem_ptr)
     const char prot_tail[] = "### ASCCONV END ###";
     char *output = malloc(elem_ptr->data_length);
     int prot_found = FALSE;
-    long cur_offset;
+    long cur_offset, tmp_offset;
     long max_offset;
 
     CHKMEM(output);
@@ -2175,15 +2191,21 @@ dump_protocol_text(Acr_Element elem_ptr)
     // scan throught the group containing the protocol, to find the 
     // ascii dump of the MrProt structure
     max_offset = elem_ptr->data_length - sizeof (prot_head);
-
+	   
+     /*For some reason, some dicom files have 2 "ASCCONV BEGIN" tags, this screws up the search.
+     Keep the second one we find for now, don't know if this will always work for these dual-ASCCONV
+     files. IRL*/
+    
     for (cur_offset = 0; cur_offset < max_offset; cur_offset++) {
         if (!memcmp(elem_ptr->data_pointer + cur_offset,
                     prot_head, sizeof(prot_head) - 1)) {
-            prot_found = TRUE;
-            break;
+		prot_found = TRUE;
+		tmp_offset = cur_offset;
         }
     }
 
+    cur_offset = tmp_offset; /*set it to the last occurence of "ASCCONV BEGIN"*/
+    
     if (prot_found) {
         int ix1 = 0;
         char *tmp_ptr = elem_ptr->data_pointer + cur_offset;

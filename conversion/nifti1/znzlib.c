@@ -244,6 +244,7 @@ int znzgetc(znzFile file)
 #if !defined (WIN32)
 int znzprintf(znzFile stream, const char *format, ...)
 {
+  char *tmpstr;
   int retval=0;
   va_list va;
   if (stream==NULL) { return 0; }

@@ -421,6 +421,7 @@ namespace itk
       bool is_signed=false;
       bool have_vectors=false;
       bool have_time=false;
+      int dim_no=GetNumberOfDimensions();
       
       switch(GetComponentType())
       {
@@ -474,18 +475,24 @@ namespace itk
       std::vector<int> dimmap(5,-1);
       minc_info info;
       
-      if(GetNumberOfComponents()>1 && GetNumberOfComponents()<=3 ) 
+      if(GetNumberOfComponents()>1)
       {
-        have_vectors=true;
-        have_time=false;
-      } else if(GetNumberOfComponents()>3||GetNumberOfDimensions()>3) {
-        have_vectors=false;
-        have_time=true;
+	if(GetNumberOfComponents()<=3 ) 
+	{
+	  have_vectors=true;
+	  have_time=false;
+	} else if(GetNumberOfComponents()>3) {
+	  have_vectors=false;
+	  have_time=true;
+	}
+	dim_no++;
+      } else if(GetNumberOfDimensions()>3) {
+	have_vectors=false;
+	have_time=true;
       }
       
       if(itk::ExposeMetaData(thisDic,"dimorder",dimorder))
       {
-        //dimmap.resize(dimorder.size());
         for(int i=0,j=0;i<dimorder.size();i++)
         {
           if(dimorder[i]==MIvector_dimension && have_vectors)
@@ -507,29 +514,28 @@ namespace itk
         if(have_vectors)
         {
           dimmap[0]=0;
-        } else if(have_time) {
-          have_vectors=false;
-          have_time=true;
-          dimmap[GetNumberOfDimensions()+1]=GetNumberOfDimensions();
-        }
-        dimmap[1]=(have_vectors?1:0)+0;
-        dimmap[2]=(have_vectors?1:0)+1;
-        dimmap[3]=(have_vectors?1:0)+2;
+        } 
+        for(int i=0;i<dim_no-(have_vectors?1:0);i++)
+	  dimmap[1+i]=(have_vectors?1:0)+i;
       }
       
-      int dim_no=GetNumberOfDimensions()+(have_vectors||have_time?1:0);
       info.resize(dim_no);
       
-/*      std::cout<<"dimmap:";
+      #ifdef _DEBUG
+      std::cout<<"Number of components:"<<GetNumberOfComponents()<<std::endl;
+      std::cout<<"Number of dimensions:"<<GetNumberOfDimensions()<<std::endl;
+      std::cout<<"info.size()="<<info.size()<<std::endl;
+      std::cout<<"dimmap:";
       for(int i=0;i<5;i++)
       {
         std::cout<<dimmap[i]<<",";
       }
-      std::cout<<std::endl;*/
+      std::cout<<std::endl;
+      #endif  //_DEBUG
       
       for(int i=0;i<GetNumberOfDimensions();i++)
       {
-        int _i=dimmap[i+1];//GetNumberOfDimensions()-i-1+(have_vectors?1:0);
+        int _i=dimmap[i+1];
         if(_i<0) 
         {
           throw ExceptionObject(__FILE__, __LINE__,"Internal error");
@@ -555,6 +561,7 @@ namespace itk
             break;
         }
       }
+      
       if(GetNumberOfDimensions()==3) //we are only rotating 3D volumes
       {
         vnl_vector< double> start(3);
@@ -572,7 +579,24 @@ namespace itk
           int _i=dimmap[i+1];
           info[_i].start=start[i];
         }
+      } else {
+	std::cout<<"Warning: maging rotation matrix for "<<GetNumberOfDimensions()<<"D volume"<<std::endl;
+	std::cout<<"Origin:";
+	for(int i=0;i<GetNumberOfDimensions();i++)
+	  std::cout<<GetOrigin(i)<<",";
+	std::cout<<std::endl;
+	
+	std::cout<<"Rotation matrix:"<<std::endl;
+	for(int i=0;i<GetNumberOfDimensions();i++)
+	{
+	  std::cout<<"\t"<<i<<":";
+	  for(int j=0;j<GetNumberOfDimensions();j++)
+	    std::cout<<GetDirection(i)[j]<<",";
+	  std::cout<<std::endl;
+	}
+	std::cout<<std::endl;
       }
+      
       //here we assume that we had a grid file
       if(have_vectors)
       {
@@ -584,36 +608,50 @@ namespace itk
         info[_i].have_dir_cos=false;
       } else if(have_time){
         int _i=dimmap[4];
-        info[_i].length=GetNumberOfComponents();
+        info[_i].length=(GetNumberOfComponents()==1)?GetDimensions(3):GetNumberOfComponents();
         double tstep=1;
         double tstart=0;
-        itk::ExposeMetaData(thisDic,"tstep",tstep);
-        itk::ExposeMetaData(thisDic,"tstart",tstart);
-        
-        info[_i].step=tstep;
-        info[_i].start=tstart;
+	
+	if( itk::ExposeMetaData(thisDic,"tstep",tstep) &&
+	    itk::ExposeMetaData(thisDic,"tstart",tstart) )
+	{
+	  info[_i].step=tstep;
+	  info[_i].start=tstart;
+	} else if( GetNumberOfComponents()==1 ) {
+	  info[_i].step=GetSpacing(3);
+	  info[_i].start=GetOrigin(3);
+	} else {
+	  info[_i].step=1.0; //TODO: show somehow differently that we don't have info?
+	  info[_i].start=0;
+	}
+	
         info[_i].dim=dim_info::DIM_TIME;
-        info[_i].have_dir_cos=false;
+        info[_i].have_dir_cos=false; //TODO: what to do here?
       }
       
-/*      std::cout<<"info:";
+      #ifdef _DEBUG
+      std::cout<<"info:";
       for(int i=0;i<info.size();i++)
       {
         switch(info[i].dim)
         {
           case dim_info::DIM_VEC:
-            std::cout<<"vector_dimension,";break;
+            std::cout<<"vector_dimension";break;
           case dim_info::DIM_Z:
-            std::cout<<"zspace,";break;
+            std::cout<<"zspace";break;
           case dim_info::DIM_Y:
-            std::cout<<"yspace,";break;
+            std::cout<<"yspace";break;
           case dim_info::DIM_X:
-            std::cout<<"xspace,";break;
-          default: std::cout<<"Unknown! ";break;
-            
+            std::cout<<"xspace";break;
+	  case dim_info::DIM_TIME:
+	    std::cout<<"time";break;
+          default: 
+	    std::cout<<"unknown";break;
         }
+        std::cout<<"("<<info[i].length<<"),";
       }
-      std::cout<<std::endl;      */
+      std::cout<<std::endl;
+      #endif //_DEBUG
       
       //TODO:  shuffle info based on the dimnames
       _wrt=new minc_1_writer;

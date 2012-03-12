@@ -1,3 +1,10 @@
+
+-- Release of minc 2.1.10 --
+
+2012-02-22  Andrew L Janke <a.janke@gmail.com>
+   * added a patch from Steve Robbins that factors references to PATH_MAX
+      out to fix a build problem on hurd
+
 2011-12-20  Andrew L Janke <a.janke@gmail.com>
    * libsrc/netcdf_convenience.c: changed execute_decompress_command()
       to always decompress the whole file as the approach used for
@@ -43,6 +50,8 @@
      which the ordering of the slices in the MOSAIC image is ascending,
      even though the acquisition is descending (version >= VA25 and
      >= VB11).
+
+-- Release of minc 2.1.00 --
 
 2010-07-27  Andrew L Janke  <a.janke@gmail.com>
    * conversion/micropet/upet2mnc.c: error bug squashed (John Cupitt)
