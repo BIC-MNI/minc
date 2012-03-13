@@ -1,5 +1,8 @@
 
 2012-03-14  Andrew L Janke <a.janke@gmail.com>
+   * added progs/mincsample
+
+2012-03-14  Andrew L Janke <a.janke@gmail.com>
    * added progs/mincmorph
 
 -- Release of minc 2.1.10 --

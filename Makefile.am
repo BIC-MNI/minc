@@ -89,6 +89,7 @@ noinst_HEADERS = \
 	progs/mincmorph/kernel_ops.h \
 	progs/mincresample/mincresample.h \
 	progs/mincreshape/mincreshape.h \
+	progs/mincsample/mt19937ar.h \
 	libsrc2/minc2_private.h \
 	progs/mincdump/mincdump.h \
 	progs/mincdump/dumplib.h \
@@ -207,6 +208,7 @@ bin_PROGRAMS = \
 	mincmorph \
 	mincresample \
 	mincreshape \
+	mincsample \
 	mincstats \
 	minctoraw \
 	invert_raw_image \
@@ -333,6 +335,7 @@ mincmorph_SOURCES = \
 	progs/mincmorph/kernel_io.c \
 	progs/mincmorph/kernel_ops.c
 
+mincsample_CFLAGS = -Iprogs/mincsample -I$(srcdir)/progs/mincsample
 mincresample_SOURCES = \
 	progs/mincresample/mincresample.c \
 	progs/mincresample/resample_volumes.c \
@@ -341,6 +344,10 @@ mincresample_SOURCES = \
 mincreshape_SOURCES = \
 	progs/mincreshape/mincreshape.c \
 	progs/mincreshape/copy_data.c
+
+mincsample_SOURCES = \
+	progs/mincsample/mincsample.c \
+	progs/mincsample/mt19937ar.c
 
 mincstats_SOURCES = progs/mincstats/mincstats.c
 
