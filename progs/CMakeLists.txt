@@ -155,7 +155,7 @@ INSTALL(TARGETS
    DESTINATION bin)
 
 # perl and shell scripts
-INSTALL(FILES
+INSTALL(PROGRAMS
    mincdiff/mincdiff  
    mincedit/mincedit  
    mincheader/mincheader  
@@ -163,15 +163,19 @@ INSTALL(FILES
    PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ  WORLD_EXECUTE WORLD_READ
    DESTINATION bin )
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/minchistory/minchistory.in ${CMAKE_CURRENT_BINARY_DIR}/minchistory @ONLY)
+add_custom_target(minchistory chmod +x ${CMAKE_CURRENT_BINARY_DIR}/minchistory DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/minchistory/minchistory.in)
 
-configure_file(minchistory/minchistory.in ${CMAKE_CURRENT_BINARY_DIR}/minchistory @ONLY)
-add_custom_target(minchistory chmod +x ${CMAKE_CURRENT_BINARY_DIR}/minchistory DEPENDS minchistory/minchistory.in)
-
-configure_file(mincpik/mincpik.in ${CMAKE_CURRENT_BINARY_DIR}/mincpik @ONLY)
-add_custom_target(mincpik chmod +x ${CMAKE_CURRENT_BINARY_DIR}/mincpik DEPENDS mincpik/mincpik.in)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mincpik/mincpik.in ${CMAKE_CURRENT_BINARY_DIR}/mincpik @ONLY)
+add_custom_target(mincpik chmod +x ${CMAKE_CURRENT_BINARY_DIR}/mincpik DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/mincpik/mincpik.in)
 
 
 INSTALL(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/minchistory
+  PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ  WORLD_EXECUTE WORLD_READ
+   DESTINATION bin )
+
+INSTALL(PROGRAMS
+  ${CMAKE_CURRENT_BINARY_DIR}/mincpik
   PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ  WORLD_EXECUTE WORLD_READ
    DESTINATION bin )

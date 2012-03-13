@@ -40,7 +40,7 @@
 #include "itkMincImageIO.h"
 #include "minc_helpers.h"
 
-//typedef itk::MincImageIO ImageIOType;
+//typedef itk::MincImageIO ImageIOType
 typedef itk::BSplineInterpolateImageFunction< minc::image3d, double, double >  InterpolatorType;
 typedef itk::ResampleImageFilter<minc::image3d, minc::image3d> FilterType;
 typedef minc::XfmTransform<double,3,3>  TransformType;
@@ -164,7 +164,8 @@ int main (int argc, char **argv)
   
 	try
   {
-    itk::ObjectFactoryBase::RegisterFactory(itk::MincImageIOFactory::New());
+    itk::RegisterMincIO();
+    
     itk::ImageFileReader<minc::image3d >::Pointer reader = itk::ImageFileReader<minc::image3d >::New();
     
     //initializing the reader
