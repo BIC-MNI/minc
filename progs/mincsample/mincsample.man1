@@ -1,0 +1,99 @@
+.\"                                      Hey, EMACS: -*- nroff -*-
+.\" Copyright 2004 Andrew Janke, McConnell Brain Imaging Centre,
+.\" Montreal Neurological Institute, McGill University.
+.\" Permission to use, copy, modify, and distribute this
+.\" software and its documentation for any purpose and without
+.\" fee is hereby granted, provided that the above copyright
+.\" notice appear in all copies.  The author and McGill University
+.\" make no representations about the suitability of this
+.\" software for any purpose.  It is provided "as is" without
+.\" express or implied warranty.
+.\"
+.\"
+.TH MINCSAMPLE 1 "MINC User's Guide"
+
+.SH NAME
+mincsample - generate samplings from minc files.
+
+.SH SYNOPSIS
+.B mincsample
+[<options>] <in1.mnc> [<in2.mnc> [<..>]]
+
+.SH DESCRIPTION 
+\fIMincsample\fR produces a data sampling on STDOUT from an input
+series of minc files. The output can be either ascii (-ascii) or as 
+a raw binary stream of doubles (-double). The output data is ordered
+first by file then voxel. When -ascii is used the data values from 
+each file are separated by a tab and the sampling points with a newline.
+When using -double, no separators are used.
+
+If -coords is also specified, the world co-ordinate at each sampling point
+will precede the data from each of the files.  An optional -outfile
+argument can also be used to direct the output to a file and -append 
+used to append the data to the file as opposed to overwriting the file.
+
+By default all data points are written out (-all) the output of points can  
+also be constrained to be points within a mask (-mask and -mask_val) and further 
+by a random sampling of a sub-set of points via the  -random_samples and 
+-random_seed arguments
+
+.SH OPTIONS
+.TP
+\fB\-verbose\fR
+Print extra information during processing.
+.TP
+\fB\-quiet\fR
+Print only the ouput sampling data.
+.TP
+\fB\-clobber\fR
+Overwrite existing output files (when used with -outfile)
+.TP
+\fB\-max_buffer\fR \fIsize\fR
+Specify the maximum size of the internal buffers (in kbytes). Default is 4096 (4MB).
+.TP
+\fB\-mask\fR \fImask.mnc\fR
+Specify and input mask, only sampling points within this mask will be used.
+.TP
+\fB\-mask_val\fR \fIvalue\fR
+Specify the value to use from the mask (Default: 1).
+.TP
+\fB\-all\fR
+Sample all the data points.
+.TP
+\fB\-random_seed\fR \fIvalue\fR
+Specify the random seed value to use during random sampling, this is to enable
+reproducible runs.  If no seed is given a semi-random seed will be chosen (from time).
+.TP
+\fB\-random_samples\fR \fIvalue\fR
+Specify the number of random samples to take from the input files. This value must be smaller
+than the maximum possible number of samples.
+.TP
+\fB\-sample\fR \fIsample.mnc\fR
+Output a mask file that corresponds to where samples were taken from.
+.TP
+\fB\-outfile\fR \fIfile\fR
+Output sampling data to a file. (Default: STDOUT).
+.TP
+\fB\-append\fR
+Append output data to an existing file.
+.TP
+\fB\-ascii\fR
+Write out data as ascii strings (Default).
+.TP
+\fB\-ascii\fR
+Write out data as double precision floating-point values.
+.TP
+\fB\-coords\fR
+Write out world co-ordinates as well as sampling values.
+.TP
+\fB-help\fR
+Print summary of command-line options and exit.
+.TP
+\fB\-version\fR
+Print the program's version number and exit.
+
+.SH AUTHOR
+Andrew Janke and Mark Griffin
+
+.SH COPYRIGHTS
+Copyright \(co 2004 by Andrew Janke and Mark Griffin
