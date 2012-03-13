@@ -6,7 +6,7 @@
 #define KERNEL_DIMS 5
 
 /* inbuilt kernels */
-int      n_inbuilt_kern;
+extern int      n_inbuilt_kern;
 
 typedef enum {
    K_NULL = 0,

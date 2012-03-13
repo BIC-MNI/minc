@@ -102,17 +102,24 @@ TARGET_LINK_LIBRARIES(mincstats m)
 ADD_EXECUTABLE(minctoraw minctoraw/minctoraw.c)
 ADD_EXECUTABLE(mincwindow mincwindow/mincwindow.c)
 
+
+ADD_EXECUTABLE(mincmorph mincmorph/mincmorph.c
+                         mincmorph/kernel_io.c
+                         mincmorph/kernel_ops.c 
+                         mincmorph/kernel_io.h 
+                         mincmorph/kernel_ops.h )
+TARGET_LINK_LIBRARIES(mincmorph ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
+
+
 ADD_EXECUTABLE(rawtominc rawtominc/rawtominc.c
                             Proglib/convert_origin_to_start.c)
 TARGET_LINK_LIBRARIES(rawtominc m)
-
 
 ADD_EXECUTABLE(voxeltoworld coordinates/voxeltoworld.c)
 TARGET_LINK_LIBRARIES(voxeltoworld ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
 
 ADD_EXECUTABLE(worldtovoxel coordinates/worldtovoxel.c)
 TARGET_LINK_LIBRARIES(worldtovoxel ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
-
 
 ADD_EXECUTABLE(transformtags xfm/transformtags.c)
 TARGET_LINK_LIBRARIES(transformtags ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
@@ -146,6 +153,7 @@ INSTALL(TARGETS
    mincstats
    minctoraw
    mincwindow
+   mincmorph
    rawtominc
    voxeltoworld
    worldtovoxel

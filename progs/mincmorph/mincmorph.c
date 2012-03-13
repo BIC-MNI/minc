@@ -34,7 +34,7 @@
 char    *get_real_from_string(char *string, double *value);
 char    *get_string_from_string(char *string, char **value);
 void     calc_volume_range(VIO_Volume * vol, double *min, double *max);
-void     print_version_info(void);
+/* void     print_version_info(void);*/
 
 /* kernel names for pretty output */
 char    *KERN_names[] = { "NULL", "2D04", "2D08", "3D06", "3D26" };
@@ -94,8 +94,8 @@ char     successive_help[] = "Successive operations (Maximum: 100) \
 ArgvInfo argTable[] = {
    {NULL, ARGV_HELP, (char *)NULL, (char *)NULL,
     "General options:"},
-   {"-version", ARGV_FUNC, (char *)print_version_info, (char *)NULL,
-    "print version info and exit"},
+/*   {"-version", ARGV_FUNC, (char *)print_version_info, (char *)NULL,
+    "print version info and exit"},*/
    {"-verbose", ARGV_CONSTANT, (char *)TRUE, (char *)&verbose,
     "be verbose"},
    {"-clobber", ARGV_CONSTANT, (char *)TRUE, (char *)&clobber,
@@ -368,8 +368,7 @@ int main(int argc, char *argv[])
          if(op->kernel_id == K_NULL){
 
             /* set up and check for the real filename */
-            (void)realpath(tmp_str, tmp_filename);
-            if(access(tmp_filename, F_OK) != 0){
+            if(!realpath(tmp_str, tmp_filename) || access(tmp_filename, F_OK) != 0){
                fprintf(stderr, "%s: Couldn't find kernel file: %s\n\n", argv[0],
                        tmp_filename);
                exit(EXIT_FAILURE);
@@ -739,10 +738,11 @@ void calc_volume_range(VIO_Volume * vol, double *min, double *max)
       }
    }
 
-void print_version_info(void)
-{
-   fprintf(stdout, "%s version %s\n", PACKAGE, VERSION);
-   fprintf(stdout, "Comments to %s\n", PACKAGE_BUGREPORT);
-   fprintf(stdout, "\n");
-   exit(EXIT_SUCCESS);
-   }
+/* void print_version_info(void)
+ {
+    fprintf(stdout, "%s version %s\n", PACKAGE, VERSION);
+    fprintf(stdout, "Comments to %s\n", PACKAGE_BUGREPORT);
+    fprintf(stdout, "\n");
+    exit(EXIT_SUCCESS);
+    }
+*/
