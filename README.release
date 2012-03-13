@@ -1,3 +1,13 @@
+
+# how to use git and the master and develop branches
+
+http://nvie.com/posts/a-successful-git-branching-model/
+
+
+
+
+# libtool and libraries
+
 We are using libtool to (possibly) generate a shared library
 for libminc and libvolume_io.
 
@@ -6,7 +16,7 @@ Each library has a three-component version string, in Makefile.am
 	CURRENT[:REVISION[:AGE]]
 
 
-= Release procedure
+# Release procedure
 
 * Update NEWS.
 
