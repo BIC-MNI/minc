@@ -108,7 +108,7 @@ namespace minc
     virtual ~minc_1_base();
     
     //! close the minc file
-    virtual void close();
+    virtual void close(void);
 
     //! is last slice was read?
     bool last(void) const 
@@ -157,7 +157,7 @@ namespace minc
     const dim_info& dim(unsigned int n) const
     {
       if(n>=static_cast<unsigned int>(_ndims)) 
-	REPORT_ERROR("Dimension is not defined");
+        REPORT_ERROR("Dimension is not defined");
       return _info[n];
     }
     
@@ -324,10 +324,18 @@ namespace minc
     
     //! default constructor
     minc_1_reader();
+
+    //! close the minc file
+    virtual void close(void);
     
     //! destructor
     virtual ~minc_1_reader();
+    
     //! open a minc file
+    //! \param path - path to existing  minc file
+    //! \param positive_directions  - make all step sizes positive
+    //! \param metadate_only - file is opened only for the purpose of reading metadata (will save memory)
+    //! \param rw - file headers may be modified
     void open(const char *path,bool positive_directions=false,bool metadate_only=false,bool rw=false);
     
     //! read single slice
@@ -357,32 +365,58 @@ namespace minc
       bool _calc_min_max;
       bool _write_prepared;
     public:
+      //! open minc file for writing - will overwrite existing 
+      //! \param path - path to minc file
+      //! \param inf  - information about dimensions
+      //! \param slice_dimensions - number of dimensions per slice (used for storage)
+      //! \param datatype - storage datatype
+      //! \param __signed - check if datatype will be signed or not
       void open(const char *path,const minc_info& inf,int slice_dimensions,nc_type datatype,int __signed=0);
+      
+      //! open minc file for writing - will overwrite existing 
+      //! \param path - path to minc file
+      //! \param imitate  - all information is copied from this opened minc file
       void open(const char *path,const minc_1_base& imitate);
+      
+      //! open minc file for writing - will overwrite existing 
+      //! \param path - path to minc file
+      //! \param imitate_file  - all information is copied from this existing minc file
       void open(const char *path,const char *imitate_file);
     
+      //! prepare for writing float array
       void setup_write_float(void);
+      //! prepare for writing double array
       void setup_write_double(void);
+      //! prepare for writing short array
       void setup_write_short(bool normalize=false);
+      //! prepare for writing unsigned short array
       void setup_write_ushort(bool normalize=false);
+      //! prepare for writing unsigned char array
       void setup_write_byte(bool normalize=false);
+      //! prepare for writing int array
       void setup_write_int(bool normalize=false);
+      //! prepare for writing unsigned int array
       void setup_write_uint(bool normalize=false);
     
       //! copy header from another minc file
+      //! \param src - path to existing minc file
       void copy_headers(const minc_1_base& src);
     
       //! append a line into minc history
+      //! \param append_history - history line to append
       void append_history(const char *append_history);
       
-      
-      //! constructor
+      //! default constructor
       minc_1_writer();
       
+      //! make a copy of another writer
       minc_1_writer(const minc_1_writer&);
       
       //! destructor
       virtual ~minc_1_writer();
+      
+      //! close the minc file
+      virtual void close(void);
       
       //!write a single slice, size of the buffer should be more or equall to slab_len
       void write(void* slice);

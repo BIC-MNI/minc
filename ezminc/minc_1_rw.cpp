@@ -598,10 +598,19 @@ namespace minc
     }
   }
   
-  minc_1_reader::~minc_1_reader()
+  void minc_1_reader::close(void)
   {
     if(_have_temp_file)
       remove(_tempfile.c_str());
+    
+    _have_temp_file=false;
+    
+    minc_1_base::close();
+  }
+  
+  minc_1_reader::~minc_1_reader()
+  {
+    close();
   }
 
   minc_1_writer::minc_1_writer():
@@ -1310,8 +1319,8 @@ namespace minc
     }
     miicv_put(_icvid, &_cur[0], &_slab[0], buffer);
   }
-  
-  minc_1_writer::~minc_1_writer()
+
+  void minc_1_writer::close(void)
   {
     if(_set_image_range)
     {
@@ -1319,6 +1328,13 @@ namespace minc
       mivarput1(_mincid, _icmax, 0, NC_DOUBLE, NULL, &_image_range[1]);
       miset_valid_range(_mincid, _imgid, _image_range);
     }
+    minc_1_base::close();
+  }
+
+
+  minc_1_writer::~minc_1_writer()
+  {
+    close();
   }
   
   void minc_1_writer::copy_headers(const minc_1_base& src)
