@@ -1,0 +1,22 @@
+MNI Morphology Kernel File
+%
+% 3D 6-connectivity ie: (in 2D)
+%
+%     1
+%   1 0 1
+%     1
+%
+% 0 - center voxel
+% Format:  vector for voxel in 5 dimensions (x,y,z,t,v) then multiplier.
+
+Kernel_Type = Normal_Kernel;
+Kernel =
+%    x    y    z    t    v     coeff
+% -----------------------------------
+   1.0  0.0  0.0  0.0  0.0     1.0
+  -1.0  0.0  0.0  0.0  0.0     1.0
+   0.0  1.0  0.0  0.0  0.0     1.0
+   0.0 -1.0  0.0  0.0  0.0     1.0
+   0.0  0.0  1.0  0.0  0.0     1.0
+   0.0  0.0 -1.0  0.0  0.0     1.0;
+   

@@ -85,6 +85,8 @@ noinst_HEADERS = \
 	progs/minccalc/errx.h \
 	progs/minccalc/node.h \
 	progs/minccalc/gram.h \
+	progs/mincmorph/kernel_io.h \
+	progs/mincmorph/kernel_ops.h \
 	progs/mincresample/mincresample.h \
 	progs/mincreshape/mincreshape.h \
 	libsrc2/minc2_private.h \
@@ -202,6 +204,7 @@ bin_PROGRAMS = \
 	mincmakescalar \
 	mincmakevector \
 	mincmath \
+	mincmorph \
 	mincresample \
 	mincreshape \
 	mincstats \
@@ -323,6 +326,12 @@ mincmakescalar_SOURCES = progs/mincmakescalar/mincmakescalar.c
 mincmakevector_SOURCES = progs/mincmakevector/mincmakevector.c
 
 mincmath_SOURCES = progs/mincmath/mincmath.c
+
+mincmorph_CFLAGS = -Iprogs/mincmorph -I$(srcdir)/progs/mincmorph
+mincmorph_SOURCES = \
+	progs/mincmorph/mincmorph.c \
+	progs/mincmorph/kernel_io.c \
+	progs/mincmorph/kernel_ops.c
 
 mincresample_SOURCES = \
 	progs/mincresample/mincresample.c \

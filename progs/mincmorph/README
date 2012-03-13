@@ -1,0 +1,16 @@
+mincmorph - morphological operations 101
+
+Comments to:
+Andrew Janke - a.janke@gmail.com
+
+Much of the theory behind what this does can be found at these web sites..
+   http://www.mmorph.com/faq.htm
+   http://www.dai.ed.ac.uk/HIPR2/skeleton.htm
+
+   SNF - http://www.umiacs.umd.edu/research/EXPAR/papers/3449/node7.html#SECTION00041000000000000000
+
+   CC8 - http://www.dai.ed.ac.uk/CVonline/LOCAL_COPIES/OWENS/LECT3/node2.html
+       - http://www.dai.ed.ac.uk/HIPR2/label.htm
+
+HOW TO USE IT:
+   mincmorph -help      for more information
