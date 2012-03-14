@@ -111,6 +111,11 @@ ADD_EXECUTABLE(mincmorph mincmorph/mincmorph.c
 TARGET_LINK_LIBRARIES(mincmorph ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
 
 
+ADD_EXECUTABLE(mincsample mincsample/mincsample.c
+                mincsample/mt19937ar.c
+                mincsample/mt19937ar.h )
+TARGET_LINK_LIBRARIES(mincsample ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
+
 ADD_EXECUTABLE(rawtominc rawtominc/rawtominc.c
                             Proglib/convert_origin_to_start.c)
 TARGET_LINK_LIBRARIES(rawtominc m)
@@ -154,6 +159,7 @@ INSTALL(TARGETS
    minctoraw
    mincwindow
    mincmorph
+   mincsample
    rawtominc
    voxeltoworld
    worldtovoxel
