@@ -580,21 +580,21 @@ namespace itk
           info[_i].start=start[i];
         }
       } else {
-	std::cout<<"Warning: maging rotation matrix for "<<GetNumberOfDimensions()<<"D volume"<<std::endl;
-	std::cout<<"Origin:";
-	for(int i=0;i<GetNumberOfDimensions();i++)
-	  std::cout<<GetOrigin(i)<<",";
-	std::cout<<std::endl;
-	
-	std::cout<<"Rotation matrix:"<<std::endl;
-	for(int i=0;i<GetNumberOfDimensions();i++)
-	{
-	  std::cout<<"\t"<<i<<":";
-	  for(int j=0;j<GetNumberOfDimensions();j++)
-	    std::cout<<GetDirection(i)[j]<<",";
-	  std::cout<<std::endl;
-	}
-	std::cout<<std::endl;
+/*        std::cout<<"Warning: maging rotation matrix for "<<GetNumberOfDimensions()<<"D volume"<<std::endl;
+        std::cout<<"Origin:";
+        for(int i=0;i<GetNumberOfDimensions();i++)
+          std::cout<<GetOrigin(i)<<",";
+        std::cout<<std::endl;
+        
+        std::cout<<"Rotation matrix:"<<std::endl;
+        for(int i=0;i<GetNumberOfDimensions();i++)
+        {
+          std::cout<<"\t"<<i<<":";
+          for(int j=0;j<GetNumberOfDimensions();j++)
+            std::cout<<GetDirection(i)[j]<<",";
+          std::cout<<std::endl;
+        }
+        std::cout<<std::endl;*/
       }
       
       //here we assume that we had a grid file
