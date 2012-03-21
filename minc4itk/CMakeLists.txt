@@ -12,8 +12,11 @@ IF(BUILD_SHARED_LIBS AND NOT ITK_BUILD_SHARED)
   message(WARNING "Building Shared library but ITK is linked statically!")
 ENDIF(BUILD_SHARED_LIBS AND NOT ITK_BUILD_SHARED)
 
+IF(NOT itk-module)
 OPTION(BUILD_ITK_PLUGIN    "Build ITK plugin" OFF)
 OPTION(BUILD_MINC4ITK_EXAMPLES   "Build minc4itk examples" ON)
+ENDIF(NOT itk-module)
+
 
 LINK_DIRECTORIES(${ITK_LIBRARY_DIRS})
 
@@ -46,25 +49,29 @@ TARGET_LINK_LIBRARIES( minc4itk
     m 
     z )
 
+
 #VF ITK plugin is disabled for now
 IF(BUILD_ITK_PLUGIN)
-message(WARNING "ITK IO plugin might not work as expected!")
-ADD_LIBRARY( minc4itk_plugin SHARED minc4itk_plugin.cxx)
-TARGET_LINK_LIBRARIES(  minc4itk_plugin minc4itk)
-INSTALL(TARGETS minc4itk_plugin LIBRARY DESTINATION lib)
+  message(WARNING "ITK IO plugin might not work as expected!")
+  ADD_LIBRARY( minc4itk_plugin SHARED minc4itk_plugin.cxx)
+  TARGET_LINK_LIBRARIES(  minc4itk_plugin minc4itk)
+  INSTALL(TARGETS minc4itk_plugin LIBRARY DESTINATION lib)
 ENDIF(BUILD_ITK_PLUGIN)
+
+
 
 INSTALL(TARGETS minc4itk ${LIBRARY_INSTALL} DESTINATION lib)
 INSTALL(FILES  ${MINC4ITK_HEADERS} DESTINATION include)
 
 IF(BUILD_MINC4ITK_EXAMPLES)
-add_subdirectory(examples)
+  add_subdirectory(examples)
 ENDIF(BUILD_MINC4ITK_EXAMPLES)
 
 IF(BUILD_TOOLS)
-add_subdirectory(tools)
+  add_subdirectory(tools)
 ENDIF(BUILD_TOOLS)
 
 IF(BUILD_CONVERTERS)
-add_subdirectory(conversion)
+  add_subdirectory(conversion)
 ENDIF(BUILD_CONVERTERS)
+

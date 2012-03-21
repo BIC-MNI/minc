@@ -1,4 +1,6 @@
+IF(NOT itk-module)
 OPTION(BUILD_EZMINC_EXAMPLES   "Build EZminc examples" ON)
+ENDIF(NOT itk-module)
 
 IF(BUILD_MINC2)
   ADD_DEFINITIONS( -DMINC2 )

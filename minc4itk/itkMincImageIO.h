@@ -20,7 +20,7 @@
 #pragma warning ( disable : 4786 )
 #endif
 
-#include <itkImageIOBase.h>
+#include "itkImageIOBase.h"
 #include <minc_1_simple.h>
 
 namespace itk

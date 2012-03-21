@@ -6,7 +6,7 @@
 
 #if ( ITK_VERSION_MAJOR > 3 ) 
 //TODO:
-#include <itkHDF5ImageIOFactory.h>
+//#include <itkHDF5ImageIOFactory.h>
 #endif //( ITK_VERSION_MAJOR > 3 ) 
 
 namespace itk

@@ -16,9 +16,9 @@
 #include <itkImageRegionIteratorWithIndex.h>
 #include <itkImageRegionConstIteratorWithIndex.h>
 
-#include <itkImageFileReader.h>
-#include <itkImageFileWriter.h>
-#include <itkImageIOFactory.h>
+#include <itkImageFileReader.h"
+#include <itkImageFileWriter.h"
+#include <itkImageIOFactory.h"
 
 #include "itkMincImageIOFactory.h"
 #include "itkMincImageIO.h"
