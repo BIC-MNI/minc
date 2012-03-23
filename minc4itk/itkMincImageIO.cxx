@@ -179,7 +179,7 @@ namespace itk
         SetNumberOfComponents(_rdr->ndim(0)+_rdr->ndim(4));
       }
       
-      for(int i=1,c=0; i < 4; i++)
+      for(int i=1,c=0; i < 5; i++)
       {
         if(_rdr->ndim(i)<=0) continue;
         SetDimensions(c,_rdr->ndim(i));

@@ -1327,6 +1327,7 @@ namespace minc
       mivarput1(_mincid, _icmin, 0, NC_DOUBLE, NULL, &_image_range[0]);
       mivarput1(_mincid, _icmax, 0, NC_DOUBLE, NULL, &_image_range[1]);
       miset_valid_range(_mincid, _imgid, _image_range);
+      _set_image_range=false;
     }
     minc_1_base::close();
   }
