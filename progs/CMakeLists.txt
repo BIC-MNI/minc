@@ -7,10 +7,10 @@ INCLUDE_DIRECTORIES(Proglib)
 LINK_LIBRARIES( ${MINC2_LIBRARIES} )
 ADD_DEFINITIONS(-DHAVE_CONFIG_H)
 
-IF(NOT MINC_TOOLKIT_BUILD)
+IF(NOT MINC2_EXTERNALLY_CONFIGURED)
   FIND_PACKAGE(BISON)
   FIND_PACKAGE(FLEX)
-ENDIF(NOT MINC_TOOLKIT_BUILD)
+ENDIF(NOT MINC2_EXTERNALLY_CONFIGURED)
 
 # all the progs
 ADD_EXECUTABLE(invert_raw_image mincview/invert_raw_image.c)
@@ -170,14 +170,17 @@ INSTALL(PROGRAMS
    mincedit/mincedit  
    mincheader/mincheader  
    mincview/mincview
-   PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ  WORLD_EXECUTE WORLD_READ
+   PERMISSIONS 
+    OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ  WORLD_EXECUTE WORLD_READ
    DESTINATION bin )
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/minchistory/minchistory.in ${CMAKE_CURRENT_BINARY_DIR}/minchistory @ONLY)
-add_custom_target(minchistory chmod +x ${CMAKE_CURRENT_BINARY_DIR}/minchistory DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/minchistory/minchistory.in)
+add_custom_target(minchistory chmod +x ${CMAKE_CURRENT_BINARY_DIR}/minchistory 
+ DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/minchistory/minchistory.in)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mincpik/mincpik.in ${CMAKE_CURRENT_BINARY_DIR}/mincpik @ONLY)
-add_custom_target(mincpik chmod +x ${CMAKE_CURRENT_BINARY_DIR}/mincpik DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/mincpik/mincpik.in)
+add_custom_target(mincpik chmod +x ${CMAKE_CURRENT_BINARY_DIR}/mincpik 
+ DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/mincpik/mincpik.in)
 
 
 INSTALL(FILES

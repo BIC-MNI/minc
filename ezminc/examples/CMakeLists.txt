@@ -1,4 +1,4 @@
-LINK_LIBRARIES( minc_io )
+LINK_LIBRARIES(minc_io)
 
 ADD_EXECUTABLE(fuzzy_volume_similarity fuzzy_volume_similarity.cpp)
 ADD_EXECUTABLE(trilinear_resample trilinear_resample.cpp)
