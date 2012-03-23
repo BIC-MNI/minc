@@ -173,7 +173,7 @@ int main(int argc,char **argv)
   {
     if(argc>1) 
     {
-      //chdir(argv[1]);
+      chdir(argv[1]);
     }
     
     //no rounding expected
