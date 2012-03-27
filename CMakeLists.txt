@@ -332,7 +332,7 @@ SET(volume_io_LIB_SRCS
    volume_io/Volumes/volumes.c
 )
 
-SET(volume_io_HEADERS
+SET(volume_io_internal_HEADERS
     volume_io/Include/volume_io/alloc.h
     volume_io/Include/volume_io/arrays.h 
     volume_io/Include/volume_io/basic.h 
@@ -340,7 +340,6 @@ SET(volume_io_HEADERS
     volume_io/Include/volume_io/files.h 
     volume_io/Include/volume_io/geom_structs.h 
     volume_io/Include/volume_io/geometry.h 
-    volume_io/Include/internal_volume_io.h 
     volume_io/Include/volume_io/multidim.h 
     volume_io/Include/volume_io/progress.h 
     volume_io/Include/volume_io/string_funcs.h 
@@ -350,6 +349,12 @@ SET(volume_io_HEADERS
     volume_io/Include/volume_io/volume.h 
     volume_io/Include/volume_io/volume_cache.h
 )
+
+SET(volume_io_HEADERS
+	volume_io/Include/volume_io.h
+	volume_io/Include/internal_volume_io.h
+)
+
 
 SET(MINC2_LIBRARY minc)
 SET(VOLUME_IO_LIBRARY volume_io)
@@ -399,15 +404,18 @@ IF(NOT itk-module)
   INSTALL(TARGETS ${VOLUME_IO_LIBRARY} ${LIBRARY_INSTALL} DESTINATION lib)
   
   INSTALL(FILES 
-      ${minc2_HEADERS}
+      ${minc_HEADERS}
     DESTINATION 
       include
     )
   
   INSTALL(FILES
-    ${volume_io_HEADERS}
+			${volume_io_internal_HEADERS}
     DESTINATION include/volume_io)
-
+	
+  INSTALL(FILES
+			${volume_io_HEADERS}
+    DESTINATION include)
 
   IF(BUILD_TOOLS)
     ADD_SUBDIRECTORY( progs )
@@ -442,10 +450,18 @@ IF(NOT itk-module)
   ENDIF(BUILD_MINC2)
 
   IF(BUILD_EZMINC)
+    set(MINC2_INCLUDE_DIRS_CONFIG
+      ${MINC2_INCLUDE_DIRS_CONFIG}
+      ${CMAKE_CURRENT_SOURCE_DIR}/ezminc
+    )
     SET(EZMINC_LIBRARIES minc_io ${MINC2_LIBRARIES})
   ENDIF(BUILD_EZMINC)
 
   IF(BUILD_MINC4ITK)
+    set(MINC2_INCLUDE_DIRS_CONFIG
+      ${MINC2_INCLUDE_DIRS_CONFIG}
+      ${CMAKE_CURRENT_SOURCE_DIR}/minc4itk
+    )
     SET(MINC4ITK_LIBRARIES minc4itk ${EZMINC_LIBRARIES})
   ENDIF(BUILD_MINC4ITK)
 
