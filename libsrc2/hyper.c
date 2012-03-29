@@ -757,6 +757,7 @@ miget_real_value_hyperslab(mihandle_t volume,
 
 	hdim = volume->dim_handles[i];
 	switch (hdim->flipping_order) {
+  default:
 	case MI_FILE_ORDER:
 	  miicv_setint(icv, MI_ICV_DO_DIM_CONV, FALSE);
 	   break;
@@ -769,8 +770,6 @@ miget_real_value_hyperslab(mihandle_t volume,
 	  if (hdim->step > 0)
 	    miicv_setint(icv, MI_ICV_DO_DIM_CONV, TRUE);
 	  break;
-	default:
-	  return;
 	}
       }
     result = miicv_attach(icv, file_id, var_id);
