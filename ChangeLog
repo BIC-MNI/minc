@@ -1,3 +1,5 @@
+2012-04-10  Andrew L Janke <a.janke@gmail.com>
+   * libsrc2/grpattr.c: added a history patch from Leila
 
 2012-03-14  Andrew L Janke <a.janke@gmail.com>
    * added progs/mincsample
