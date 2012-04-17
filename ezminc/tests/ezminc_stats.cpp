@@ -18,13 +18,12 @@ template<class TPixel> double calc_stats(const char * filename)
   minc_1_reader rdr;
   rdr.open(filename);
   
-  if(history!=rdr.history())
-      REPORT_ERROR("Mismatched history");
- 
  
   int volume=1.0;
   for(int i=0;i<3;i++)
-    volume*=rdr.info()[i+1].length;
+  {
+    volume*=rdr.info()[i].length;
+  }
   
   if(typeid(TPixel)==typeid(unsigned char))
     rdr.setup_read_byte();
