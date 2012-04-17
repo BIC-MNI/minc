@@ -61,10 +61,10 @@ int main(int argc,char **argv)
       std::cerr<<"Usage:"<<argv[0]<<" input.mnc"<<std::endl;
       return 1;
     }
-    
-    std::cout<<"byte mean:"<<calc_stats<unsigned char>(argv[1])<<std::endl;
-    std::cout<<"int mean:"<<calc_stats<int>(argv[1])<<std::endl;
-    std::cout<<"float mean:"<<calc_stats<float>(argv[1])<<std::endl;
+    std::cout.precision(10);
+    std::cout<<"byte mean:"  <<calc_stats<unsigned char>(argv[1])<<std::endl;
+    std::cout<<"int mean:"   <<calc_stats<int>(argv[1])<<std::endl;
+    std::cout<<"float mean:" <<calc_stats<float>(argv[1])<<std::endl;
     std::cout<<"double mean:"<<calc_stats<double>(argv[1])<<std::endl;
     
   } catch (const minc::generic_error & err) {
