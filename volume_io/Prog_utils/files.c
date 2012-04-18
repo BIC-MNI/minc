@@ -2521,7 +2521,7 @@ VIOAPI  Status  io_unsigned_char(
         }
         else
         {
-            if( fprintf( file, "%d", (int) *c ) != 1 )
+            if( fprintf( file, "%d", (int) *c ) < 0  )
             {
                 print_error( "Error outputting unsigned char.  " );
                 print_system_error();
