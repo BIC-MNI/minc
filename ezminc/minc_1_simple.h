@@ -254,7 +254,7 @@ namespace minc
     for(in.begin();!in.last();in.next())
     {
       size_t address=0;
-      for(size_t i=0;i<rw.dim_no();i++)
+      for(int i=0;i<rw.dim_no();i++)
         address+=in.cur()[i]*strides[i];
       
       volume[address]=in.value();
@@ -277,7 +277,7 @@ namespace minc
     for(out.begin();!out.last();out.next())
     {
       size_t address=0;
-      for(size_t i=0;i<rw.dim_no();i++)
+      for(int i=0;i<rw.dim_no();i++)
         address+=out.cur()[i]*strides[i];
 
       out.value(volume[address]);

@@ -346,6 +346,7 @@ ELSE(BUILD_MINC2)
   ADD_DEPENDENCIES(volume_io ${MINC2_LIBRARY})
 ENDIF(BUILD_MINC2)
 
+
 INSTALL(FILES volume_io/Include/volume_io/alloc.h
 	volume_io/Include/volume_io/arrays.h 
 	volume_io/Include/volume_io/basic.h 
@@ -364,6 +365,13 @@ INSTALL(FILES volume_io/Include/volume_io/alloc.h
 	volume_io/Include/volume_io/volume_cache.h
    DESTINATION include/volume_io)
 
+
+SET(VOLUME_IO_LIBRARIES ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES})
+
+SET(EZMINC_LIBRARIES )
+SET(MINC4ITK_LIBRARIES )
+
+
 IF(BUILD_TOOLS)
 # now build the progs subdir
   ADD_SUBDIRECTORY( progs )
@@ -376,10 +384,12 @@ ENDIF(BUILD_CONVERTERS)
 
 IF(BUILD_EZMINC)
   ADD_SUBDIRECTORY( ezminc )
+  SET(EZMINC_LIBRARIES minc_io ${MINC2_LIBRARIES} )
 ENDIF(BUILD_EZMINC)
 
 IF(BUILD_MINC4ITK AND BUILD_EZMINC)
   ADD_SUBDIRECTORY( minc4itk )
+  SET(MINC4ITK_LIBRARIES minc4itk ${EZMINC_LIBRARIES} )
 ENDIF(BUILD_MINC4ITK AND BUILD_EZMINC)
 
 # config for the build directory
@@ -399,6 +409,7 @@ IF(BUILD_MINC2)
 ENDIF(BUILD_MINC2)
 
 set(MINC2_LIBRARY_DIRS_CONFIG ${CMAKE_CURRENT_BINARY_DIR})
+
 
 configure_file(MINC2Config.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/MINC2Config.cmake @ONLY )

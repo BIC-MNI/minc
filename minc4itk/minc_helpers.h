@@ -22,7 +22,6 @@
 
 #include "itkMincImageIOFactory.h"
 #include "itkMincImageIO.h"
-#include <minc_io_fixed_vector.h>
 
 namespace minc
 {
@@ -203,23 +202,23 @@ namespace minc
   //! \param dims - dimensions (voxels)
   //! \param spacing - volume spacing (mm)
   //! \param origin  - volume origin (mm)
-  template<class T> void allocate_image3d(typename T::Pointer &image, 
-      const fixed_vec<3, unsigned int>&dims, 
-      const fixed_vec<3, double>& spacing=fixed_vec<3, double>(1.0) , 
-      const fixed_vec<3, double>& origin=fixed_vec<3, double>(0.0))
-	{
-		image3d_complex::SizeType  imageSize3D = {{ dims[0], dims[1], dims[2]}};
-		image3d_complex::IndexType startIndex3D = { {0, 0, 0}};
-		image3d_complex::RegionType region;
-		region.SetSize  (imageSize3D);
-		region.SetIndex (startIndex3D);
-		image->SetLargestPossibleRegion (region);
-		image->SetBufferedRegion (region);
-		image->SetRequestedRegion (region);
-		image->SetSpacing( spacing.c_buf() );
-		image->SetOrigin( origin.c_buf() );
-		image->Allocate ();
-	}
+//   template<class T> void allocate_image3d(typename T::Pointer &image, 
+//       const fixed_vec<3, unsigned int>&dims, 
+//       const fixed_vec<3, double>& spacing=fixed_vec<3, double>(1.0) , 
+//       const fixed_vec<3, double>& origin=fixed_vec<3, double>(0.0))
+// 	{
+// 		image3d_complex::SizeType  imageSize3D = {{ dims[0], dims[1], dims[2]}};
+// 		image3d_complex::IndexType startIndex3D = { {0, 0, 0}};
+// 		image3d_complex::RegionType region;
+// 		region.SetSize  (imageSize3D);
+// 		region.SetIndex (startIndex3D);
+// 		image->SetLargestPossibleRegion (region);
+// 		image->SetBufferedRegion (region);
+// 		image->SetRequestedRegion (region);
+// 		image->SetSpacing( spacing.c_buf() );
+// 		image->SetOrigin( origin.c_buf() );
+// 		image->Allocate ();
+// 	}
 
   
   inline image3d::SizeType operator/= (image3d::SizeType & s, int d)
@@ -275,10 +274,10 @@ namespace minc
   //! allocate volume with spacing 1mm and origin 0,0,0
   //! \param[out] image - volume to allocate
   //! \param dims - dimensions (voxels)
-  template<class T> void allocate_image3d(typename T::Pointer &image, const itk::Size<3> &dims)
-  {
-    allocate_image3d<T>(image,IDX<unsigned int>(dims[0],dims[1],dims[2]));
-  }
+//   template<class T> void allocate_image3d(typename T::Pointer &image, const itk::Size<3> &dims)
+//   {
+//     allocate_image3d<T>(image,IDX<unsigned int>(dims[0],dims[1],dims[2]));
+//   }
 
   //! calculate volume min and max
   int get_image_limits(image3d::Pointer, voxel_type &min, voxel_type &max);
