@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 #include <math.h>
 #include <ParseArgv.h>
 
@@ -174,10 +175,10 @@ ParseArgv(argcPtr, argv, argTable, flags)
       infoPtr = matchPtr;
       switch (infoPtr->type) {
       case ARGV_CONSTANT:
-         *((int *) infoPtr->dst) = (int) infoPtr->src;
+         *((int *) infoPtr->dst) = (intptr_t) infoPtr->src;
          break;
       case ARGV_INT:
-         nargs = (int) infoPtr->src;
+         nargs = (intptr_t) infoPtr->src;
          if (nargs<1) nargs=1;
          for (i=0; i<nargs; i++) {
             if (argc == 0) {
@@ -199,7 +200,7 @@ ParseArgv(argcPtr, argv, argTable, flags)
          }
          break;
       case ARGV_LONG:
-         nargs = (int) infoPtr->src;
+         nargs = (intptr_t) infoPtr->src;
          if (nargs<1) nargs=1;
          for (i=0; i<nargs; i++) {
             if (argc == 0) {
@@ -222,7 +223,7 @@ ParseArgv(argcPtr, argv, argTable, flags)
          break;
 
       case ARGV_STRING:
-         nargs = (int) infoPtr->src;
+         nargs = (intptr_t) infoPtr->src;
          if (nargs<1) nargs=1;
          for (i=0; i<nargs; i++) {
             if (argc == 0) {
@@ -238,7 +239,7 @@ ParseArgv(argcPtr, argv, argTable, flags)
          *((int *) infoPtr->dst) = dstIndex;
          goto argsDone;
       case ARGV_FLOAT:
-         nargs = (int) infoPtr->src;
+         nargs = (intptr_t) infoPtr->src;
          if (nargs<1) nargs=1;
          for (i=0; i<nargs; i++) {
             if (argc == 0) {
@@ -399,7 +400,7 @@ PrintUsage(argTable, flags)
          switch (infoPtr->type) {
          case ARGV_INT: {
             FPRINTF(stderr, "\n\t\tDefault value:");
-            nargs = (int) infoPtr->src;
+            nargs = (intptr_t) infoPtr->src;
             if (nargs<1) nargs=1;
             for (j=0; j<nargs; j++) {
                FPRINTF(stderr, " %d", *(((int *) infoPtr->dst)+j));
@@ -408,7 +409,7 @@ PrintUsage(argTable, flags)
          }
          case ARGV_FLOAT: {
             FPRINTF(stderr, "\n\t\tDefault value:");
-            nargs = (int) infoPtr->src;
+            nargs = (intptr_t) infoPtr->src;
             if (nargs<1) nargs=1;
             for (j=0; j<nargs; j++) {
                FPRINTF(stderr, " %g", *(((double *) infoPtr->dst)+j));
@@ -418,7 +419,7 @@ PrintUsage(argTable, flags)
          case ARGV_STRING: {
             char *string;
 
-            nargs = (int) infoPtr->src;
+            nargs = (intptr_t) infoPtr->src;
             if (nargs<1) nargs=1;
             string = *((char **) infoPtr->dst);
             if ((nargs==1) && (string == NULL)) break;
