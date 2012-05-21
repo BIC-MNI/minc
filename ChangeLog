@@ -1,3 +1,9 @@
+2012-05-16  Andrew L Janke <a.janke@gmail.com>
+   * added patches from Jordi Gutiérrez Hermoso
+   * libsrc/hdf_convenience.c: added default switch case
+   * libsrc/ParseArgv.c: added intptr_t casts
+   * conversion/dcm2mnc/dicom_to_minc.c: added initialisation of tmp_offset
+
 2012-04-10  Andrew L Janke <a.janke@gmail.com>
    * libsrc2/grpattr.c: added a history patch from Leila
 
