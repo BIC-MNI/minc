@@ -1724,6 +1724,38 @@ free2d(int n, double **mat)
     free(mat);
 }
 
+/** Function for create a NON-STANDARD dataset other than --> (acquisition, patient, study)
+ */
+
+int
+create_dataset(hid_t hdf_file, const char *name)
+{
+
+  hid_t dataset_info;
+  hid_t dataspace_info;
+  hid_t grp_info;
+  int result;
+
+  grp_info = H5Gopen1(hdf_file, "/minc-2.0/info");
+  if (grp_info < 0) {
+    return (MI_ERROR);
+  }
+  dataspace_info = H5Screate(H5S_SCALAR);
+  if (dataspace_info < 0) {
+    return (MI_ERROR);
+  }
+  dataset_info = H5Dcreate1(grp_info, name, 
+			   H5T_STD_I32LE, dataspace_info, H5P_DEFAULT);
+  if (dataset_info < 0) {
+    return (MI_ERROR);
+  }
+  H5Dclose(dataset_info);
+  H5Sclose(dataspace_info);
+  H5Gclose(grp_info);
+
+  return (MI_NOERROR);
+}
+
 /** Function for create a dataset (acquisition, patient, study)
  */
 
