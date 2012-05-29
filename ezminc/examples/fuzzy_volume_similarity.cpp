@@ -77,7 +77,7 @@ int main(int argc,char **argv)
   static struct option long_options[] = {
     {"verbose", no_argument,             &verbose, 1},
     {"quiet",   no_argument,             &verbose, 0},
-    {"mask",     required_argument,              0,'m'},
+    {"mask",    required_argument,       0,      'm'},
     
     {0, 0, 0, 0}
   };
