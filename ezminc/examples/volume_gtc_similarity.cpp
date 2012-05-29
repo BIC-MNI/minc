@@ -17,6 +17,7 @@
 #include "minc_1_simple.h"
 #include <getopt.h>
 #include <algorithm>
+#include <string.h>
 
 using namespace minc;
 
@@ -29,7 +30,7 @@ void show_usage (const char * prog)
            <<"\"Generalized Overlap Measures for Evaluation and Validation in Medical Image Analysis \""
            <<" IEEE TRANSACTIONS ON MEDICAL IMAGING, VOL. 25, NO. 11, NOVEMBER 2006"<<std::endl
            <<"http://dx.doi.org/10.1109/TMI.2006.880587"<<std::endl<<std::endl
-           <<"Usage: "<<prog<<" <input1.mnc> <input2.mnc> [--gkappa] [--gtc] [--csv]  "<<std::endl;
+           <<"Usage: "<<prog<<" <input1.mnc> <input2.mnc> [--gkappa] [--gtc] [--csv] [--exclude l1[,l2[,l3]]]  "<<std::endl;
 }
 
 template<class T>class find_min_max
@@ -77,20 +78,25 @@ int main(int argc,char **argv)
   int csv=0;
   int gkappa=0;
   int gtc=0;
+  
   static struct option long_options[] = {
     {"verbose", no_argument,             &verbose, 1},
     {"quiet",   no_argument,             &verbose, 0},
     {"gkappa",   no_argument,            &gkappa, 1},
-    {"gtc",      no_argument,       &gtc, 1},
-    {"csv",           no_argument,       &csv, 1},
+    {"gtc",      no_argument,            &gtc, 1},
+    {"csv",      no_argument,            &csv, 1},
+    {"exclude",  required_argument,      0,      'e'},
+   
     {0, 0, 0, 0}
   };
+  
+  std::vector<int> exclude;
   
   for (;;) {
     /* getopt_long stores the option index here. */
     int option_index = 0;
 
-    int c = getopt_long (argc, argv, "vq", long_options, &option_index);
+    int c = getopt_long (argc, argv, "vqe:", long_options, &option_index);
 
     /* Detect the end of the options. */
     if (c == -1) break;
@@ -99,9 +105,20 @@ int main(int argc,char **argv)
     {
       case 0:
         break;
+        
       case 'v':
         std::cout << "Version: 0.1" << std::endl;
         return 0;
+        
+      case 'e':
+        {
+          const char* delim=", ";
+          
+          for(char *tok=strtok(optarg,delim);tok;tok=strtok(NULL,delim))
+            exclude.push_back(atoi(tok));
+        }
+        break;
+        
       case '?':
         /* getopt_long already printed an error message. */
       default:
@@ -183,6 +200,9 @@ int main(int argc,char **argv)
     //TODO: add mask ? or different weighting
     for(unsigned char label=low; label<=hi; label++)
     {
+      if( !exclude.empty() && std::find<std::vector<int>::iterator,int>(exclude.begin(),exclude.end(),label)!=exclude.end() )
+        continue; //skip this label
+        
       for(int i=0; i<size ; i++ )
       {
         if( buffer1[i]==label ) volume+=1.0;
