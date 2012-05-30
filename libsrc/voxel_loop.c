@@ -1392,6 +1392,7 @@ PRIVATE void do_voxel_loop(Loop_Options *loop_options,
    /* Print log message */
    if (loop_options->verbose) {
       (void) printf("Processing:");
+      (void) fflush(stdout);
    }
 
    /* Outer loop over files, if appropriate */
@@ -1437,6 +1438,7 @@ PRIVATE void do_voxel_loop(Loop_Options *loop_options,
             /* Print log message */
             if (loop_options->verbose) {
                (void) printf(".");
+               (void) fflush(stdout);
             }
 
             /* Calculate number of voxels in a chunk */
@@ -1641,8 +1643,8 @@ PRIVATE void do_voxel_loop(Loop_Options *loop_options,
 
    /* Print log message */
    if (loop_options->verbose) {
-      (void) fprintf(stderr, "Done\n");
-      (void) fflush(stderr);
+      (void) printf("Done\n");
+      (void) fflush(stdout);
    }
 
    /* Free results pointer array, but not its buffers, since these
