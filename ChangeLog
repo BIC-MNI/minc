@@ -1,3 +1,6 @@
+2012-06-21  Andrew L Janke <a.janke@gmail.com>
+   * added mincblob.man1 and updated configure.ac and Makefile.am
+
 2012-05-16  Andrew L Janke <a.janke@gmail.com>
    * added patches from Jordi Gutiérrez Hermoso
    * libsrc/hdf_convenience.c: added default switch case
