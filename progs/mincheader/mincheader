@@ -60,7 +60,7 @@ set -o nounset
 
 # simple little function to emulate perl's die();
 die () {
-    echo >&2 $@
+    echo >&2 "$@"
     echo ""
     exit 1
 }
@@ -83,7 +83,7 @@ header_opts='-header_only'
 header_only=yes
 while [ $# -gt 0 ]
 do 
-   case $1 in
+   case "$1" in
       -h|-he|-hel|-help)
          echo $usage;
          echo ""
@@ -104,21 +104,20 @@ done
 
 # only allow one input file and check for it
 [ $# -eq 1 ] || die $usage
-[ -f $1 ] || die "$me: no such file $1"
-
+[ -f "$1" ] || die "$me: no such file '$1'"
 
 tmpfile="$tmpdir/mincheader-$$-tmp"
 
 # For a compressed file, dump header only unless directed otherwise
-dumpfile=`mincexpand $1 $tmpfile -name_only $header_opts`
-if [ $dumpfile = $tmpfile -a $header_only = yes ]
+dumpfile=`mincexpand "$1" $tmpfile -name_only $header_opts`
+if [ "$dumpfile" = $tmpfile -a $header_only = yes ]
 then
-    mincdump -h $dumpfile
+    mincdump -h "$dumpfile"
 else
    #  Get variables names (excluding image): remove leading "image", remove word 
    #  "image", collapse multiple blanks to one, remove leading blanks, remove
    #  trailing blanks, replace blanks with commas
-   vars=`mincinfo -varnames $dumpfile | \
+   vars=`mincinfo -varnames "$dumpfile" | \
    sed -e 's/^image //g' \
        -e 's/ image / /g' \
        -e 's/  */ /g' \
@@ -126,6 +125,6 @@ else
        -e 's/ $//' \
        -e 's/ /,/g'`
    
-   [ x$vars = x ] || mincdump -v "$vars" $dumpfile
+   [ x$vars = x ] || mincdump -v "$vars" "$dumpfile"
 fi
 
