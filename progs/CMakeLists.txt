@@ -131,6 +131,10 @@ TARGET_LINK_LIBRARIES(xfmconcat ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
 ADD_EXECUTABLE(xfminvert xfm/xfminvert.c)
 TARGET_LINK_LIBRARIES(xfminvert ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
 
+ADD_EXECUTABLE(mincblob mincblob/mincblob.c)
+TARGET_LINK_LIBRARIES(mincblob ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
+
+
 # install progs
 INSTALL(TARGETS
    invert_raw_image 
@@ -141,6 +145,7 @@ INSTALL(TARGETS
    mincdump
 #   mincexample1
 #   mincexample2
+   mincblob 
    mincexpand
    mincextract
    mincinfo

@@ -5,9 +5,11 @@ ADD_EXECUTABLE(trilinear_resample trilinear_resample.cpp)
 ADD_EXECUTABLE(volume_avg volume_avg.cpp)
 ADD_EXECUTABLE(volume_msq_dist volume_msq_dist.cpp)
 ADD_EXECUTABLE(volume_similarity volume_similarity.cpp)
+ADD_EXECUTABLE(volume_gtc_similarity volume_gtc_similarity.cpp)
 
 INSTALL(TARGETS
    fuzzy_volume_similarity
+   volume_gtc_similarity
    volume_similarity
    DESTINATION bin)
 

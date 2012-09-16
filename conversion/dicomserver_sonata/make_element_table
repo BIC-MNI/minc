@@ -1,4 +1,4 @@
-#! /usr/local/bin/perl5 -w
+#! /usr/bin/env perl -w
 
 # Script to read in the Siemens header files ds_head_acr_groups_types.h and
 # ds_head_shadow_groups_types.h and create a table of elements to be

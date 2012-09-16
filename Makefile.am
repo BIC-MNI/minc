@@ -193,6 +193,7 @@ bin_PROGRAMS = \
 	worldtovoxel \
 	minc_modify_header \
 	mincaverage \
+	mincblob \
 	minccalc \
 	minccmp \
 	mincconcat \
@@ -280,6 +281,8 @@ worldtovoxel_SOURCES = progs/coordinates/worldtovoxel.c
 minc_modify_header_SOURCES = progs/minc_modify_header/minc_modify_header.c
 
 mincaverage_SOURCES = progs/mincaverage/mincaverage.c
+
+mincblob_SOURCES = progs/mincblob/mincblob.c
 
 minccalc_CFLAGS = -Iprogs/minccalc -I$(srcdir)/progs/minccalc
 minccalc_SOURCES = \
@@ -546,6 +549,7 @@ dist_man1_MANS = \
 	progs/coordinates/voxeltoworld.man1 \
 	progs/minc_modify_header/minc_modify_header.man1 \
 	progs/mincaverage/mincaverage.man1 \
+	progs/mincblob/mincblob.man1 \
 	progs/minccalc/minccalc.man1 \
 	progs/minccomplete/minccomplete.man1 \
 	progs/mincconcat/mincconcat.man1 \

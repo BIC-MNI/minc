@@ -183,7 +183,7 @@ int main(int argc,char **argv)
 
     if(low==0) low=1; //assume 0 is background
 
-
+    
     for(unsigned char label=low; label<=hi; label++)
     {
       int v1=0,v2=0;
@@ -220,13 +220,16 @@ int main(int argc,char **argv)
 
       if( csv )
       {
-        if(low!=hi)
-          std::cout<<(int)label<<",";
+        if( (hi-low)<=1 || v1>0 && v2>0)
+        {
+          if(low!=hi)
+            std::cout<<(int)label<<",";
 
-        std::cout<<_kappa<<",";
-        std::cout<<_sensitivity<<",";
-        std::cout<<_specificity<<",";
-        std::cout<<_jaccard<<std::endl;
+          std::cout<<_kappa<<",";
+          std::cout<<_sensitivity<<",";
+          std::cout<<_specificity<<",";
+          std::cout<<_jaccard<<std::endl;
+        }
       } else {
         if( kappa ){
           if(verbose) std::cout<<"Kappa ";

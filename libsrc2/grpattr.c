@@ -592,7 +592,12 @@ miget_attr_values(mihandle_t vol, mitype_t data_type, const char *path,
 	return (MI_ERROR);
     }
 
-    strncpy(fullpath, MI_ROOT_PATH "/" MI_INFO_NAME, sizeof (fullpath));
+    if (strcmp(name,"history")) {
+        strncpy(fullpath, MI_ROOT_PATH "/" MI_INFO_NAME, sizeof (fullpath));
+    }
+    else {
+        strncpy(fullpath, MI_ROOT_PATH "/" , sizeof (fullpath));
+    }
     if (*path != '/') {
         strncat(fullpath, "/", sizeof (fullpath) - strlen(fullpath));
     }
