@@ -22,7 +22,8 @@ using namespace minc;
 
 void show_usage (const char * prog)
 {
-  std::cout<<"Program calculates fuzzy volume similarity metrics"<<std::endl
+  std::cout<<"Program calculates fuzzy volume similarity metrics "<<std::endl
+          <<" I.e to be used with tissue probability maps where all values are between 0 and 1"
           <<"based on :  William R. Crum, Oscar Camara, and Derek L. G. Hill"
           <<"\"Generalized Overlap Measures for Evaluation and Validation in Medical Image Analysis \""
           <<" IEEE TRANSACTIONS ON MEDICAL IMAGING, VOL. 25, NO. 11, NOVEMBER 2006"<<std::endl
