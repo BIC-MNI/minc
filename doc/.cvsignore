@@ -1,7 +1,0 @@
-*.ps
-*.dvi
-*.aux
-*.log
-*.toc
-Makefile.in Makefile
-
