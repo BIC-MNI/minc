@@ -1,4 +1,3 @@
-
 LINK_LIBRARIES(${LIBMINC_LIBRARIES})
 
 ADD_EXECUTABLE(minc_tst minc.c)
@@ -28,7 +27,6 @@ MACRO(minc_test cmd)
   ENDIF(LIBMINC_BUILD_V2)
 ENDMACRO(minc_test)
 
-
 # running tests
 minc_test(minc_types)
 minc_test(icv_dim1)
@@ -51,3 +49,46 @@ ADD_TEST(test_mconv test_mconv)
 #ADD_TEST(test_xfm test_xfm)
 
 TARGET_LINK_LIBRARIES(test_xfm ${VOLUME_IO_LIBRARY} ${LIBMINC_LIBRARIES} m)
+
+
+IF(LIBMINC_BUILD_V2)
+
+ADD_EXECUTABLE(minc2-convert-test minc2-convert-test.c)
+ADD_EXECUTABLE(minc2-create-test-images-2 minc2-create-test-images-2.c)
+ADD_EXECUTABLE(minc2-create-test-images minc2-create-test-images.c)
+ADD_EXECUTABLE(minc2-datatype-test minc2-datatype-test.c)
+ADD_EXECUTABLE(minc2-dimension-test minc2-dimension-test.c)
+ADD_EXECUTABLE(minc2-full-test minc2-full-test.c)
+ADD_EXECUTABLE(minc2-grpattr-test minc2-grpattr-test.c)
+ADD_EXECUTABLE(minc2-hyper-test-2 minc2-hyper-test-2.c)
+ADD_EXECUTABLE(minc2-hyper-test minc2-hyper-test.c)
+ADD_EXECUTABLE(minc2-label-test minc2-label-test.c)
+#ADD_EXECUTABLE(minc2-m2stats minc2-m2stats.c)
+ADD_EXECUTABLE(minc2-multires-test minc2-multires-test.c)
+ADD_EXECUTABLE(minc2-record-test minc2-record-test.c)
+ADD_EXECUTABLE(minc2-slice-test minc2-slice-test.c)
+ADD_EXECUTABLE(minc2-valid-test minc2-valid-test.c)
+ADD_EXECUTABLE(minc2-vector_dimension-test minc2-vector_dimension-test.c)
+ADD_EXECUTABLE(minc2-volprops-test minc2-volprops-test.c)
+
+ADD_TEST(minc2-convert-test minc2-convert-test)
+ADD_TEST(minc2-create-test-images-2 minc2-create-test-images-2)
+ADD_TEST(minc2-create-test-images minc2-create-test-images)
+ADD_TEST(minc2-datatype-test minc2-datatype-test)
+ADD_TEST(minc2-dimension-test minc2-dimension-test)
+ADD_TEST(minc2-full-test minc2-full-test)
+ADD_TEST(minc2-grpattr-test minc2-grpattr-test)
+ADD_TEST(minc2-hyper-test-2 minc2-hyper-test-2)
+ADD_TEST(minc2-hyper-test minc2-hyper-test)
+ADD_TEST(minc2-label-test minc2-label-test)
+#ADD_TEST(minc2-m2stats minc2-m2stats)
+ADD_TEST(minc2-multires-test minc2-multires-test)
+ADD_TEST(minc2-record-test minc2-record-test)
+ADD_TEST(minc2-slice-test minc2-slice-test)
+ADD_TEST(minc2-valid-test minc2-valid-test)
+ADD_TEST(minc2-vector_dimension-test minc2-vector_dimension-test)
+ADD_TEST(minc2-volprops-test minc2-volprops-test)
+
+
+
+ENDIF(LIBMINC_BUILD_V2)

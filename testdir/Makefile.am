@@ -49,3 +49,47 @@ icv_fillvalue.out: ;
 icv_range.out: ;
 minc_types.out: ;
 
+if MINC2
+	
+INCLUDES += -I$(top_srcdir)/libsrc2
+
+minc2_script_tests = \
+	minc2-testminctools.sh
+
+minc2-all-local: # CHECK!
+	cd $(srcdir) && chmod +x $(script_tests)
+
+
+LDADD += ../../libminc2.la
+
+AM_CFLAGS += -DAPPARENTORDER
+
+MINC2_TESTS =	\
+	minc2-create-test-images \
+	minc2-create-test-images-2 \
+	minc2-datatype-test \
+	minc2-dimension-test \
+	minc2-full-test \
+	minc2-grpattr-test \
+	minc2-hyper-test \
+        minc2-hyper-test-2 \
+	minc2-label-test \
+	minc2-record-test \
+	minc2-slice-test \
+	minc2-valid-test \
+	minc2-volprops-test \
+	minc2-multires-test \
+	minc2-convert-test \
+	minc2-vector_dimension-test 
+
+TESTS += \
+	$(MINC2_TESTS) \
+	$(minc2_script_tests)
+
+EXTRA_DIST += $(minc2_script_tests)
+
+check_PROGRAMS += $(ALL_TESTS)
+
+CLEANFILES = *.mnc
+
+endif # MINC2
