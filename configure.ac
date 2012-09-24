@@ -81,7 +81,6 @@ AC_CHECK_FUNCS(system popen)
 AC_CONFIG_FILES([
 Makefile 
 epm-header
-doc/Makefile
 testdir/Makefile 
 libsrc2/test/Makefile
 volume_io/Makefile

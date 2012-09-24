@@ -16,7 +16,7 @@ endif
 INCLUDES = \
 	-I$(top_srcdir)/libsrc \
 	-I$(top_builddir)/volume_io/Include \
-	-I$(top_srcdir)/volume_io/Include \
+	-I$(top_srcdir)/volume_io/Include
 
 if MINC2
 INCLUDES += -I$(top_srcdir)/libsrc2
@@ -127,7 +127,7 @@ ezMINC_files = \
 	ezminc/CMakeLists.txt \
 	ezminc/minc_1_rw.cpp \
 	ezminc/minc_1_rw.h \
-	ezminc/minc_io_exceptions.h \
+	ezminc/minc_io_exceptions.h
 	
 libminc2_la_LDFLAGS = -version-info 3:0:0
 libminc2_la_SOURCES = \
