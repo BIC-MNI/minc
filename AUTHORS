@@ -1,19 +1,13 @@
-Peter Neelin designed, coded, and maintained MINC (1992-2002).
-David MacDonald designed, coded, and maintained VolumeIO (1991-1998).
-
-Current maintenance is done on the minc-development mailing list.
-  http://www.bic.mni.mcgill.ca/mailman/listinfo/minc-development
-
-MINC Contributors (in alphabetical order)
-
 Leila Baghdadi
 Vladimir Fonov
 Colin Holmes
 Andrew Janke
-David Leonard (original minccalc parser)
+David Leonard
 Claude Lepage
-Ilana Leppert (dcm2mnc DTI additions)
+Ilana Leppert
 Jason Lerch
+Dave McDonald
+Peter Neelin
 Steven Robbins
 John Sled
 Robert Vincent

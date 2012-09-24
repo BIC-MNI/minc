@@ -6,10 +6,7 @@ ACLOCAL_AMFLAGS = -I m4
 AM_CFLAGS = 
 AM_YFLAGS = -d --debug
 
-SUBDIRS = . volume_io testdir doc
-if MINC2
-SUBDIRS += libsrc2/test
-endif
+SUBDIRS = . 
 
 # how to build man pages from POD
 progs/minccomplete/minccomplete.man1: progs/minccomplete/minccomplete
@@ -22,64 +19,13 @@ progs/mincpik/mincpik.man1: progs/mincpik/mincpik
 # Add these to the include searches.
 #
 INCLUDES = \
-	-I$(top_srcdir)/libsrc \
-	-I$(top_builddir)/volume_io/Include \
-	-I$(top_srcdir)/volume_io/Include \
 	-I$(top_srcdir)/progs/Proglib \
 	-I$(top_srcdir)/conversion/Acr_nema
-
-if MINC2
-INCLUDES += -I$(top_srcdir)/libsrc2
-endif
-
-# Headers which must be installed.
-#
-include_HEADERS = \
-	libsrc/minc.h \
-	libsrc/ParseArgv.h \
-	libsrc/voxel_loop.h \
-	libsrc/nd_loop.h \
-	libsrc/time_stamp.h \
-	libsrc/minc_compat.h \
-	volume_io/Include/volume_io.h \
-	libsrc2/minc2.h \
-	libsrc/minc_simple.h
-
-include_volume_iodir = $(includedir)/volume_io
-
-include_volume_io_HEADERS = \
-	volume_io/Include/volume_io/alloc.h \
-	volume_io/Include/volume_io/arrays.h \
-	volume_io/Include/volume_io/basic.h \
-	volume_io/Include/volume_io/def_math.h \
-	volume_io/Include/volume_io/files.h \
-	volume_io/Include/volume_io/geom_structs.h \
-	volume_io/Include/volume_io/geometry.h \
-	volume_io/Include/internal_volume_io.h \
-	volume_io/Include/volume_io/multidim.h \
-	volume_io/Include/volume_io/progress.h \
-	volume_io/Include/volume_io/string_funcs.h \
-	volume_io/Include/volume_io/system_dependent.h \
-	volume_io/Include/volume_io/transforms.h \
-	volume_io/Include/volume_io/vol_io_prototypes.h \
-	volume_io/Include/volume_io/volume.h \
-	volume_io/Include/volume_io/volume_cache.h
 
 # Header files which must be included in the distribution but which are 
 # not part of the installation.
 #
 noinst_HEADERS = \
-	libsrc/read_file_names.h \
-	libsrc/minc_basic.h \
-	libsrc/minc_config.h \
-	libsrc/minc_error.h \
-	libsrc/minc_private.h \
-	libsrc/minc_routines.h \
-	libsrc/minc_structures.h \
-	libsrc/minc_useful.h \
-	libsrc/minc_varlists.h \
-	libsrc/type_limits.h \
-	libsrc/hdf_convenience.h \
 	progs/Proglib/convert_origin_to_start.h \
 	progs/Proglib/minc_def.h \
 	progs/minccalc/errx.h \
@@ -90,7 +36,6 @@ noinst_HEADERS = \
 	progs/mincresample/mincresample.h \
 	progs/mincreshape/mincreshape.h \
 	progs/mincsample/mt19937ar.h \
-	libsrc2/minc2_private.h \
 	progs/mincdump/mincdump.h \
 	progs/mincdump/dumplib.h \
 	progs/mincdump/vardata.h \
@@ -125,7 +70,7 @@ noinst_HEADERS = \
 	conversion/vff2mnc/vff2mnc.h
 
 if ACR_NEMA_TOOLS
-include_HEADERS += conversion/Acr_nema/acr_nema.h
+include_HEADERS = conversion/Acr_nema/acr_nema.h
 
 include_acr_nemadir = $(includedir)/acr_nema
 
@@ -143,7 +88,6 @@ else
 #
 # If not installing the full ACR/NEMA package, just add these headers to 
 # list of headers not to be installed.
-#
 noinst_HEADERS += \
 	conversion/Acr_nema/acr_nema.h \
 	conversion/Acr_nema/acr_nema/acr_io.h \
@@ -158,21 +102,7 @@ noinst_HEADERS += \
 endif
 
 
-# Libraries which must be built and installed.
-#
-lib_LTLIBRARIES = libminc2.la libvolume_io2.la
-
-# Conditionally install the libacr_nema.la library.  It must always be
-# built even if it is not installed.
-#
-if ACR_NEMA_TOOLS
-lib_LTLIBRARIES += libacr_nema.la
-else
-noinst_LTLIBRARIES = libacr_nema.la
-endif
-
 # Scripts we install: sh or perl.
-#
 dist_bin_SCRIPTS = \
 	progs/mincdiff/mincdiff \
 	progs/mincedit/mincedit \
@@ -184,10 +114,9 @@ bin_SCRIPTS = \
 	progs/minccomplete/minccomplete \
 	progs/minchistory/minchistory \
 	progs/mincpik/mincpik \
-   progs/xfm/xfmflip
+	progs/xfm/xfmflip
 
 # Programs we build and install.
-#
 bin_PROGRAMS = \
 	voxeltoworld \
 	worldtovoxel \
@@ -245,8 +174,6 @@ noinst_PROGRAMS = \
 	mincexample1 \
 	mincexample2
 
-LDADD = libvolume_io2.la libminc2.la
-
 EXTRA_DIST = \
 	$(m4_files) \
 	$(ezMINC_files) \
@@ -254,12 +181,8 @@ EXTRA_DIST = \
 	progs/minchistory/minchistory.in \
 	progs/mincpik/mincpik.in \
 	progs/xfm/xfmflip.in \
-	libsrc/strdup.c \
 	epm-header.in \
-	libsrc/config.h.msvc-win32 \
-	Makefile.msvc-win32 \
 	conversion/Acr_nema/dicom.txt \
-	INSTALL.minc \
 	CMakeLists.txt \
 	config.h.cmake \
 	UseMINC2.cmake.in \
@@ -468,107 +391,8 @@ copy_acr_nema_SOURCES = conversion/Acr_nema/copy_acr_nema.c
 extract_SOURCES = conversion/image_filters/extract.c
 byte_swap_SOURCES = conversion/image_filters/byte_swap.c
 
-
-libminc2_la_LDFLAGS = -version-info 3:0:0
-libminc2_la_SOURCES = \
-	libsrc/ParseArgv.c \
-	libsrc/read_file_names.c \
-	libsrc/dim_conversion.c \
-	libsrc/image_conversion.c \
-	libsrc/minc_convenience.c \
-	libsrc/minc_error.c \
-	libsrc/nd_loop.c \
-	libsrc/netcdf_convenience.c \
-	libsrc/time_stamp.c \
-	libsrc/value_conversion.c \
-	libsrc/voxel_loop.c \
-	libsrc/hdf_convenience.c \
-	libsrc/minc_compat.c \
-	libsrc/minc_simple.c
-
-if MINC2
-libminc2_la_SOURCES += \
-	libsrc2/convert.c \
-	libsrc2/datatype.c \
-	libsrc2/dimension.c \
-	libsrc2/free.c \
-	libsrc2/grpattr.c \
-	libsrc2/hyper.c \
-	libsrc2/label.c \
-	libsrc2/m2util.c \
-	libsrc2/record.c \
-	libsrc2/slice.c \
-	libsrc2/valid.c \
-	libsrc2/volprops.c \
-	libsrc2/volume.c
-else
-EXTRA_DIST += \
-	libsrc2/convert.c \
-	libsrc2/datatype.c \
-	libsrc2/dimension.c \
-	libsrc2/free.c \
-	libsrc2/grpattr.c \
-	libsrc2/hyper.c \
-	libsrc2/label.c \
-	libsrc2/m2util.c \
-	libsrc2/record.c \
-	libsrc2/slice.c \
-	libsrc2/valid.c \
-	libsrc2/volprops.c \
-	libsrc2/volume.c
-endif
-
-libvolume_io2_la_LDFLAGS = -version-info 3:0:0
-libvolume_io2_la_SOURCES = \
-	volume_io/Geometry/colour.c \
-	volume_io/Geometry/colour_def.c \
-	volume_io/Geometry/gaussian.c \
-	volume_io/Geometry/inverse.c \
-	volume_io/Geometry/newton.c \
-	volume_io/Geometry/points.c \
-	volume_io/Geometry/splines.c \
-	volume_io/Geometry/tensors.c \
-	volume_io/Geometry/transforms.c \
-	volume_io/MNI_formats/gen_xf_io.c \
-	volume_io/MNI_formats/gen_xfs.c \
-	volume_io/MNI_formats/grid_transforms.c \
-	volume_io/MNI_formats/mni_io.c \
-	volume_io/MNI_formats/tag_points.c \
-	volume_io/MNI_formats/thin_plate_spline.c \
-	volume_io/Prog_utils/alloc.c \
-	volume_io/Prog_utils/alloc_check.c \
-	volume_io/Prog_utils/arrays.c \
-	volume_io/Prog_utils/files.c \
-	volume_io/Prog_utils/print.c \
-	volume_io/Prog_utils/progress.c \
-	volume_io/Prog_utils/string.c \
-	volume_io/Prog_utils/time.c \
-	volume_io/Volumes/evaluate.c \
-	volume_io/Volumes/get_hyperslab.c \
-	volume_io/Volumes/input_free.c \
-	volume_io/Volumes/input_mnc.c \
-	volume_io/Volumes/input_volume.c \
-	volume_io/Volumes/multidim_arrays.c \
-	volume_io/Volumes/output_mnc.c \
-	volume_io/Volumes/output_volume.c \
-	volume_io/Volumes/set_hyperslab.c \
-	volume_io/Volumes/volume_cache.c \
-	volume_io/Volumes/volumes.c
-
-libacr_nema_la_SOURCES = \
-	conversion/Acr_nema/acr_io.c \
-	conversion/Acr_nema/dicom_client_routines.c \
-	conversion/Acr_nema/dicom_network.c \
-	conversion/Acr_nema/element.c \
-	conversion/Acr_nema/file_io.c \
-	conversion/Acr_nema/globals.c \
-	conversion/Acr_nema/group.c \
-	conversion/Acr_nema/message.c \
-	conversion/Acr_nema/value_repr.c
-
 # MAN pages go here.  The "dist_" prefix signals that they
 # are to be included in source distribution.
-#
 dist_man1_MANS = \
 	progs/coordinates/voxeltoworld.man1 \
 	progs/minc_modify_header/minc_modify_header.man1 \
@@ -613,5 +437,3 @@ dist_man1_MANS = \
 	conversion/micropet/upet2mnc.man1 \
 	conversion/dcm2mnc/dcm2mnc.man1 \
 	conversion/vff2mnc/vff2mnc.man1
-
-dist_man3_MANS = libsrc/ParseArgv.man3
