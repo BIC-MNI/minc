@@ -18,6 +18,7 @@
 #include <getopt.h>
 #include <algorithm>
 #include <string.h>
+#include <map>
 
 using namespace minc;
 
@@ -30,7 +31,7 @@ void show_usage (const char * prog)
            <<"\"Generalized Overlap Measures for Evaluation and Validation in Medical Image Analysis \""
            <<" IEEE TRANSACTIONS ON MEDICAL IMAGING, VOL. 25, NO. 11, NOVEMBER 2006"<<std::endl
            <<"http://dx.doi.org/10.1109/TMI.2006.880587"<<std::endl<<std::endl
-           <<"Usage: "<<prog<<" <input1.mnc> <input2.mnc> [--gkappa] [--gtc] [--csv] [--exclude l1[,l2[,l3]]]  "<<std::endl;
+           <<"Usage: "<<prog<<" <input1.mnc> <input2.mnc> [--gkappa]  [--akappa] [--gtc] [--csv] [--exclude l1[,l2[,l3]]] "<<std::endl;
 }
 
 template<class T>class find_min_max
@@ -78,11 +79,13 @@ int main(int argc,char **argv)
   int csv=0;
   int gkappa=0;
   int gtc=0;
+  int akappa=0;
   
   static struct option long_options[] = {
     {"verbose", no_argument,             &verbose, 1},
     {"quiet",   no_argument,             &verbose, 0},
     {"gkappa",   no_argument,            &gkappa, 1},
+    {"akappa",   no_argument,            &akappa, 1},
     {"gtc",      no_argument,            &gtc, 1},
     {"csv",      no_argument,            &csv, 1},
     {"exclude",  required_argument,      0,      'e'},
@@ -132,11 +135,12 @@ int main(int argc,char **argv)
     return 1;
   }
   
-  if(! (gkappa||gtc) ) //no options selected, do all 
+  if(! (gkappa||gtc||akappa) ) //no options selected, do all 
   {
     verbose=1;
     gkappa=1;
     gtc=1;
+    akappa=1;
   }
   
   try
@@ -196,31 +200,51 @@ int main(int argc,char **argv)
     double intersect=0.0;
     double overlap=0.0;
     double volume=0.0;
+    double _akappa=0.0;
+    double _akappa_cnt=0.0;
     
+    //tools for calculating average kappa ( MICCAI2012 MultiAtlas segmentation style)
+    double count_intersect,kappa;
+    double count_ref,count_res;
+
     //TODO: add mask ? or different weighting
     for(unsigned char label=low; label<=hi; label++)
     {
       if( !exclude.empty() && std::find<std::vector<int>::iterator,int>(exclude.begin(),exclude.end(),label)!=exclude.end() )
         continue; //skip this label
         
+      count_intersect=0.0;
+      count_ref=0.0;
+      count_res=0.0;
+
       for(int i=0; i<size ; i++ )
       {
-        if( buffer1[i]==label ) volume+=1.0;
-        if( buffer2[i]==label ) volume+=1.0;
-        
-        if( buffer1[i]==label && buffer2[i]==label ) intersect+=1.0;
+        if( buffer1[i]==label ) {volume+=1.0;count_ref+=1.0;}
+        if( buffer2[i]==label ) {volume+=1.0;count_res+=1.0;}
+
+        if( buffer1[i]==label && buffer2[i]==label ) {intersect+=1.0;count_intersect+=1.0;}
         if( buffer1[i]==label || buffer2[i]==label ) overlap+=1.0;
       }
+      if( (count_ref+count_res)>0.0)
+      {
+        kappa=2.0*count_intersect/(count_ref+count_res);
+        _akappa+=kappa;
+        _akappa_cnt+=1.0;
+      }
     }
+    
     double _gkappa=2*intersect/volume;
     double _gtc=intersect/overlap;
+    _akappa=_akappa/_akappa_cnt;
     
     std::cout.precision(10);
 
     if( csv )
     {
       std::cout<<_gkappa<<",";
-      std::cout<<_gtc<<std::endl;
+      std::cout<<_gtc<<",";
+      std::cout<<_akappa<<std::endl;
+      
     } else {
       if( gkappa ){
         if(verbose) std::cout<<"Generalized Kappa ";
@@ -230,6 +254,12 @@ int main(int argc,char **argv)
       {
         if(verbose) std::cout<<"Generalized Tinamoto Coeffecient ";
         std::cout<<_gtc<<std::endl;
+      }
+      if( akappa )
+      {
+        if(verbose) std::cout<<"Average kappa ";
+        std::cout<<_akappa<<std::endl;
+        //std::cout<<"Count:"<<_akappa_cnt<<std::endl;
       }
     }
     
