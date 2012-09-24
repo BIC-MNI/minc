@@ -13,7 +13,7 @@ static int error_cnt = 0;
 int main(int argc, char **argv)
 {
     mihandle_t hvol;
-    mihandle_t hvol;
+    mihandle_t hvol1;
     int r;
     mitype_t data_type;
     int length;
