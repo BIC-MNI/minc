@@ -28,8 +28,8 @@ namespace minc
     int _code;
   public:
 
-    generic_error (const char *file, int line, const char *msg = "Error", int code = 0):
-    _file (file), _line (line), _msg (msg), _code (code)
+    generic_error (const char *file__, int line__, const char *msg__ = "Error", int code__ = 0):
+    _file (file__), _line (line__), _msg (msg__), _code (code__)
     {
       //                    std::cerr<<"Exception created: "<<_file<<":"<<_line<<" "<<_msg<<std::endl;
     }

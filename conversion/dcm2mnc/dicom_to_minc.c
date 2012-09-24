@@ -2137,6 +2137,7 @@ prot_find_string(Acr_Element elem_ptr, const char *name_str, char *value)
     int  ix1, ix2;
 
     max_offset = elem_ptr->data_length - sizeof(prot_head);
+    tmp_offset = max_offset;
 
     // Scan through the element containing the protocol, to find the 
     // ASCII dump of the MrProt structure.
@@ -2148,7 +2149,7 @@ prot_find_string(Acr_Element elem_ptr, const char *name_str, char *value)
     for (cur_offset = 0; cur_offset < max_offset; cur_offset++) {
         if (!memcmp(elem_ptr->data_pointer + cur_offset,
                     prot_head, sizeof(prot_head) - 1)) {
-		tmp_offset = cur_offset;
+            tmp_offset = cur_offset;
         }
     }
 

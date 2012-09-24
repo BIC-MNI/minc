@@ -85,8 +85,11 @@ noinst_HEADERS = \
 	progs/minccalc/errx.h \
 	progs/minccalc/node.h \
 	progs/minccalc/gram.h \
+	progs/mincmorph/kernel_io.h \
+	progs/mincmorph/kernel_ops.h \
 	progs/mincresample/mincresample.h \
 	progs/mincreshape/mincreshape.h \
+	progs/mincsample/mt19937ar.h \
 	libsrc2/minc2_private.h \
 	progs/mincdump/mincdump.h \
 	progs/mincdump/dumplib.h \
@@ -190,6 +193,7 @@ bin_PROGRAMS = \
 	worldtovoxel \
 	minc_modify_header \
 	mincaverage \
+	mincblob \
 	minccalc \
 	minccmp \
 	mincconcat \
@@ -202,8 +206,10 @@ bin_PROGRAMS = \
 	mincmakescalar \
 	mincmakevector \
 	mincmath \
+	mincmorph \
 	mincresample \
 	mincreshape \
+	mincsample \
 	mincstats \
 	minctoraw \
 	invert_raw_image \
@@ -276,6 +282,8 @@ minc_modify_header_SOURCES = progs/minc_modify_header/minc_modify_header.c
 
 mincaverage_SOURCES = progs/mincaverage/mincaverage.c
 
+mincblob_SOURCES = progs/mincblob/mincblob.c
+
 minccalc_CFLAGS = -Iprogs/minccalc -I$(srcdir)/progs/minccalc
 minccalc_SOURCES = \
 	progs/minccalc/minccalc.c \
@@ -324,6 +332,13 @@ mincmakevector_SOURCES = progs/mincmakevector/mincmakevector.c
 
 mincmath_SOURCES = progs/mincmath/mincmath.c
 
+mincmorph_CFLAGS = -Iprogs/mincmorph -I$(srcdir)/progs/mincmorph
+mincmorph_SOURCES = \
+	progs/mincmorph/mincmorph.c \
+	progs/mincmorph/kernel_io.c \
+	progs/mincmorph/kernel_ops.c
+
+mincsample_CFLAGS = -Iprogs/mincsample -I$(srcdir)/progs/mincsample
 mincresample_SOURCES = \
 	progs/mincresample/mincresample.c \
 	progs/mincresample/resample_volumes.c \
@@ -332,6 +347,10 @@ mincresample_SOURCES = \
 mincreshape_SOURCES = \
 	progs/mincreshape/mincreshape.c \
 	progs/mincreshape/copy_data.c
+
+mincsample_SOURCES = \
+	progs/mincsample/mincsample.c \
+	progs/mincsample/mt19937ar.c
 
 mincstats_SOURCES = progs/mincstats/mincstats.c
 
@@ -530,6 +549,7 @@ dist_man1_MANS = \
 	progs/coordinates/voxeltoworld.man1 \
 	progs/minc_modify_header/minc_modify_header.man1 \
 	progs/mincaverage/mincaverage.man1 \
+	progs/mincblob/mincblob.man1 \
 	progs/minccalc/minccalc.man1 \
 	progs/minccomplete/minccomplete.man1 \
 	progs/mincconcat/mincconcat.man1 \

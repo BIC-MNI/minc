@@ -2173,6 +2173,8 @@ hdf_open_dsets(struct m2_file *file, hid_t grp_id, char *cpath, int is_dim)
 		H5Dclose(new_id);
 	    }
 	    break;
+   default:
+      break;
 	}
     }
     return (MI_NOERROR);

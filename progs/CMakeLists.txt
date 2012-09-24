@@ -2,19 +2,15 @@
 #
 # Andrew Janke - a.janke@gmail.com
 
-#SET(CMAKE_MODULE_PATH "cmake-modules")
-
-#LINK_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/..)
 INCLUDE_DIRECTORIES(Proglib)
 
 LINK_LIBRARIES( ${MINC2_LIBRARIES} )
 ADD_DEFINITIONS(-DHAVE_CONFIG_H)
 
-#SET(BISON_FIND_REQUIRED)
-#SET(FLEX_FIND_REQUIRED)
-
-FIND_PACKAGE(BISON)
-FIND_PACKAGE(FLEX)
+IF(NOT MINC2_EXTERNALLY_CONFIGURED)
+  FIND_PACKAGE(BISON)
+  FIND_PACKAGE(FLEX)
+ENDIF(NOT MINC2_EXTERNALLY_CONFIGURED)
 
 # all the progs
 ADD_EXECUTABLE(invert_raw_image mincview/invert_raw_image.c)
@@ -102,17 +98,29 @@ TARGET_LINK_LIBRARIES(mincstats m)
 ADD_EXECUTABLE(minctoraw minctoraw/minctoraw.c)
 ADD_EXECUTABLE(mincwindow mincwindow/mincwindow.c)
 
+
+ADD_EXECUTABLE(mincmorph mincmorph/mincmorph.c
+                         mincmorph/kernel_io.c
+                         mincmorph/kernel_ops.c 
+                         mincmorph/kernel_io.h 
+                         mincmorph/kernel_ops.h )
+TARGET_LINK_LIBRARIES(mincmorph ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
+
+
+ADD_EXECUTABLE(mincsample mincsample/mincsample.c
+                mincsample/mt19937ar.c
+                mincsample/mt19937ar.h )
+TARGET_LINK_LIBRARIES(mincsample ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
+
 ADD_EXECUTABLE(rawtominc rawtominc/rawtominc.c
                             Proglib/convert_origin_to_start.c)
 TARGET_LINK_LIBRARIES(rawtominc m)
-
 
 ADD_EXECUTABLE(voxeltoworld coordinates/voxeltoworld.c)
 TARGET_LINK_LIBRARIES(voxeltoworld ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
 
 ADD_EXECUTABLE(worldtovoxel coordinates/worldtovoxel.c)
 TARGET_LINK_LIBRARIES(worldtovoxel ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
-
 
 ADD_EXECUTABLE(transformtags xfm/transformtags.c)
 TARGET_LINK_LIBRARIES(transformtags ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
@@ -122,6 +130,10 @@ TARGET_LINK_LIBRARIES(xfmconcat ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
 
 ADD_EXECUTABLE(xfminvert xfm/xfminvert.c)
 TARGET_LINK_LIBRARIES(xfminvert ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
+
+ADD_EXECUTABLE(mincblob mincblob/mincblob.c)
+TARGET_LINK_LIBRARIES(mincblob ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
+
 
 # install progs
 INSTALL(TARGETS
@@ -133,6 +145,7 @@ INSTALL(TARGETS
    mincdump
 #   mincexample1
 #   mincexample2
+   mincblob 
    mincexpand
    mincextract
    mincinfo
@@ -146,6 +159,8 @@ INSTALL(TARGETS
    mincstats
    minctoraw
    mincwindow
+   mincmorph
+   mincsample
    rawtominc
    voxeltoworld
    worldtovoxel
@@ -155,23 +170,30 @@ INSTALL(TARGETS
    DESTINATION bin)
 
 # perl and shell scripts
-INSTALL(FILES
+INSTALL(PROGRAMS
    mincdiff/mincdiff  
    mincedit/mincedit  
    mincheader/mincheader  
    mincview/mincview
-   PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ  WORLD_EXECUTE WORLD_READ
+   PERMISSIONS 
+    OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ  WORLD_EXECUTE WORLD_READ
    DESTINATION bin )
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/minchistory/minchistory.in ${CMAKE_CURRENT_BINARY_DIR}/minchistory @ONLY)
+add_custom_target(minchistory chmod +x ${CMAKE_CURRENT_BINARY_DIR}/minchistory 
+ DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/minchistory/minchistory.in)
 
-configure_file(minchistory/minchistory.in ${CMAKE_CURRENT_BINARY_DIR}/minchistory @ONLY)
-add_custom_target(minchistory chmod +x ${CMAKE_CURRENT_BINARY_DIR}/minchistory DEPENDS minchistory/minchistory.in)
-
-configure_file(mincpik/mincpik.in ${CMAKE_CURRENT_BINARY_DIR}/mincpik @ONLY)
-add_custom_target(mincpik chmod +x ${CMAKE_CURRENT_BINARY_DIR}/mincpik DEPENDS mincpik/mincpik.in)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mincpik/mincpik.in ${CMAKE_CURRENT_BINARY_DIR}/mincpik @ONLY)
+add_custom_target(mincpik chmod +x ${CMAKE_CURRENT_BINARY_DIR}/mincpik 
+ DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/mincpik/mincpik.in)
 
 
 INSTALL(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/minchistory
+  PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ  WORLD_EXECUTE WORLD_READ
+   DESTINATION bin )
+
+INSTALL(PROGRAMS
+  ${CMAKE_CURRENT_BINARY_DIR}/mincpik
   PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ  WORLD_EXECUTE WORLD_READ
    DESTINATION bin )

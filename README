@@ -39,6 +39,10 @@ Institute (MNI).
 
 MINC requires that NetCDF and HDF5 are installed.
 
+MINC development is performed on github
+
+   http://github.com/BIC-MNI/minc
+
 
 SUPPORT FOR HDF5 "MINC 2.0" FORMAT FILES
 ----------------------------------------

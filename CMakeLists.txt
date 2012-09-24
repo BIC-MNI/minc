@@ -3,97 +3,98 @@
 # Andrew Janke - a.janke@gmail.com
 # Vladimir S. FONOV - vladimir.fonov@gmail.com
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-INCLUDE(ExternalProject)
-
 PROJECT(minc2)
 
-SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake-modules")
-ENABLE_TESTING()
-INCLUDE(CTest)
-
-#ADD_SUBDIRECTORY( doc )
-
-# Packaging defines
-SET(CPACK_GENERATOR TGZ)
-SET(CPACK_PACKAGE_VERSION_MAJOR 2)
-SET(CPACK_PACKAGE_VERSION_MINOR 1)
-SET(CPACK_PACKAGE_VERSION_PATCH 10)
-INCLUDE(CPack)
-
-
+SET(MINC2_PACKAGE_VERSION_MAJOR 2)
+SET(MINC2_PACKAGE_VERSION_MINOR 1)
+SET(MINC2_PACKAGE_VERSION_PATCH 20)
 SET(PACKAGE "minc2")
 SET(PACKAGE_BUGREPORT "a.janke@gmail.com")
 
 SET(PACKAGE_NAME "minc2")
-SET(PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
-SET(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
+SET(PACKAGE_VERSION "${MINC2_PACKAGE_VERSION_MAJOR}.${MINC2_PACKAGE_VERSION_MINOR}.${MINC2_PACKAGE_VERSION_PATCH}")
+SET(PACKAGE_STRING  "${PACKAGE_NAME} ${PACKAGE_VERSION}")
+ENABLE_TESTING()
+INCLUDE(CTest)
 
-OPTION(BUILD_MINC2      "Support minc2 file format" ON)
-OPTION(BUILD_TOOLS      "Build minc tools (mincreshape,mincresample, etc)" ON)
-OPTION(BUILD_CONVERTERS "Build minc conversion programs (mnc2nii, nii2mnc , dcm2mnc...)" ON)
-OPTION(BUILD_EZMINC     "Build C++ interface library EZminc" ON)
-OPTION(USE_SYSTEM_NETCDF "Use System NETCDF > 3.6.3" ON)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
-IF(BUILD_EZMINC)
-OPTION(BUILD_MINC4ITK   "Build ITK interface" ON)
-ENDIF(BUILD_EZMINC)
+IF(MINC_TOOLKIT_BUILD)
+  SET(MINC2_EXTERNALLY_CONFIGURED ON)
+ENDIF(MINC_TOOLKIT_BUILD)
 
-IF(BUILD_MINC2)
- OPTION(USE_SYSTEM_HDF5 "Use System HDF5 > 1.8 " ON)
-ENDIF(BUILD_MINC2)
+IF(NOT MINC2_EXTERNALLY_CONFIGURED)
+  SET(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules")
+  
+  SET(CPACK_GENERATOR TGZ)
+  SET(CPACK_PACKAGE_VERSION_MAJOR ${MINC2_PACKAGE_VERSION_MAJOR})
+  SET(CPACK_PACKAGE_VERSION_MINOR ${MINC2_PACKAGE_VERSION_MINOR})
+  SET(CPACK_PACKAGE_VERSION_PATCH ${MINC2_PACKAGE_VERSION_PATCH})
+  
+  OPTION(MINC2_BUILD_SHARED_LIBS "Build minc2 with shared libraries." OFF)
+  
+  INCLUDE(CPack)
+  
+  OPTION(MINC2_BUILD_V2                "Support minc2 file format" ON)
+  OPTION(MINC2_BUILD_TOOLS             "Build minc tools (mincreshape,mincresample, etc)" ON)
+  OPTION(MINC2_BUILD_CONVERTERS        "Build minc conversion programs (mnc2nii, nii2mnc , dcm2mnc...)" ON)
+  OPTION(MINC2_BUILD_EZMINC            "Build C++ interface library EZminc" ON)
+  OPTION(MINC2_BUILD_EZMINC_EXAMPLES   "Build EZminc examples" ON)
+  
+ENDIF(NOT MINC2_EXTERNALLY_CONFIGURED)
+
+IF(MINC2_BUILD_V2 AND NOT MINC2_EXTERNALLY_CONFIGURED)
+  IF(ITK_FOUND AND ITK_VERSION_MAJOR VERSION_EQUAL 4) # check if using ITK HDF5 library
+    IF(ITKHDF5_LOADED)
+      SET(USE_ITK_HDF5 ON)
+    ELSE(ITKHDF5_LOADED)
+      SET(USE_ITK_HDF5 OFF)
+    ENDIF(ITKHDF5_LOADED)
+  ELSE(ITK_FOUND AND ITK_VERSION_MAJOR VERSION_EQUAL 4) # check if using ITK HDF5 library
+    SET(USE_ITK_HDF5 OFF)
+  ENDIF(ITK_FOUND AND ITK_VERSION_MAJOR VERSION_EQUAL 4) # check if using ITK HDF5 library
+ENDIF(MINC2_BUILD_V2 AND NOT MINC2_EXTERNALLY_CONFIGURED)
+
+IF(MINC2_BUILD_SHARED_LIBS)
+  SET(LIBRARY_TYPE SHARED)
+  SET(LIBRARY_INSTALL LIBRARY)
+ELSE(MINC2_BUILD_SHARED_LIBS)
+  SET(LIBRARY_TYPE STATIC)
+  SET(LIBRARY_INSTALL ARCHIVE)
+ENDIF(MINC2_BUILD_SHARED_LIBS)
+
 
 # external packages
-IF(USE_SYSTEM_NETCDF)
+IF(NOT MINC2_EXTERNALLY_CONFIGURED)
   FIND_PACKAGE(NETCDF REQUIRED)
-  
-ELSE(USE_SYSTEM_NETCDF)
-  ExternalProject_Add(NETCDF 
-    SOURCE_DIR NETCDF
-    URL "ftp://ftp.unidata.ucar.edu/pub/netcdf/netcdf-4.0.1.tar.gz"
-    URL_MD5 "a251453c5477599f050fa4e593295186"
-    BUILD_IN_SOURCE 1
-    INSTALL_DIR "${CMAKE_INSTALL_PREFIX}"
-    BUILD_COMMAND   make 
-    INSTALL_COMMAND make install 
-    CONFIGURE_COMMAND ./configure --prefix=${CMAKE_INSTALL_PREFIX} --with-pic --disable-netcdf4 --disable-hdf4 --disable-dap --disable-shared --disable-cxx --disable-f77 --disable-f90 --disable-examples --enable-v2 --disable-docs
-  )
-
-  SET(NETCDF_LIBRARY ${CMAKE_INSTALL_PREFIX}/lib/libnetcdf.a )
-  SET(NETCDF_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include )
-ENDIF(USE_SYSTEM_NETCDF)
+ENDIF(NOT MINC2_EXTERNALLY_CONFIGURED)
 
 
-IF(BUILD_MINC2)
-  IF(USE_SYSTEM_HDF5 )
-#     SET(HDF5_FIND_COMPONENTS "C")
-#     SET(HDF5_USE_STATIC_LIBRARIES ON)
+IF(MINC2_BUILD_V2 AND NOT MINC2_EXTERNALLY_CONFIGURED)
+  IF(USE_ITK_HDF5)
+    SET(HDF5_INCLUDE_DIR "${ITKHDF5_INCLUDE_DIRS}/itkhdf5") # a hack?
+    SET(HDF5_LIBRARY     ${ITKHDF5_LIBRARIES})
+    SET(ZLIB_LIBRARY   ${ITKZLIB_LIBRARIES})
+  ELSE(USE_ITK_HDF5)
+    FIND_PACKAGE(ZLIB REQUIRED)
     FIND_PACKAGE(HDF5 REQUIRED)
-  ELSE(USE_SYSTEM_HDF5)
+  ENDIF(USE_ITK_HDF5)
+  
+  IF(ZLIB_FOUND)
+    SET(HAVE_ZLIB 1)
+  ELSE(ZLIB_FOUND)
+    FIND_PACKAGE(ZLIB)
+    IF(ZLIB_FOUND)
+      SET(HAVE_ZLIB 1)
+    ENDIF(ZLIB_FOUND)
+  ENDIF(ZLIB_FOUND)
+ENDIF(MINC2_BUILD_V2 AND NOT MINC2_EXTERNALLY_CONFIGURED)
 
-    ExternalProject_Add(HDF5
-      SOURCE_DIR HDF5
-      URL "http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.7/src/hdf5-1.8.7.tar.gz"
-      URL_MD5 "37711d4bcb72997e93d495f97c76c33a"
-      BUILD_IN_SOURCE 1
-      INSTALL_DIR     "${CMAKE_INSTALL_PREFIX}"
-      BUILD_COMMAND   make 
-      INSTALL_COMMAND make install 
-      CONFIGURE_COMMAND ./configure --prefix=${CMAKE_INSTALL_PREFIX}  --with-pic --disable-shared --disable-cxx --disable-f77 --disable-f90 --disable-examples --disable-hl --disable-docs
-    )
-
-    SET(HDF5_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include )
-    SET(HDF5_LIBRARY  ${CMAKE_INSTALL_PREFIX}/lib/libhdf5.a )
-
-  ENDIF(USE_SYSTEM_HDF5)
-ENDIF(BUILD_MINC2)
-
-
-ADD_DEFINITIONS(-DHAVE_CONFIG_H)
-ADD_DEFINITIONS(-fPIC)
-
-# aliases
-SET(VERSION "${PACKAGE_VERSION}")
+# add for building relocatable library
+IF(UNIX)
+  SET(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -fPIC")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+ENDIF(UNIX)
 
 # check for prereqs
 INCLUDE(CheckFunctionExists)
@@ -131,71 +132,50 @@ CHECK_INCLUDE_FILES(vfork.h     HAVE_VFORK_H)
 CHECK_INCLUDE_FILES(inttypes.h  HAVE_INTTYPES_H)
 CHECK_INCLUDE_FILES(string.h    HAVE_STRING_H)
 CHECK_INCLUDE_FILES(strings.h   HAVE_STRINGS_H)
-CHECK_INCLUDE_FILES(pwd.h   HAVE_PWD_H)
+CHECK_INCLUDE_FILES(pwd.h       HAVE_PWD_H)
 
+ADD_DEFINITIONS(-DHAVE_CONFIG_H)
 
+# aliases
+SET(VERSION "${PACKAGE_VERSION}")
 
-IF(ZLIB_FOUND)
-  SET(HAVE_ZLIB 1)
-ELSE(ZLIB_FOUND)
-  FIND_PACKAGE(ZLIB)
-  IF(ZLIB_FOUND)
-    SET(HAVE_ZLIB 1)
-  ENDIF(ZLIB_FOUND)
-ENDIF(ZLIB_FOUND)
-
-IF(BUILD_EZMINC)
+IF(MINC2_BUILD_EZMINC)
   set(MINC2_INCLUDE_DIRS_CONFIG    
-    ${CMAKE_SOURCE_DIR}/ezminc
+    ${CMAKE_CURRENT_SOURCE_DIR}/ezminc
   )
   INCLUDE_DIRECTORIES(
-    ${CMAKE_SOURCE_DIR}/ezminc
+    ${CMAKE_CURRENT_SOURCE_DIR}/ezminc
    )
-ENDIF(BUILD_EZMINC)
-
-IF(BUILD_MINC4ITK AND BUILD_EZMINC)
-  set(MINC2_INCLUDE_DIRS_CONFIG    
-    ${CMAKE_SOURCE_DIR}/minc4itk
-  )
-
-  INCLUDE_DIRECTORIES(
-    ${CMAKE_SOURCE_DIR}/minc4itk
-   )
-ENDIF(BUILD_MINC4ITK AND BUILD_EZMINC)
-
+ENDIF(MINC2_BUILD_EZMINC)
 
 # netcdf and HDF5
 
-IF(BUILD_MINC2)
+IF(MINC2_BUILD_V2)
   FIND_PACKAGE(ZLIB REQUIRED)
   SET(MINC2 "1")
 ELSE(BUILD_MINC2)
   SET(MINC2 "0")
-ENDIF(BUILD_MINC2)
+ENDIF(MINC2_BUILD_V2)
 
 # config files for build
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/config.h.cmake ${CMAKE_BINARY_DIR}/config.h @ONLY)
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h @ONLY)
 
 # others
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/epm-header.in ${CMAKE_BINARY_DIR}/epm-header)
-
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/epm-header.in ${CMAKE_CURRENT_BINARY_DIR}/epm-header)
 
 # set the master INCLUDE directories
 INCLUDE_DIRECTORIES(
    ${CMAKE_CURRENT_SOURCE_DIR}
-   ${CMAKE_BINARY_DIR}
-   ${CMAKE_SOURCE_DIR}/libsrc
-   ${CMAKE_SOURCE_DIR}/volume_io/Include
+   ${CMAKE_CURRENT_BINARY_DIR}
+   ${CMAKE_CURRENT_SOURCE_DIR}/libsrc
+   ${CMAKE_CURRENT_SOURCE_DIR}/volume_io/Include
    )
 
 INCLUDE_DIRECTORIES( ${NETCDF_INCLUDE_DIR} )
 
-IF(BUILD_MINC2)
-  INCLUDE_DIRECTORIES(
-   ${CMAKE_SOURCE_DIR}/libsrc2
-   )
-ENDIF(BUILD_MINC2)
-
+IF(MINC2_BUILD_V2)
+  INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/libsrc2 )
+ENDIF(MINC2_BUILD_V2)
 
 # some variables
 SET(minc1_LIB_SRCS
@@ -215,6 +195,17 @@ SET(minc1_LIB_SRCS
    libsrc/read_file_names.c
    )
 
+SET(minc1_HEADERS
+  libsrc/minc.h 
+  libsrc/ParseArgv.h 
+  libsrc/voxel_loop.h 
+  libsrc/nd_loop.h
+  libsrc/time_stamp.h
+  libsrc/minc_compat.h
+  volume_io/Include/volume_io.h
+  libsrc/minc_simple.h
+)
+
 SET(minc2_LIB_SRCS
    libsrc2/convert.c
    libsrc2/datatype.c
@@ -231,66 +222,9 @@ SET(minc2_LIB_SRCS
    libsrc2/volume.c
    )
 
-SET(MINC2_LIBRARY minc)
-SET(MINC2_LIBRARIES ${MINC2_LIBRARY} ${NETCDF_LIBRARY})
-
-IF(BUILD_MINC2)
-  INCLUDE_DIRECTORIES( ${HDF5_INCLUDE_DIR} )
-
-
-  SET(minc_LIB_SRCS ${minc1_LIB_SRCS} ${minc2_LIB_SRCS})
-  SET(MINC2_LIBRARY minc2)
-  SET(MINC2_LIBRARIES ${MINC2_LIBRARY} ${HDF5_LIBRARY} ${NETCDF_LIBRARY} ${ZLIB_LIBRARIES}  m )
-
-  ADD_LIBRARY(minc2 STATIC ${minc_LIB_SRCS} )
-
-  TARGET_LINK_LIBRARIES(minc2 ${NETCDF_LIBRARY} ${HDF5_LIBRARY} ${ZLIB_LIBRARIES} m )
-
-  INSTALL(TARGETS minc2 ARCHIVE DESTINATION lib)
-
-  INSTALL(FILES libsrc/minc.h libsrc/ParseArgv.h 
-    libsrc/voxel_loop.h 
-    libsrc/nd_loop.h
-    libsrc/time_stamp.h
-    libsrc/minc_compat.h
-    volume_io/Include/volume_io.h
-    libsrc2/minc2.h
-    libsrc/minc_simple.h
-    DESTINATION include
-    )
-
-  SET_TARGET_PROPERTIES(minc2 PROPERTIES VERSION ${PACKAGE_VERSION} SOVERSION ${CPACK_PACKAGE_VERSION_MAJOR})
-
-  IF(NOT USE_SYSTEM_HDF5)
-      ADD_DEPENDENCIES(${MINC2_LIBRARY} HDF5)
-  ENDIF(NOT USE_SYSTEM_HDF5)
-
-ELSE(BUILD_MINC2)
-
-    SET(minc_LIB_SRCS ${minc1_LIB_SRCS} )
-    ADD_LIBRARY(minc STATIC ${minc1_LIB_SRCS} )
-    TARGET_LINK_LIBRARIES(minc ${NETCDF_LIBRARY} )
-    INSTALL(TARGETS minc ARCHIVE DESTINATION lib)
-
-    INSTALL(FILES libsrc/minc.h libsrc/ParseArgv.h 
-      libsrc/voxel_loop.h 
-      libsrc/nd_loop.h
-      libsrc/time_stamp.h
-      libsrc/minc_compat.h
-      volume_io/Include/volume_io.h
-      libsrc/minc_simple.h
-      DESTINATION include
-      )
-
-    SET_TARGET_PROPERTIES(minc PROPERTIES VERSION ${PACKAGE_VERSION} SOVERSION ${CPACK_PACKAGE_VERSION_MAJOR})
-ENDIF(BUILD_MINC2)
-
-IF(NOT USE_SYSTEM_NETCDF)
-    ADD_DEPENDENCIES(${MINC2_LIBRARY} NETCDF)
-ENDIF(NOT USE_SYSTEM_NETCDF)
-
-
-# build the main minc2 library
+SET(minc2_HEADERS
+  libsrc2/minc2.h
+)
 
 # volume_io2
 SET(volume_io_LIB_SRCS
@@ -328,87 +262,107 @@ SET(volume_io_LIB_SRCS
    volume_io/Volumes/set_hyperslab.c
    volume_io/Volumes/volume_cache.c
    volume_io/Volumes/volumes.c
-   )
-
-IF(BUILD_MINC2)
-  # build and install volume_io2 library
-  ADD_LIBRARY(volume_io2 STATIC ${volume_io_LIB_SRCS})
-  INSTALL(TARGETS volume_io2 ARCHIVE DESTINATION lib)
-  SET_TARGET_PROPERTIES(volume_io2 PROPERTIES VERSION ${PACKAGE_VERSION} SOVERSION ${CPACK_PACKAGE_VERSION_MAJOR})
-  SET( VOLUME_IO_LIBRARY volume_io2)
-  ADD_DEPENDENCIES(volume_io2 ${MINC2_LIBRARY})
-
-ELSE(BUILD_MINC2)
-  ADD_LIBRARY(volume_io STATIC ${volume_io_LIB_SRCS})
-  INSTALL(TARGETS volume_io ARCHIVE DESTINATION lib)
-  SET_TARGET_PROPERTIES(volume_io PROPERTIES VERSION ${PACKAGE_VERSION} SOVERSION ${CPACK_PACKAGE_VERSION_MAJOR})
-  SET( VOLUME_IO_LIBRARY volume_io)
-  ADD_DEPENDENCIES(volume_io ${MINC2_LIBRARY})
-ENDIF(BUILD_MINC2)
-
-
-INSTALL(FILES volume_io/Include/volume_io/alloc.h
-	volume_io/Include/volume_io/arrays.h 
-	volume_io/Include/volume_io/basic.h 
-	volume_io/Include/volume_io/def_math.h 
-	volume_io/Include/volume_io/files.h 
-	volume_io/Include/volume_io/geom_structs.h 
-	volume_io/Include/volume_io/geometry.h 
-	volume_io/Include/internal_volume_io.h 
-	volume_io/Include/volume_io/multidim.h 
-	volume_io/Include/volume_io/progress.h 
-	volume_io/Include/volume_io/string_funcs.h 
-	volume_io/Include/volume_io/system_dependent.h 
-	volume_io/Include/volume_io/transforms.h 
-	volume_io/Include/volume_io/vol_io_prototypes.h 
-	volume_io/Include/volume_io/volume.h 
-	volume_io/Include/volume_io/volume_cache.h
-   DESTINATION include/volume_io)
-
-
-SET(VOLUME_IO_LIBRARIES ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES})
-
-SET(EZMINC_LIBRARIES )
-SET(MINC4ITK_LIBRARIES )
-
-
-IF(BUILD_TOOLS)
-# now build the progs subdir
-  ADD_SUBDIRECTORY( progs )
-ENDIF(BUILD_TOOLS)
-
-IF(BUILD_CONVERTERS)
-# and then the conversion subdir
-  ADD_SUBDIRECTORY( conversion )
-ENDIF(BUILD_CONVERTERS)
-
-IF(BUILD_EZMINC)
-  ADD_SUBDIRECTORY( ezminc )
-  SET(EZMINC_LIBRARIES minc_io ${MINC2_LIBRARIES} )
-ENDIF(BUILD_EZMINC)
-
-IF(BUILD_MINC4ITK AND BUILD_EZMINC)
-  ADD_SUBDIRECTORY( minc4itk )
-  SET(MINC4ITK_LIBRARIES minc4itk ${EZMINC_LIBRARIES} )
-ENDIF(BUILD_MINC4ITK AND BUILD_EZMINC)
-
-# config for the build directory
-set(MINC2_USE_FILE_CONFIG   ${CMAKE_CURRENT_BINARY_DIR}/UseMINC2.cmake)
-
-set(MINC2_INCLUDE_DIRS_CONFIG    
-   ${CMAKE_CURRENT_SOURCE_DIR}
-   ${CMAKE_SOURCE_DIR}/libsrc
-   ${CMAKE_SOURCE_DIR}/volume_io/Include
 )
 
-IF(BUILD_MINC2)
+SET(volume_io_HEADERS
+    volume_io/Include/volume_io/alloc.h
+    volume_io/Include/volume_io/arrays.h 
+    volume_io/Include/volume_io/basic.h 
+    volume_io/Include/volume_io/def_math.h 
+    volume_io/Include/volume_io/files.h 
+    volume_io/Include/volume_io/geom_structs.h 
+    volume_io/Include/volume_io/geometry.h 
+    volume_io/Include/internal_volume_io.h 
+    volume_io/Include/volume_io/multidim.h 
+    volume_io/Include/volume_io/progress.h 
+    volume_io/Include/volume_io/string_funcs.h 
+    volume_io/Include/volume_io/system_dependent.h 
+    volume_io/Include/volume_io/transforms.h 
+    volume_io/Include/volume_io/vol_io_prototypes.h 
+    volume_io/Include/volume_io/volume.h 
+    volume_io/Include/volume_io/volume_cache.h
+)
+
+SET(MINC2_LIBRARY minc)
+SET(VOLUME_IO_LIBRARY volume_io)
+
+SET(MINC2_LIBRARIES ${MINC2_LIBRARY} ${NETCDF_LIBRARY})
+
+#SET(MINC2_DEPENDENCIES "")
+
+IF(MINC2_BUILD_V2)
+
+  INCLUDE_DIRECTORIES( ${HDF5_INCLUDE_DIR} )
+
+  SET(minc_LIB_SRCS ${minc1_LIB_SRCS} ${minc2_LIB_SRCS})
+  SET(minc_HEADERS ${minc1_HEADERS} ${minc2_HEADERS})
+  SET(MINC2_LIBRARY minc2)
+  SET(MINC2_LIBRARIES ${MINC2_LIBRARY} ${HDF5_LIBRARY} ${NETCDF_LIBRARY} ${ZLIB_LIBRARY}  m )
+  SET(VOLUME_IO_LIBRARY volume_io2)
+  
+ELSE(MINC2_BUILD_V2)
+  SET(minc_LIB_SRCS ${minc1_LIB_SRCS} )
+  SET(minc_HEADERS ${minc1_HEADERS} ${minc2_HEADERS})
+ENDIF(MINC2_BUILD_V2)
+
+
+ADD_LIBRARY(${MINC2_LIBRARY} ${LIBRARY_TYPE} ${minc_LIB_SRCS} )
+TARGET_LINK_LIBRARIES(${MINC2_LIBRARY} ${NETCDF_LIBRARY} ${HDF5_LIBRARY} ${ZLIB_LIBRARY} m )
+
+ADD_LIBRARY(${VOLUME_IO_LIBRARY} ${LIBRARY_TYPE} ${volume_io_LIB_SRCS})
+TARGET_LINK_LIBRARIES(${VOLUME_IO_LIBRARY} ${MINC2_LIBRARY})
+
+SET_TARGET_PROPERTIES(${MINC2_LIBRARY}     PROPERTIES VERSION ${PACKAGE_VERSION} SOVERSION ${MINC2_PACKAGE_VERSION_MAJOR})
+SET_TARGET_PROPERTIES(${VOLUME_IO_LIBRARY} PROPERTIES VERSION ${PACKAGE_VERSION} SOVERSION ${MINC2_PACKAGE_VERSION_MAJOR})
+
+ADD_DEPENDENCIES(${VOLUME_IO_LIBRARY} ${MINC2_LIBRARY})
+
+INSTALL(TARGETS ${MINC2_LIBRARY}     ${LIBRARY_INSTALL} DESTINATION lib)
+INSTALL(TARGETS ${VOLUME_IO_LIBRARY} ${LIBRARY_INSTALL} DESTINATION lib)
+INSTALL(FILES   ${minc_HEADERS}      DESTINATION  include  )
+INSTALL(FILES   ${volume_io_HEADERS} DESTINATION include/volume_io)
+
+IF(MINC2_BUILD_TOOLS)
+  ADD_SUBDIRECTORY( progs )
+ENDIF(MINC2_BUILD_TOOLS)
+
+IF(MINC2_BUILD_CONVERTERS)
+  ADD_SUBDIRECTORY( conversion )
+ENDIF(MINC2_BUILD_CONVERTERS)
+
+IF(MINC2_BUILD_EZMINC)
+  ADD_SUBDIRECTORY( ezminc )
+ENDIF(MINC2_BUILD_EZMINC)
+
+# config for the build directory
+set(MINC2_USE_FILE_CONFIG  ${CMAKE_CURRENT_BINARY_DIR}/UseMINC2.cmake)
+
+set(MINC2_INCLUDE_DIRS_CONFIG
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/libsrc
+  ${CMAKE_CURRENT_SOURCE_DIR}/volume_io/Include
+)
+
+IF(MINC2_BUILD_EZMINC)
+  set(MINC2_INCLUDE_DIRS_CONFIG
+      ${MINC2_INCLUDE_DIRS_CONFIG}
+       ${CMAKE_CURRENT_SOURCE_DIR}/ezminc)
+ENDIF(MINC2_BUILD_EZMINC)
+
+
+IF(MINC2_BUILD_V2)
   set(MINC2_INCLUDE_DIRS_CONFIG
     ${MINC2_INCLUDE_DIRS_CONFIG}
-    ${CMAKE_SOURCE_DIR}/libsrc2
+    ${CMAKE_CURRENT_SOURCE_DIR}/libsrc2
   )
-ENDIF(BUILD_MINC2)
+ENDIF(MINC2_BUILD_V2)
 
-set(MINC2_LIBRARY_DIRS_CONFIG ${CMAKE_CURRENT_BINARY_DIR})
+IF(MINC2_BUILD_EZMINC)
+  SET(EZMINC_LIBRARIES minc_io ${MINC2_LIBRARIES})
+ENDIF(MINC2_BUILD_EZMINC)
+
+set(MINC2_LIBRARY_DIRS_CONFIG ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/ezminc)
+set(MINC2_LIBRARIES_CONFIG ${MINC2_LIBRARIES})
 
 
 configure_file(MINC2Config.cmake.in
@@ -419,12 +373,24 @@ configure_file(UseMINC2.cmake.in
 
 # config for install dir
 set(MINC2_USE_FILE_CONFIG "${CMAKE_INSTALL_PREFIX}/lib/UseMINC2.cmake")
-
-set(MINC2_INCLUDE_DIRS_CONFIG    
-   ${CMAKE_INSTALL_PREFIX}/include
-)
-
+set(MINC2_INCLUDE_DIRS_CONFIG ${CMAKE_INSTALL_PREFIX}/include )
 set(MINC2_LIBRARY_DIRS_CONFIG ${CMAKE_INSTALL_PREFIX}/lib)
+
+#fix for superbuild install
+IF(SUPERBUILD_STAGING_PREFIX)
+
+  STRING(REPLACE "${SUPERBUILD_STAGING_PREFIX}/" "" MINC2_INCLUDE_DIRS_CONFIG "${MINC2_INCLUDE_DIRS_CONFIG}")
+  STRING(REPLACE "${SUPERBUILD_STAGING_PREFIX}/" "" MINC2_LIBRARY_DIRS_CONFIG "${MINC2_LIBRARY_DIRS_CONFIG}")
+  STRING(REPLACE "${SUPERBUILD_STAGING_PREFIX}/" "" MINC2_LIBRARIES_CONFIG    "${MINC2_LIBRARIES_CONFIG}")
+  STRING(REPLACE "${SUPERBUILD_STAGING_PREFIX}/" "" EZMINC_LIBRARIES          "${EZMINC_LIBRARIES}")
+  
+  STRING(REPLACE "${SUPERBUILD_STAGING_PREFIX}/" "" NETCDF_INCLUDE_DIR "${NETCDF_INCLUDE_DIR}")
+  STRING(REPLACE "${SUPERBUILD_STAGING_PREFIX}/" "" HDF5_INCLUDE_DIR   "${HDF5_INCLUDE_DIR}")
+  STRING(REPLACE "${SUPERBUILD_STAGING_PREFIX}/" "" NETCDF_LIBRARY     "${NETCDF_LIBRARY}")
+  STRING(REPLACE "${SUPERBUILD_STAGING_PREFIX}/" "" HDF5_LIBRARY       "${HDF5_LIBRARY}")
+  STRING(REPLACE "${SUPERBUILD_STAGING_PREFIX}/" "" ZLIB_LIBRARIES     "${ZLIB_LIBRARIES}")
+  
+ENDIF(SUPERBUILD_STAGING_PREFIX)
 
 configure_file(MINC2Config.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/MINC2Config.cmake @ONLY )
@@ -432,15 +398,13 @@ configure_file(MINC2Config.cmake.in
 configure_file(UseMINC2.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/UseMINC2.cmake @ONLY)
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/UseMINC2.cmake ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/MINC2Config.cmake
+INSTALL(FILES
+   ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/UseMINC2.cmake 
+   ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/MINC2Config.cmake
   DESTINATION lib
   COMPONENT Development)
 
 # testing
-
 IF(BUILD_TESTING)
-  ADD_SUBDIRECTORY( testdir )
+  ADD_SUBDIRECTORY(testdir)
 ENDIF(BUILD_TESTING)
-
-
-

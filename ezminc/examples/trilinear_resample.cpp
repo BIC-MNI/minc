@@ -120,6 +120,7 @@ int main(int argc,char **argv)
     minc_1_writer wrt;
     wrt.open(argv[optind+1],new_info,2,NC_FLOAT);
     save_simple_volume<float>(wrt,output_vol);
+    //wrt.close();
   } catch (const minc::generic_error & err) {
     std::cerr << "Got an error at:" << err.file () << ":" << err.line () << std::endl;
     std::cerr << err.msg()<<std::endl;
