@@ -184,9 +184,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <minc.h>
-#if HAVE_FLOAT_H
 #include <float.h>
-#endif /* HAVE_FLOAT_H */
 #include <math.h>
 #if HAVE_UNISTD_H
 #include <unistd.h>

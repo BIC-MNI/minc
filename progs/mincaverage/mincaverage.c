@@ -105,7 +105,6 @@
 #include <ParseArgv.h>
 #include <time_stamp.h>
 #include <voxel_loop.h>
-#include "read_file_names.h"
 
 /* Constants */
 

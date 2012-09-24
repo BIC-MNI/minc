@@ -124,9 +124,7 @@
 #include <unistd.h>
 #endif /* HAVE_UNISTD_H */
 #include <limits.h>
-#if HAVE_FLOAT_H
 #include <float.h>
-#endif /* HAVE_FLOAT_H */
 #include <math.h>
 #include <string.h>
 #include <ctype.h>

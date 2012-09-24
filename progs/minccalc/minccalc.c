@@ -121,7 +121,6 @@ Mon May 21 01:01:01 EST 2000 - Original version "imgcalc" by David Leonard
 #include <voxel_loop.h>
 #include <time_stamp.h>
 #include "node.h"
-#include "read_file_names.h"
 
 /* Constants */
 

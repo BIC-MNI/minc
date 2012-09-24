@@ -101,6 +101,14 @@ noinst_HEADERS += \
 
 endif
 
+# Conditionally install the libacr_nema.la library.  It must always be                                        
+# built even if it is not installed.
+if ACR_NEMA_TOOLS            
+lib_LTLIBRARIES = libacr_nema.la
+else                         
+noinst_LTLIBRARIES = libacr_nema.la
+endif 
+
 
 # Scripts we install: sh or perl.
 dist_bin_SCRIPTS = \
@@ -176,7 +184,6 @@ noinst_PROGRAMS = \
 
 EXTRA_DIST = \
 	$(m4_files) \
-	$(ezMINC_files) \
 	progs/minccomplete/minccomplete.in \
 	progs/minchistory/minchistory.in \
 	progs/mincpik/mincpik.in \
@@ -195,31 +202,6 @@ EXTRA_DIST = \
 m4_files = \
 	m4/mni_REQUIRE_LIB.m4 \
 	m4/smr_WITH_BUILD_PATH.m4
-
-ezMINC_files = \
-	ezminc/examples/volume_msq_dist.cpp
-	ezminc/examples/CMakeLists.txt
-	ezminc/examples/fuzzy_volume_similarity.cpp
-	ezminc/examples/trilinear_resample.cpp
-	ezminc/examples/volume_avg.cpp
-	ezminc/examples/volume_gtc_similarity.cpp
-	ezminc/examples/volume_similarity.cpp
-	ezminc/minc_1_simple_rw.cpp
-	ezminc/minc_1_simple_rw.h
-	ezminc/minc_io_4d_volume.h
-	ezminc/minc_io_fixed_vector.h
-	ezminc/minc_io_simple_volume.h
-	ezminc/tests/minc_rw_test2.cpp
-	ezminc/tests/minc_rw_test_4d.cpp
-	ezminc/tests/minc_rw_test_simple.cpp
-	ezminc/tests/CMakeLists.txt
-	ezminc/tests/ezminc_rw_test.cpp
-	ezminc/tests/ezminc_stats.cpp
-	ezminc/minc_1_simple.h
-	ezminc/CMakeLists.txt
-	ezminc/minc_1_rw.cpp
-	ezminc/minc_1_rw.h
-	ezminc/minc_io_exceptions.h
 	
 voxeltoworld_SOURCES = progs/coordinates/voxeltoworld.c
 
@@ -390,6 +372,17 @@ copy_acr_nema_SOURCES = conversion/Acr_nema/copy_acr_nema.c
 
 extract_SOURCES = conversion/image_filters/extract.c
 byte_swap_SOURCES = conversion/image_filters/byte_swap.c
+
+libacr_nema_la_SOURCES = \
+	conversion/Acr_nema/acr_io.c \
+	conversion/Acr_nema/dicom_client_routines.c \
+	conversion/Acr_nema/dicom_network.c \
+	conversion/Acr_nema/element.c \
+	conversion/Acr_nema/file_io.c \
+	conversion/Acr_nema/globals.c \
+	conversion/Acr_nema/group.c \
+	conversion/Acr_nema/message.c \
+	conversion/Acr_nema/value_repr.c
 
 # MAN pages go here.  The "dist_" prefix signals that they
 # are to be included in source distribution.

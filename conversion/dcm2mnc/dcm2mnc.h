@@ -127,9 +127,7 @@
 #include <memory.h>
 #include <limits.h>
 #include <math.h>
-#if HAVE_FLOAT_H
 #include <float.h>
-#endif
 
 #include <time_stamp.h>
 #include <acr_nema.h>

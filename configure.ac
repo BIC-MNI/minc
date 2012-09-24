@@ -14,6 +14,11 @@ AM_PROG_CC_C_O
 AM_PROG_LEX
 AC_PROG_YACC
 
+AC_PROG_LIBTOOL
+
+AC_CHECK_HEADERS(sys/time.h sys/stat.h sys/wait.h unistd.h)
+AC_CHECK_HEADERS(fcntl.h pwd.h float.h values.h)
+
 AC_PATH_PROGS(POD2MAN, pod2man)
 AM_CONDITIONAL(BUILD_POD_DOC, test "x$POD2MAN" != "x" )
 if test "x$POD2MAN" = "x"; then
@@ -26,6 +31,8 @@ smr_WITH_BUILD_PATH
 mni_REQUIRE_VOLUMEIO
 AC_DEFINE_UNQUOTED([MINC2], [1], [Build against the MINC2 API])
 
+dnl Verify existence of mkstemp, tempnam, and tmpnam                                                          
+AC_CHECK_FUNCS(mkstemp tempnam tmpnam)
 
 # Code to enable conditional build of ACR/NEMA tools
 AC_ARG_ENABLE(acr-nema,
