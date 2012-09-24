@@ -27,7 +27,6 @@ INCLUDES = \
 #
 noinst_HEADERS = \
 	progs/Proglib/convert_origin_to_start.h \
-	progs/Proglib/minc_def.h \
 	progs/minccalc/errx.h \
 	progs/minccalc/node.h \
 	progs/minccalc/gram.h \
