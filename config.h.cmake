@@ -50,5 +50,3 @@
 #cmakedefine HAVE_STRINGS_H 1 
 #cmakedefine HAVE_STRING_H 1 
 
-#define H5Acreate_vers 2
-
