@@ -162,6 +162,7 @@ extern int scaled_maximal_pivoting_gaussian_elimination_real(int n,
 extern double *alloc1d(int);
 extern double **alloc2d(int, int);
 extern void free2d(int, double **);
+extern int create_dataset(hid_t hdf_file, const char *path);
 extern int create_standard_dataset(hid_t hdf_file, const char *path);
 
 /* From hyper.c */

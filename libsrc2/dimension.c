@@ -1329,33 +1329,31 @@ miget_dimension_start(midimhandle_t dimension, mivoxel_order_t voxel_order,
   if (dimension == NULL || dimension->step == 0) {
     return (MI_ERROR);
   }
-  
- 
+
   if (voxel_order == MI_ORDER_FILE) {
     *start_ptr = dimension->start;
   }
- else { // L.B March 16/2011, Properly reflect voxel ordering
+  else { // L.B March 16/2011, Properly reflect voxel ordering
     if (dimension->flipping_order == MI_COUNTER_FILE_ORDER) { 
       *start_ptr = dimension->start + (dimension->step * (dimension->length-1));
     }
     else if (dimension->flipping_order == MI_POSITIVE) {
       if (dimension->step > 0) {
-      *start_ptr = dimension->start;
+        *start_ptr = dimension->start;
       }
       else {
-	*start_ptr = dimension->start + (dimension->step * (dimension->length-1));
+        *start_ptr = dimension->start + (dimension->step * (dimension->length-1));
       }
     }
     else if (dimension->flipping_order == MI_NEGATIVE) {
       if (dimension->step < 0) {
-	*start_ptr = dimension->start;
+        *start_ptr = dimension->start;
       }
       else {
-    
-	*start_ptr = dimension->start + (dimension->step * (dimension->length-1));
+        *start_ptr = dimension->start + (dimension->step * (dimension->length-1));
       }
     }
- }
+  }
   return (MI_NOERROR);
 }
 

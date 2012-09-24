@@ -13,6 +13,7 @@ static int error_cnt = 0;
 int main(int argc, char **argv)
 {
     mihandle_t hvol;
+    mihandle_t hvol;
     int r;
     mitype_t data_type;
     int length;
@@ -23,6 +24,8 @@ int main(int argc, char **argv)
     float fltarr[TESTARRAYSIZE];
     int intarr[TESTARRAYSIZE];
     char valstr[128];
+    float val1=12.5;
+    float val2=34.5;
     milisthandle_t hlist, h1list;
     char pathbuf[256];
     char namebuf[256];
@@ -31,6 +34,12 @@ int main(int argc, char **argv)
 
     r = micreate_volume("tst-grpa.mnc", 0, NULL, MI_TYPE_UINT, 
                         MI_CLASS_INT, NULL, &hvol);
+    if (r < 0) {
+	TESTRPT("Unable to create test file", r);
+	return (-1);
+    }
+    r = micreate_volume("tst-grpb.mnc", 0, NULL, MI_TYPE_UINT, 
+                        MI_CLASS_INT, NULL, &hvol1);
     if (r < 0) {
 	TESTRPT("Unable to create test file", r);
 	return (-1);
@@ -220,7 +229,22 @@ int main(int argc, char **argv)
     if (strcmp(valstr, "bicycle") != 0) {
 	TESTRPT("miget_attr_values failed", 0);
     }
+     r = miset_attr_values(hvol, MI_TYPE_FLOAT, "/OPT",
+			  "zoom",1, &val1);
 
+    if (r < 0) {
+        TESTRPT("micreate_group failed", r);
+    }
+  
+    r = miset_attr_values(hvol, MI_TYPE_FLOAT, "/OPT",
+ 			  "binning",1, &val2);
+  
+    r = miset_attr_values(hvol, MI_TYPE_FLOAT, "/OPT",
+			  "gain",1, &val1);
+
+    if (r < 0) {
+        TESTRPT("micreate_group failed", r);
+    }
     
     r = milist_start(hvol, "/", 1, &hlist);
     if (r == MI_NOERROR) {
@@ -232,6 +256,9 @@ int main(int argc, char **argv)
     }
     milist_finish(hlist);
     
+
+    printf("copy all attributes in the provided path in the new volume\n");
+    r = micopy_attr(hvol,"/OPT",hvol1);
     printf("***************** \n");
     
     r = milist_start(hvol, "/", 1, &h1list);
@@ -245,7 +272,7 @@ int main(int argc, char **argv)
     milist_finish(h1list);
 	
     miclose_volume(hvol);
-
+    miclose_volume(hvol1);
     if (error_cnt != 0) {
 	fprintf(stderr, "%d error%s reported\n", 
 		error_cnt, (error_cnt == 1) ? "" : "s");

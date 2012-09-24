@@ -249,6 +249,7 @@ extern int miget_attr_length(mihandle_t vol, const char *path,
 			     const char *name, int *length);
 extern int miget_attr_type(mihandle_t vol, const char *path, const char *name,
 			   mitype_t *data_type);
+extern int micopy_attr(mihandle_t vol, const char *path, mihandle_t new_vol);
 extern int miget_attr_values(mihandle_t vol, mitype_t data_type,
 			     const char *path, const char *name, 
 			     int length, void *values);

@@ -47,9 +47,13 @@ milist_start(mihandle_t vol, const char *path, int flags,
     
     strncat(fullpath, path, sizeof (fullpath) - strlen(fullpath));
 
-    grp_id = H5Gopen1(vol->hdf_id, fullpath);
+    /*grp_id = H5Gopen1(vol->hdf_id, fullpath);
     if (grp_id < 0) {
         return (MI_ERROR);
+    }*/
+    grp_id = midescend_path(vol->hdf_id, fullpath);
+    if (grp_id < 0) {
+	return (MI_ERROR);
     }
 
     data = (struct milistdata *) malloc(sizeof (struct milistdata));
@@ -75,6 +79,7 @@ milist_start(mihandle_t vol, const char *path, int flags,
 static int
 milist_recursion(milisthandle_t handle, char *path)
 {
+    hid_t tmp_id;
     struct milistdata *data = (struct milistdata *) handle;
     herr_t r;
     struct milistframe *frame;
@@ -91,7 +96,14 @@ milist_recursion(milisthandle_t handle, char *path)
 
             /* End of this group, need to pop the frame. */
             frame = data->frame_ptr->next;
-            H5Gclose(data->frame_ptr->grp_id);
+            //H5Gclose(data->frame_ptr->grp_id);
+            H5E_BEGIN_TRY {
+              tmp_id = H5Gclose(data->frame_ptr->grp_id);
+              if (tmp_id < 0) {
+                tmp_id = H5Dclose(data->frame_ptr->grp_id);
+              }
+            } H5E_END_TRY;
+
             free(data->frame_ptr);
             data->frame_ptr = frame;
             if (frame == NULL) {
@@ -196,6 +208,7 @@ milist_attr_next(mihandle_t vol, milisthandle_t handle,
 int
 milist_finish(milisthandle_t handle)
 {
+    hid_t tmp_id;
     struct milistdata *data = (struct milistdata *) handle;
     struct milistframe *frame;
 
@@ -205,7 +218,14 @@ milist_finish(milisthandle_t handle)
 
     while ((frame = data->frame_ptr) != NULL) {
         data->frame_ptr = frame->next;
-        H5Gclose(frame->grp_id);
+        //H5Gclose(frame->grp_id);
+        H5E_BEGIN_TRY {
+          tmp_id = H5Gclose(frame->grp_id);
+          if (tmp_id < 0) {
+            tmp_id = H5Dclose(frame->grp_id);
+          }
+        } H5E_END_TRY;
+
         free(frame);
     }
 
@@ -339,6 +359,7 @@ micreate_group(mihandle_t vol, const char *path, const char *name)
 int
 midelete_attr(mihandle_t vol, const char *path, const char *name)
 {
+    hid_t tmp_id;
     hid_t hdf_file;
     hid_t hdf_grp;
     herr_t hdf_result;
@@ -371,9 +392,14 @@ midelete_attr(mihandle_t vol, const char *path, const char *name)
 	return (MI_ERROR);
     }
 
-    /* Close the handles we created.
+    /* Close the handles we created (PROPERLY!)
      */
-    H5Gclose(hdf_grp);
+    H5E_BEGIN_TRY {
+      tmp_id = H5Gclose(hdf_grp);
+      if (tmp_id < 0) {
+        tmp_id = H5Dclose(hdf_grp);
+      }
+    } H5E_END_TRY;
 
     return (MI_NOERROR);
 }
@@ -433,6 +459,7 @@ int
 miget_attr_length(mihandle_t vol, const char *path, const char *name,
 		  int *length)
 {
+    hid_t tmp_id;
     hid_t hdf_file;
     hid_t hdf_grp;
     hid_t hdf_attr;
@@ -503,7 +530,12 @@ miget_attr_length(mihandle_t vol, const char *path, const char *name,
     H5Tclose(hdf_type);
     H5Sclose(hdf_space);
     H5Aclose(hdf_attr);
-    H5Gclose(hdf_grp);
+    H5E_BEGIN_TRY {
+      tmp_id = H5Gclose(hdf_grp);
+      if (tmp_id < 0) {
+            tmp_id = H5Dclose(hdf_grp);
+        }
+    } H5E_END_TRY;
 
     return (MI_NOERROR);
 }
@@ -514,6 +546,7 @@ int
 miget_attr_type(mihandle_t vol, const char *path, const char *name,
 		mitype_t *data_type)
 {
+    hid_t tmp_id;
     hid_t hdf_file;
     hid_t hdf_grp;
     hid_t hdf_attr;
@@ -567,9 +600,61 @@ miget_attr_type(mihandle_t vol, const char *path, const char *name,
 
     H5Tclose(hdf_type);
     H5Aclose(hdf_attr);
-    H5Gclose(hdf_grp);
+    H5E_BEGIN_TRY {
+      tmp_id = H5Gclose(hdf_grp);
+      if (tmp_id < 0) {
+            tmp_id = H5Dclose(hdf_grp);
+        }
+    } H5E_END_TRY;
 
     return (MI_NOERROR);
+}
+
+/** Copy all attribute given a path
+ */
+int
+micopy_attr(mihandle_t vol, const char *path, mihandle_t new_vol)
+{
+  milisthandle_t hlist;
+  mitype_t data_type;
+  char namebuf[256];
+  char pathbuf[256];
+  char valstr[128];
+  float valflt;
+  long  vallng;
+  int r;
+  int length;
+
+  r = milist_start(vol, path, 1, &hlist);
+  if (r == MI_NOERROR) {
+    while (milist_attr_next(vol, hlist, pathbuf, sizeof(pathbuf),
+			   namebuf, sizeof(namebuf)) == MI_NOERROR) {
+      miget_attr_type(vol,pathbuf, namebuf,&data_type);
+      switch(data_type) {
+      case MI_TYPE_STRING:
+          miget_attr_length(vol,pathbuf,namebuf,&length);
+          miget_attr_values(vol, MI_TYPE_STRING, pathbuf, namebuf, length, valstr);
+          miset_attr_values(new_vol, MI_TYPE_STRING, pathbuf, namebuf, length, valstr);
+          break;
+      case MI_TYPE_FLOAT:
+          miget_attr_values(vol, MI_TYPE_FLOAT, pathbuf, namebuf, 1, &valflt);
+          miset_attr_values(new_vol, MI_TYPE_FLOAT, pathbuf, namebuf, 1, &valflt);
+          break;
+      case MI_TYPE_INT:
+          miget_attr_values(vol, MI_TYPE_INT, pathbuf, namebuf, 1, &vallng);
+          miset_attr_values(new_vol, MI_TYPE_INT, pathbuf, namebuf, 1, &vallng);
+          break;
+      default:
+          return (MI_ERROR);
+      }
+    }
+  }
+  else {
+   return (MI_ERROR);
+  }
+  milist_finish(hlist);
+  
+  return (MI_NOERROR);
 }
 
 /** Get the values of an attribute.
@@ -578,6 +663,7 @@ int
 miget_attr_values(mihandle_t vol, mitype_t data_type, const char *path, 
 		  const char *name, int length, void *values)
 {
+    hid_t tmp_id;
     hid_t hdf_file;
     hid_t hdf_grp;
     hid_t mtyp_id;
@@ -656,7 +742,12 @@ miget_attr_values(mihandle_t vol, mitype_t data_type, const char *path,
     H5Aclose(hdf_attr);
     H5Tclose(mtyp_id);
     H5Sclose(hdf_space);
-    H5Gclose(hdf_grp);
+    H5E_BEGIN_TRY {
+      tmp_id = H5Gclose(hdf_grp);
+      if (tmp_id < 0) {
+            tmp_id = H5Dclose(hdf_grp);
+        }
+    } H5E_END_TRY;
 
     return (MI_NOERROR);
 }
@@ -719,7 +810,18 @@ miset_attr_values(mihandle_t vol, mitype_t data_type, const char *path,
 	  }
 	} H5E_END_TRY;
       }
-    
+    else {
+       H5E_BEGIN_TRY {
+	 tmp_id = H5Dopen1(hdf_file, fullpath);
+	 if (tmp_id < 0) {
+      	    create_dataset(hdf_file,std_name);
+	 }
+	 else {
+	   H5Dclose(tmp_id);
+	 }
+       } H5E_END_TRY;
+
+    }
     free(std_name);
 
     /* Search through the path, descending into each group encountered.
