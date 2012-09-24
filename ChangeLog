@@ -1,3 +1,11 @@
+
+-- Release of minc 2.2.00 --
+
+2012-09-24  Andrew L Janke <a.janke@gmail.com>
+   * added make_mincmorph_kernel.pl
+   * merged changed from develop branch
+   * added -size arguments to mincresample
+
 2012-08-03  Andrew L Janke <a.janke@gmail.com>
    * progs/mincheader/mincheader: fixed to handle files with spaces
 

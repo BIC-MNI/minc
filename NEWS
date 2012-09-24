@@ -1,3 +1,9 @@
+New in Release 2.2.00
+---------------------
+* added mincmorph, mincblob and mincsample
+* many bugfixes for minc 2.0 code
+* last release before split of libminc from minc-tools
+
 New in Release 2.1.10
 ---------------------
 * added imin() and imax() operators to minccalc

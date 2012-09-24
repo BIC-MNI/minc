@@ -263,10 +263,7 @@ EXTRA_DIST = \
 	config.h.cmake \
 	progs/CMakeLists.txt \
 	conversion/CMakeLists.txt \
-	cmake-modules/FindBISON.cmake \
-	cmake-modules/FindFLEX.cmake \
 	cmake-modules/FindHDF5.cmake \
-	cmake-modules/FindMINC.cmake \
 	cmake-modules/FindNETCDF.cmake
 
 m4_files = \
@@ -445,7 +442,7 @@ extract_SOURCES = conversion/image_filters/extract.c
 byte_swap_SOURCES = conversion/image_filters/byte_swap.c
 
 
-libminc2_la_LDFLAGS = -version-info 2:3:1
+libminc2_la_LDFLAGS = -version-info 3:0:0
 libminc2_la_SOURCES = \
 	libsrc/ParseArgv.c \
 	libsrc/read_file_names.c \
@@ -494,7 +491,7 @@ EXTRA_DIST += \
 	libsrc2/volume.c
 endif
 
-libvolume_io2_la_LDFLAGS = -version-info 2:2:1
+libvolume_io2_la_LDFLAGS = -version-info 3:0:0
 libvolume_io2_la_SOURCES = \
 	volume_io/Geometry/colour.c \
 	volume_io/Geometry/colour_def.c \

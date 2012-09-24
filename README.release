@@ -4,8 +4,6 @@
 http://nvie.com/posts/a-successful-git-branching-model/
 
 
-
-
 # libtool and libraries
 
 We are using libtool to (possibly) generate a shared library
