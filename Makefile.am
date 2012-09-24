@@ -249,6 +249,7 @@ LDADD = libvolume_io2.la libminc2.la
 
 EXTRA_DIST = \
 	$(m4_files) \
+	$(ezMINC_files) \
 	progs/minccomplete/minccomplete.in \
 	progs/minchistory/minchistory.in \
 	progs/mincpik/mincpik.in \
@@ -261,6 +262,8 @@ EXTRA_DIST = \
 	INSTALL.minc \
 	CMakeLists.txt \
 	config.h.cmake \
+	UseMINC2.cmake.in \
+	MINC2Config.cmake.in \
 	progs/CMakeLists.txt \
 	conversion/CMakeLists.txt \
 	cmake-modules/FindHDF5.cmake \
@@ -270,7 +273,31 @@ m4_files = \
 	m4/mni_REQUIRE_LIB.m4 \
 	m4/smr_WITH_BUILD_PATH.m4
 
-
+ezMINC_files = \
+	ezminc/examples/volume_msq_dist.cpp
+	ezminc/examples/CMakeLists.txt
+	ezminc/examples/fuzzy_volume_similarity.cpp
+	ezminc/examples/trilinear_resample.cpp
+	ezminc/examples/volume_avg.cpp
+	ezminc/examples/volume_gtc_similarity.cpp
+	ezminc/examples/volume_similarity.cpp
+	ezminc/minc_1_simple_rw.cpp
+	ezminc/minc_1_simple_rw.h
+	ezminc/minc_io_4d_volume.h
+	ezminc/minc_io_fixed_vector.h
+	ezminc/minc_io_simple_volume.h
+	ezminc/tests/minc_rw_test2.cpp
+	ezminc/tests/minc_rw_test_4d.cpp
+	ezminc/tests/minc_rw_test_simple.cpp
+	ezminc/tests/CMakeLists.txt
+	ezminc/tests/ezminc_rw_test.cpp
+	ezminc/tests/ezminc_stats.cpp
+	ezminc/minc_1_simple.h
+	ezminc/CMakeLists.txt
+	ezminc/minc_1_rw.cpp
+	ezminc/minc_1_rw.h
+	ezminc/minc_io_exceptions.h
+	
 voxeltoworld_SOURCES = progs/coordinates/voxeltoworld.c
 
 worldtovoxel_SOURCES = progs/coordinates/worldtovoxel.c
