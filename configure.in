@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([minc],[2.2.00],[a.janke@gmail.com])
+AC_INIT([libminc],[2.2.00],[a.janke@gmail.com])
 
 AC_CONFIG_SRCDIR([libsrc2/minc2.h])
 AC_CONFIG_AUX_DIR(ac_config_aux)
@@ -78,16 +78,6 @@ AC_CHECK_FUNCS(system popen)
 
 # Code to enable conditional build of ACR/NEMA tools
 
-AC_ARG_ENABLE(acr-nema,
-    [  --enable-acr-nema       install ACR/NEMA tools],
-    [ case "${enableval}" in
-      yes) acr_nema=true ;;
-      no)  acr_nema=false ;;
-      *) AC_MSG_ERROR(bad value ${enableval} for --enable-acr-nema) ;;
-      esac],
-    [acr_nema=false])
-AM_CONDITIONAL(ACR_NEMA_TOOLS, test x$acr_nema = xtrue)
-
 AC_CONFIG_FILES([
 Makefile 
 epm-header
@@ -99,10 +89,4 @@ volume_io/Documentation/Makefile
 volume_io/Testing/Makefile
 ])
 
-AC_OUTPUT(
-progs/xfm/xfmflip
-progs/minccomplete/minccomplete
-progs/minchistory/minchistory
-progs/mincpik/mincpik
-)
 
