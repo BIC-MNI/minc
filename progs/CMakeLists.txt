@@ -7,10 +7,10 @@ INCLUDE_DIRECTORIES(Proglib)
 LINK_LIBRARIES( ${LIBMINC_LIBRARIES} )
 ADD_DEFINITIONS(-DHAVE_CONFIG_H)
 
-IF(NOT MINC2_EXTERNALLY_CONFIGURED)
+IF(NOT MINC_TOOLS_EXTERNALLY_CONFIGURED)
   FIND_PACKAGE(BISON)
   FIND_PACKAGE(FLEX)
-ENDIF(NOT MINC2_EXTERNALLY_CONFIGURED)
+ENDIF(NOT MINC_TOOLS_EXTERNALLY_CONFIGURED)
 
 # all the progs
 ADD_EXECUTABLE(invert_raw_image mincview/invert_raw_image.c)
@@ -87,7 +87,7 @@ ADD_EXECUTABLE(minc_modify_header minc_modify_header/minc_modify_header.c)
 ADD_EXECUTABLE(mincresample mincresample/mincresample.c
                                mincresample/resample_volumes.c
                                Proglib/convert_origin_to_start.c)
-TARGET_LINK_LIBRARIES(mincresample ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
+TARGET_LINK_LIBRARIES(mincresample ${VOLUME_IO_LIBRARIES} ${LIBMINC_LIBRARIES} m)
 
 ADD_EXECUTABLE(mincreshape mincreshape/mincreshape.c
                               mincreshape/copy_data.c)
@@ -104,35 +104,35 @@ ADD_EXECUTABLE(mincmorph mincmorph/mincmorph.c
                          mincmorph/kernel_ops.c 
                          mincmorph/kernel_io.h 
                          mincmorph/kernel_ops.h )
-TARGET_LINK_LIBRARIES(mincmorph ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
+TARGET_LINK_LIBRARIES(mincmorph ${VOLUME_IO_LIBRARIES} ${LIBMINC_LIBRARIES} m)
 
 
 ADD_EXECUTABLE(mincsample mincsample/mincsample.c
                 mincsample/mt19937ar.c
                 mincsample/mt19937ar.h )
-TARGET_LINK_LIBRARIES(mincsample ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
+TARGET_LINK_LIBRARIES(mincsample ${VOLUME_IO_LIBRARIES} ${LIBMINC_LIBRARIES} m)
 
 ADD_EXECUTABLE(rawtominc rawtominc/rawtominc.c
                             Proglib/convert_origin_to_start.c)
 TARGET_LINK_LIBRARIES(rawtominc m)
 
 ADD_EXECUTABLE(voxeltoworld coordinates/voxeltoworld.c)
-TARGET_LINK_LIBRARIES(voxeltoworld ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
+TARGET_LINK_LIBRARIES(voxeltoworld ${VOLUME_IO_LIBRARIES} ${LIBMINC_LIBRARIES} m)
 
 ADD_EXECUTABLE(worldtovoxel coordinates/worldtovoxel.c)
-TARGET_LINK_LIBRARIES(worldtovoxel ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
+TARGET_LINK_LIBRARIES(worldtovoxel ${VOLUME_IO_LIBRARIES} ${LIBMINC_LIBRARIES} m)
 
 ADD_EXECUTABLE(transformtags xfm/transformtags.c)
-TARGET_LINK_LIBRARIES(transformtags ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
+TARGET_LINK_LIBRARIES(transformtags ${VOLUME_IO_LIBRARIES} ${LIBMINC_LIBRARIES} m)
 
 ADD_EXECUTABLE(xfmconcat xfm/xfmconcat.c)
-TARGET_LINK_LIBRARIES(xfmconcat ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
+TARGET_LINK_LIBRARIES(xfmconcat ${VOLUME_IO_LIBRARIES} ${LIBMINC_LIBRARIES} m)
 
 ADD_EXECUTABLE(xfminvert xfm/xfminvert.c)
-TARGET_LINK_LIBRARIES(xfminvert ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
+TARGET_LINK_LIBRARIES(xfminvert ${VOLUME_IO_LIBRARIES} ${LIBMINC_LIBRARIES} m)
 
 ADD_EXECUTABLE(mincblob mincblob/mincblob.c)
-TARGET_LINK_LIBRARIES(mincblob ${VOLUME_IO_LIBRARY} ${MINC2_LIBRARIES} m)
+TARGET_LINK_LIBRARIES(mincblob ${VOLUME_IO_LIBRARIES} ${LIBMINC_LIBRARIES} m)
 
 
 # install progs
