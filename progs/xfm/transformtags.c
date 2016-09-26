@@ -10,7 +10,7 @@
 @CREATED    : September 13, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: transformtags.c,v $
- * Revision 6.4  2008-01-17 02:33:06  rotor
+ * Revision 6.4  2008/01/17 02:33:06  rotor
  *  * removed all rcsids
  *  * removed a bunch of ^L's that somehow crept in
  *  * removed old (and outdated) BUGS file

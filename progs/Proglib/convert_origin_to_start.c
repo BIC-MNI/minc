@@ -7,7 +7,7 @@
 @CREATED    : November 7, 1995 (Peter Neelin)
 @MODIFIED   : 
  * $Log: convert_origin_to_start.c,v $
- * Revision 6.3  2008-01-17 02:33:02  rotor
+ * Revision 6.3  2008/01/17 02:33:02  rotor
  *  * removed all rcsids
  *  * removed a bunch of ^L's that somehow crept in
  *  * removed old (and outdated) BUGS file

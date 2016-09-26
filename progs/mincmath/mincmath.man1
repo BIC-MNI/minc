@@ -9,9 +9,9 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincmath/mincmath.man1,v 6.3 2004-05-20 21:52:08 bert Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincmath/mincmath.man1,v 6.3 2004/05/20 21:52:08 bert Exp $
 .\"
-.TH MINCMATH 1 "$Date: 2004-05-20 21:52:08 $" "" "MINC User's Guide"
+.TH MINCMATH 1 "$Date: 2004/05/20 21:52:08 $" "" "MINC User's Guide"
 
 .SH NAME
 mincmath - perform simple math operations on minc files

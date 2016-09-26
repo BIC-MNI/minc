@@ -7,7 +7,7 @@
 @MODIFIED   : 
  *
  * $Log: minc_error.h,v $
- * Revision 6.4  2008-04-11 05:15:00  rotor
+ * Revision 6.4  2008/04/11 05:15:00  rotor
  *  * rewrote error code  (Claude) to remove global defs that were
  *     causing build problems with DYLIB on OSX
  *

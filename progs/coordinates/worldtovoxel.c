@@ -10,7 +10,7 @@
 @CREATED    : June 13, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: worldtovoxel.c,v $
- * Revision 6.8  2008-01-17 02:33:02  rotor
+ * Revision 6.8  2008/01/17 02:33:02  rotor
  *  * removed all rcsids
  *  * removed a bunch of ^L's that somehow crept in
  *  * removed old (and outdated) BUGS file

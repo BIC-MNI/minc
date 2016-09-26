@@ -61,7 +61,7 @@ int off;
 }
 
 #if defined(__alpha) || defined(_WIN32) /* LITTLE_ENDIAN : alpha, intel */
-ftovaxf(f, bufr)
+void ftovaxf(f, bufr)
 float f;
 unsigned short *bufr;
 {
@@ -84,7 +84,7 @@ unsigned short *bufr;
 	bufr[1] =  ret >>16;
 }
 #else  /* BIG ENDIAN : sun hp sgi*/
-ftovaxf(orig,number)
+void ftovaxf(orig,number)
   unsigned short number[2];
   float orig;
 {
@@ -181,7 +181,7 @@ int nblks, dtype;
 }
 
 
-read_matrix_data( fptr, strtblk, nblks, dptr, dtype)
+int read_matrix_data( fptr, strtblk, nblks, dptr, dtype)
   FILE *fptr;
   int strtblk, nblks, dtype;
   char * dptr;
@@ -193,7 +193,7 @@ read_matrix_data( fptr, strtblk, nblks, dptr, dtype)
 	return file_data_to_host(dptr,nblks,dtype);
 }
 
-write_matrix_data( fptr, strtblk, nblks, dptr, dtype)
+int write_matrix_data( fptr, strtblk, nblks, dptr, dtype)
 FILE *fptr;
 int strtblk, nblks, dtype;
 char *dptr;

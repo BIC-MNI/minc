@@ -5,7 +5,7 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: voxel_loop.h,v $
- * Revision 6.4  2005-08-26 21:04:58  bert
+ * Revision 6.4  2005/08/26 21:04:58  bert
  * Use #if rather than #ifdef with MINC2 symbol
  *
  * Revision 6.3  2004/10/15 13:46:52  bert

@@ -6,7 +6,7 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: element.h,v $
- * Revision 6.5  2008-08-12 05:00:23  rotor
+ * Revision 6.5  2008/08/12 05:00:23  rotor
  *  * large number of changes from Claude (64 bit and updates)
  *
  * Revision 6.4  2006/04/09 15:28:40  bert

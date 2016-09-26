@@ -6,7 +6,7 @@
 @CREATED    : January 31, 1997 (Peter Neelin)
 @MODIFIED   :  
  * $Log: value_repr.c,v $
- * Revision 6.5  2008-08-12 05:00:22  rotor
+ * Revision 6.5  2008/08/12 05:00:22  rotor
  *  * large number of changes from Claude (64 bit and updates)
  *
  * Revision 6.4  2005/03/04 00:08:37  bert

@@ -9,9 +9,9 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincmakescalar/mincmakescalar.man1,v 6.2 2004-05-20 21:52:08 bert Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincmakescalar/mincmakescalar.man1,v 6.2 2004/05/20 21:52:08 bert Exp $
 .\"
-.TH MINCMAKESCALAR 1 "$Date: 2004-05-20 21:52:08 $" "" "MINC User's Guide"
+.TH MINCMAKESCALAR 1 "$Date: 2004/05/20 21:52:08 $" "" "MINC User's Guide"
 
 .SH NAME
 mincmakescalar - convert vector minc files to scalar

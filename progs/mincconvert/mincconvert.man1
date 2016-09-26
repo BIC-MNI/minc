@@ -1,5 +1,5 @@
 .\"                                      Hey, EMACS: -*- nroff -*-
-.TH MINCCONVERT 1 "$Date: 2004-05-20 21:52:08 $" "" "MINC User's Guide"
+.TH MINCCONVERT 1 "$Date: 2004/05/20 21:52:08 $" "" "MINC User's Guide"
 .SH NAME
 mincconvert \- convert between MINC 1 to MINC 2 format.
 .SH SYNOPSIS

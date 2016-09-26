@@ -6,7 +6,7 @@
 @CREATED    : Jul 2006 (Leila Baghdadi)
 @MODIFIED   : 
  * $Log: vff2mnc.h,v $
- * Revision 1.2  2007-12-11 12:43:01  rotor
+ * Revision 1.2  2007/12/11 12:43:01  rotor
  *  * added static to all global variables in main programs to avoid linking
  *       problems with libraries (compress in mincconvert and libz for example)
  *

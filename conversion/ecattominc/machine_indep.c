@@ -34,7 +34,7 @@ void get_long_value(const void *from, void *to) {
 @CREATED    : December 10, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: machine_indep.c,v $
- * Revision 6.5  2009-01-20 11:58:13  rotor
+ * Revision 6.5  2009/01/20 11:58:13  rotor
  *  * CMakeLists.txt: updated version
  *  * Updated Changelog to include releases
  *  * Warning cleanups below

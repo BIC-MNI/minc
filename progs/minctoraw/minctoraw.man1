@@ -1,5 +1,5 @@
 .\"                                      Hey, EMACS: -*- nroff -*-
-.TH MINCTORAW 1 "$Date: 2004-05-20 21:52:09 $" "" "MINC User's Guide"
+.TH MINCTORAW 1 "$Date: 2004/05/20 21:52:09 $" "" "MINC User's Guide"
 
 .SH NAME
 minctoraw \- copy data from a MINC file.

@@ -6,7 +6,7 @@
 @GLOBALS    : 
 @CREATED    : July 8, 1997 (Peter Neelin)
 @MODIFIED   : $Log: siemens_to_dicom.c,v $
-@MODIFIED   : Revision 1.11  2009-01-20 11:58:13  rotor
+@MODIFIED   : Revision 1.11  2009/01/20 11:58:13  rotor
 @MODIFIED   :  * CMakeLists.txt: updated version
 @MODIFIED   :  * Updated Changelog to include releases
 @MODIFIED   :  * Warning cleanups below

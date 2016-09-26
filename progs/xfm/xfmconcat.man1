@@ -1,5 +1,5 @@
 .\"                                      Hey, EMACS: -*- nroff -*-
-.TH XFMCONCAT 1 "$Date: 2008-09-04 03:20:16 $" "" "MINC User's Guide"
+.TH XFMCONCAT 1 "$Date: 2008/09/04 03:20:16 $" "" "MINC User's Guide"
 .SH NAME
 xfmconcat \- concatenate MNI transform files
 

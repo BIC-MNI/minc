@@ -9,9 +9,9 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincmakevector/mincmakevector.man1,v 6.2 2004-05-20 21:52:08 bert Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincmakevector/mincmakevector.man1,v 6.2 2004/05/20 21:52:08 bert Exp $
 .\"
-.TH MINCMAKEVECTOR 1 "$Date: 2004-05-20 21:52:08 $" "" "MINC User's Guide"
+.TH MINCMAKEVECTOR 1 "$Date: 2004/05/20 21:52:08 $" "" "MINC User's Guide"
 
 .SH NAME
 mincmakevector - convert a list of scalar minc files into one vector file

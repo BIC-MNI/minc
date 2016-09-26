@@ -23,7 +23,6 @@ If this is the case, you should pass the argument
 
    ./configure --with-build-path=/usr/local <options>
 
-3. Use NetCDF 4.X and HDF5 1.8.X for minc-2.1.X.
 
 Compiling
 ---------

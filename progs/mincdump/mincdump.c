@@ -1,7 +1,7 @@
 /*********************************************************************
  *   Copyright 1993, University Corporation for Atmospheric Research
  *   See netcdf/README file for copying and redistribution conditions.
- *   $Header: /private-cvsroot/minc/progs/mincdump/mincdump.c,v 1.10 2008-01-11 07:17:08 stever Exp $
+ *   $Header: /private-cvsroot/minc/progs/mincdump/mincdump.c,v 1.10 2008/01/11 07:17:08 stever Exp $
  *********************************************************************/
 #if HAVE_CONFIG_H
 #include "config.h"

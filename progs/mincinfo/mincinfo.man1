@@ -9,9 +9,9 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.man1,v 6.3 2004-05-20 21:52:08 bert Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincinfo/mincinfo.man1,v 6.3 2004/05/20 21:52:08 bert Exp $
 .\"
-.TH MINCINFO 1 "$Date: 2004-05-20 21:52:08 $" "" "MINC User's Guide"
+.TH MINCINFO 1 "$Date: 2004/05/20 21:52:08 $" "" "MINC User's Guide"
 
 .SH NAME
 mincinfo \- print out specified information about a minc file

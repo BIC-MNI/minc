@@ -13,7 +13,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/alloc.h,v 1.19 2005-05-19 21:19:27 bert Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io/alloc.h,v 1.19 2005/05/19 21:19:27 bert Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------
@@ -38,8 +38,8 @@
 #define  _ALLOC_SOURCE_LINE_ARGUMENTS
 #define  PRINT_ALLOC_SOURCE_LINE
 #else
-#define  _ALLOC_SOURCE_LINE    , __FILE__, __LINE__
-#define  _ALLOC_SOURCE_LINE_ARG_DEF   , char  filename[], int line_number
+#define  _ALLOC_SOURCE_LINE    , (char *)__FILE__, __LINE__
+#define  _ALLOC_SOURCE_LINE_ARG_DEF   , char filename[], int line_number
 #define  _ALLOC_SOURCE_LINE_ARGUMENTS   , filename, line_number
 #define  PRINT_ALLOC_SOURCE_LINE   \
          print_alloc_source_line( filename, line_number );

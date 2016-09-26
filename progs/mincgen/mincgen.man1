@@ -1,6 +1,6 @@
 .\"                                      Hey, EMACS: -*- nroff -*-
-.\" $Header: /private-cvsroot/minc/progs/mincgen/mincgen.man1,v 1.3 2008-10-12 05:07:12 stever Exp $
-.TH MINCGEN 1 "$Date: 2008-10-12 05:07:12 $" "" "MINC User's Guide"
+.\" $Header: /private-cvsroot/minc/progs/mincgen/mincgen.man1,v 1.3 2008/10/12 05:07:12 stever Exp $
+.TH MINCGEN 1 "$Date: 2008/10/12 05:07:12 $" "" "MINC User's Guide"
 .SH NAME
 mincgen \- Generate a MINC file from a CDL file.
 .SH SYNOPSIS

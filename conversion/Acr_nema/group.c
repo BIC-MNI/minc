@@ -6,7 +6,7 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: group.c,v $
- * Revision 6.12  2008-08-12 05:00:22  rotor
+ * Revision 6.12  2008/08/12 05:00:22  rotor
  *  * large number of changes from Claude (64 bit and updates)
  *
  * Revision 6.11  2006/04/09 15:29:43  bert

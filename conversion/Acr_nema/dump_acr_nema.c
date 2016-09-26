@@ -6,7 +6,7 @@
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dump_acr_nema.c,v $
- * Revision 6.7  2005-03-11 22:19:59  bert
+ * Revision 6.7  2005/03/11 22:19:59  bert
  * add '-t' option to parse files which contain lists of field names with corresponding group and element id's.
  *
  * Revision 6.6  2004/10/29 13:08:41  rotor

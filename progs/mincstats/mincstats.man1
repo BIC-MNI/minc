@@ -9,9 +9,9 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincstats/mincstats.man1,v 1.5 2004-05-20 21:52:09 bert Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincstats/mincstats.man1,v 1.5 2004/05/20 21:52:09 bert Exp $
 .\"
-.TH MINCSTATS 1 "$Date: 2004-05-20 21:52:09 $" "" "MINC User's Guide"
+.TH MINCSTATS 1 "$Date: 2004/05/20 21:52:09 $" "" "MINC User's Guide"
 
 .SH NAME
 mincstats - calculate simple statistics across voxels of a minc file

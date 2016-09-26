@@ -3,7 +3,7 @@
 /*********************************************************************
  *   Copyright 1993, UCAR/Unidata
  *   See netcdf/COPYRIGHT file for copying and redistribution conditions.
- *   $Header: /private-cvsroot/minc/progs/mincgen/ncgen.h,v 1.2 2007-02-02 18:49:36 baghdadi Exp $
+ *   $Header: /private-cvsroot/minc/progs/mincgen/ncgen.h,v 1.2 2007/02/02 18:49:36 baghdadi Exp $
  *********************************************************************/
 
 #define MAX_NC_ATTSIZE    500000     /* max size of attribute (for ncgen) */

@@ -1,7 +1,7 @@
 /*********************************************************************
  *   Copyright 1993, UCAR/Unidata
  *   See netcdf/COPYRIGHT file for copying and redistribution conditions.
- *   $Id: load.c,v 1.3 2005-11-23 04:37:26 bert Exp $
+ *   $Id: load.c,v 1.3 2005/11/23 04:37:26 bert Exp $
  *********************************************************************/
 
 #if HAVE_CONFIG_H

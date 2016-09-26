@@ -5,7 +5,7 @@
 @CREATED    : August 20, 2004. (Bert Vincent, Montreal Neurological Institute)
 @MODIFIED   : 
  * $Log: minc_simple.c,v $
- * Revision 6.6  2008-01-11 07:17:07  stever
+ * Revision 6.6  2008/01/11 07:17:07  stever
  * Remove unused variables.
  *
  * Revision 6.5  2005/08/26 21:04:58  bert

@@ -17,7 +17,7 @@ extern "C" {
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io.h,v 1.13 2005-05-19 21:19:27 bert Exp $
+@VERSION    : $Header: /private-cvsroot/minc/volume_io/Include/volume_io.h,v 1.13 2005/05/19 21:19:27 bert Exp $
 ---------------------------------------------------------------------------- */
 
 /* ----------------------------- MNI Header -----------------------------------

@@ -6,7 +6,7 @@
 @CREATED    : February 10, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: dicom_network.c,v $
- * Revision 6.12  2008-08-12 05:00:22  rotor
+ * Revision 6.12  2008/08/12 05:00:22  rotor
  *  * large number of changes from Claude (64 bit and updates)
  *
  * Revision 6.11  2004/10/29 13:08:41  rotor

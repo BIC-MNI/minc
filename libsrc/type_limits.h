@@ -6,7 +6,7 @@
 @CREATED    : August 7, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: type_limits.h,v $
- * Revision 6.1  1999-10-19 14:45:12  neelin
+ * Revision 6.1  1999/10/19 14:45:12  neelin
  * Fixed Log subsitutions for CVS
  *
  * Revision 6.0  1997/09/12 13:24:54  neelin
@@ -40,7 +40,7 @@
               make no representations about the suitability of this
               software for any purpose.  It is provided "as is" without
               express or implied warranty.
-@RCSID      : $Header: /private-cvsroot/minc/libsrc/type_limits.h,v 6.1 1999-10-19 14:45:12 neelin Exp $ MINC (MNI)
+@RCSID      : $Header: /private-cvsroot/minc/libsrc/type_limits.h,v 6.1 1999/10/19 14:45:12 neelin Exp $ MINC (MNI)
 ---------------------------------------------------------------------------- */
 
 #include <limits.h>

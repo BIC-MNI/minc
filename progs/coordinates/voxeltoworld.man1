@@ -1,5 +1,5 @@
 .\"                                      Hey, EMACS: -*- nroff -*-
-.TH VOXELTOWORLD 1 "$Date: 2004-05-20 21:52:07 $" "" "MINC User's Guide"
+.TH VOXELTOWORLD 1 "$Date: 2004/05/20 21:52:07 $" "" "MINC User's Guide"
 .SH NAME
 voxeltoworld \- convert voxel coordinates to world coordinates
 

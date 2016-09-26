@@ -1,5 +1,10 @@
-New in Release 
+New in Release 2.1.02
 ---------------------
+* resample_volumes.c: use max <= min to set range per slice
+* Modified Otsu threshold for biModalT to avoid division by zero
+  in sigma_b_k expression when omega_k = 0 or sum.
+* Added function prototypes in machine_indep.c
+* fixed nii2mnc for proper orientation of axes
 * Fixed bug in dicom_to_minc.c for segmentation fault on undefined sequence
   (initialization of gi_ptr->cur_size)
 * Free some memory after usage
@@ -14,20 +19,18 @@ New in Release
 New in Release 2.1.00
 ---------------------
 * Improved convergence and accuracy for application of non-linear 
-  transformation (especially for 2-d slices) - Claude
+  transformation
 * Set default volume_io caching to none
 * Added pod2man for man page generation of help for perl scripts
-* Added minccmp and xfm2def man man pages
+* Added minccmp and xfm2def
 * Added checks for outfiles to minccalc
 * Added taking first time point for 4D files, -test_size and
     -sagittal_offset_perc to mincpik
-* ported some HDF calls to 1.8.x (must now use 1.8.X; 1.6.X no
-  longer supported from now on)
+* ported some HDF calls to 1.8.x
 * Added libtoolize/glibtoolize logic in autogen.sh (thanks Sean)
 * Fixed bug in multidim_array_is_alloced for correct check of
   memory allocation of image data. Return volume=NULL when memory
   allocation fails.
-* Fixed a bug in upet2mnc on 64 bit platforms (thanks John Cupitt)
 
 New in Release 2.0.18
 ---------------------

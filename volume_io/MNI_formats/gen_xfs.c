@@ -557,15 +557,12 @@ static  void  transform_or_invert_point(
         break;
 
     case GRID_TRANSFORM:
-        if( inverse_flag )
-        {
+        if( inverse_flag ) {
             grid_inverse_transform_point( transform,
                                           x, y, z,
                                           x_transformed, y_transformed,
                                           z_transformed );
-        }
-        else
-        {
+        } else {
             grid_transform_point( transform,
                                   x, y, z,
                                   x_transformed, y_transformed,
@@ -574,14 +571,11 @@ static  void  transform_or_invert_point(
         break;
 
     case USER_TRANSFORM:
-        if( inverse_flag )
-        {
+        if( inverse_flag ) {
             transform->user_inverse_transform_function(
                            transform->user_data, x, y, z,
                            x_transformed, y_transformed, z_transformed );
-        }
-        else
-        {
+        } else {
             transform->user_transform_function(
                            transform->user_data, x, y, z,
                            x_transformed, y_transformed, z_transformed );
@@ -593,19 +587,14 @@ static  void  transform_or_invert_point(
         *y_transformed = y;
         *z_transformed = z;
 
-        if( inverse_flag )
-        {
-            for( trans = transform->n_transforms-1;  trans >= 0;  --trans )
-            {
+        if( inverse_flag ) {
+            for( trans = transform->n_transforms-1;  trans >= 0;  --trans ) {
                 general_inverse_transform_point( &transform->transforms[trans],
                              *x_transformed, *y_transformed, *z_transformed,
                              x_transformed, y_transformed, z_transformed );
             }
-        }
-        else
-        {
-            for_less( trans, 0, transform->n_transforms )
-            {
+        } else {
+            for_less( trans, 0, transform->n_transforms ) {
                 general_transform_point( &transform->transforms[trans],
                              *x_transformed, *y_transformed, *z_transformed,
                              x_transformed, y_transformed, z_transformed );

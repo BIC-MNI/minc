@@ -9,9 +9,9 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincexpand/mincexpand.man1,v 6.1 2004-05-20 21:52:08 bert Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincexpand/mincexpand.man1,v 6.1 2004/05/20 21:52:08 bert Exp $
 .\"
-.TH MINCEXPAND 1 "$Date: 2004-05-20 21:52:08 $" "" "MINC User's Guide"
+.TH MINCEXPAND 1 "$Date: 2004/05/20 21:52:08 $" "" "MINC User's Guide"
 
 .SH NAME
 mincexpand - expands a compressed minc file, if necessary.

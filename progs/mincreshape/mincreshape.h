@@ -7,7 +7,7 @@
 @CREATED    : March 11, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincreshape.h,v $
- * Revision 6.5  2008-01-13 09:38:54  stever
+ * Revision 6.5  2008/01/13 09:38:54  stever
  * Avoid compiler warnings about functions and variables that are defined
  * but not used.  Remove some such functions and variables,
  * conditionalize some, and move static declarations out of header files

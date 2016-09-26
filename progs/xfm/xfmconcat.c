@@ -10,7 +10,7 @@
 @CREATED    : August 13, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: xfmconcat.c,v $
- * Revision 6.7  2008-09-04 03:20:16  rotor
+ * Revision 6.7  2008/09/04 03:20:16  rotor
  *  * added -clobber option to xfmconcat and readied for 2.0.16 release
  *
  * Revision 6.6  2008/01/23 22:54:35  rotor

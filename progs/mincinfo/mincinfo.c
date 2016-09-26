@@ -10,7 +10,7 @@
 @CREATED    : May 19, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincinfo.c,v $
- * Revision 6.13  2009-04-29 13:58:46  rotor
+ * Revision 6.13  2009/04/29 13:58:46  rotor
  *  * fixed a stack smash in mincinfo.c
  *
  * Revision 6.12  2008/01/17 02:33:02  rotor

@@ -133,8 +133,10 @@ main(int argc, char **argv)
     int r;                      /* Result code. */
     static int qflag = 0;       /* Quiet flag (default is non-quiet) */
     static int rflag = 1;       /* Scan range flag */
-    static int oflag = DIMORDER_ZYX;
-    static int flip[MAX_SPACE_DIMS];
+    short order;
+    static int OrderList[6] = { DIMORDER_ZYX, DIMORDER_ZXY, DIMORDER_XYZ,
+                                DIMORDER_XZY, DIMORDER_YZX, DIMORDER_YXZ };
+    int flip[MAX_SPACE_DIMS] = { 0, 0, 0 };
 
     static char *mnc_ordered_dim_names[MAX_SPACE_DIMS];
 
@@ -157,24 +159,6 @@ main(int argc, char **argv)
          "Do not scan data range."},
         {"-quiet", ARGV_CONSTANT, (char *) 0, (char *)&qflag,
          "Quiet operation"},
-        {"-transverse", ARGV_CONSTANT, (char *) DIMORDER_ZYX, (char *) &oflag, 
-         "Assume transverse (ZYX) ordering for spatial dimensions"},
-        {"-sagittal", ARGV_CONSTANT, (char *) DIMORDER_XZY, (char *) &oflag, 
-         "Assume sagittal (XZY) ordering for spatial dimensions"},
-        {"-coronal", ARGV_CONSTANT, (char *) DIMORDER_YZX, (char *) &oflag, 
-         "Assume coronal (YZX) ordering for spatial dimensions"},
-        {"-xyz", ARGV_CONSTANT, (char *) DIMORDER_XYZ, (char *) &oflag,
-         "Assume XYZ ordering for spatial dimensions"},
-        {"-zxy", ARGV_CONSTANT, (char *) DIMORDER_ZXY, (char *) &oflag,
-         "Assume ZXY ordering for spatial dimensions"},
-        {"-yxz", ARGV_CONSTANT, (char *) DIMORDER_YXZ, (char *) &oflag,
-         "Assume YXZ ordering for spatial dimensions"},
-        {"-flipx", ARGV_CONSTANT, (char *) 1, (char *)&flip[DIM_X], 
-         "Invert direction of X (left-right) axis"},
-        {"-flipy", ARGV_CONSTANT, (char *) 1, (char *)&flip[DIM_Y], 
-         "Invert direction of Y (posterior-anterior) axis"},
-        {"-flipz", ARGV_CONSTANT, (char *) 1, (char *)&flip[DIM_Z], 
-         "Invert direction of Z (inferior-superior) axis"},
         {NULL, ARGV_END, NULL, NULL, NULL}
     };
 
@@ -276,60 +260,7 @@ main(int argc, char **argv)
         nifti_image_infodump(nii_ptr);
     }
 
-    /* Set up the spatial axis correspondence for the call to 
-     * convert_transform_to_starts_and_steps()
-     */
-    switch (oflag) {
-    default:
-    case DIMORDER_ZYX:
-        mnc_ordered_dim_names[DIM_X] = MIxspace;
-        mnc_ordered_dim_names[DIM_Y] = MIyspace;
-        mnc_ordered_dim_names[DIM_Z] = MIzspace;
-        mnc_spatial_axes[DIM_X] = DIM_X;
-        mnc_spatial_axes[DIM_Y] = DIM_Y;
-        mnc_spatial_axes[DIM_Z] = DIM_Z;
-        break;
-    case DIMORDER_ZXY:
-        mnc_ordered_dim_names[DIM_X] = MIyspace;
-        mnc_ordered_dim_names[DIM_Y] = MIxspace;
-        mnc_ordered_dim_names[DIM_Z] = MIzspace;
-        mnc_spatial_axes[DIM_X] = DIM_Y;
-        mnc_spatial_axes[DIM_Y] = DIM_X;
-        mnc_spatial_axes[DIM_Z] = DIM_Z;
-        break;
-    case DIMORDER_XYZ:
-        mnc_ordered_dim_names[DIM_X] = MIzspace;
-        mnc_ordered_dim_names[DIM_Y] = MIyspace;
-        mnc_ordered_dim_names[DIM_Z] = MIxspace;
-        mnc_spatial_axes[DIM_X] = DIM_Z;
-        mnc_spatial_axes[DIM_Y] = DIM_Y;
-        mnc_spatial_axes[DIM_Z] = DIM_X;
-        break;
-    case DIMORDER_XZY:
-        mnc_ordered_dim_names[DIM_X] = MIyspace;
-        mnc_ordered_dim_names[DIM_Y] = MIzspace;
-        mnc_ordered_dim_names[DIM_Z] = MIxspace;
-        mnc_spatial_axes[DIM_X] = DIM_Y;
-        mnc_spatial_axes[DIM_Y] = DIM_Z;
-        mnc_spatial_axes[DIM_Z] = DIM_X;
-        break;
-    case DIMORDER_YZX:
-        mnc_ordered_dim_names[DIM_X] = MIxspace;
-        mnc_ordered_dim_names[DIM_Y] = MIzspace;
-        mnc_ordered_dim_names[DIM_Z] = MIyspace;
-        mnc_spatial_axes[DIM_X] = DIM_X;
-        mnc_spatial_axes[DIM_Y] = DIM_Z;
-        mnc_spatial_axes[DIM_Z] = DIM_Y;
-        break;
-    case DIMORDER_YXZ:
-        mnc_ordered_dim_names[DIM_X] = MIzspace;
-        mnc_ordered_dim_names[DIM_Y] = MIxspace;
-        mnc_ordered_dim_names[DIM_Z] = MIyspace;
-        mnc_spatial_axes[DIM_X] = DIM_Z;
-        mnc_spatial_axes[DIM_Y] = DIM_X;
-        mnc_spatial_axes[DIM_Z] = DIM_Y;
-        break;
-    }
+    /* Determine the data type for output. */
 
     switch (nii_ptr->datatype) {
     case DT_INT8:
@@ -388,6 +319,150 @@ main(int argc, char **argv)
     if (mnc_vtype == NC_NAT) {
         mnc_vsign = mnc_msign;
         mnc_vtype = mnc_mtype;
+    }
+
+    /* Calculate the starts, steps, and direction cosines. This only 
+     * be done properly if the file is NIfTI-1 file.  If it is an Analyze
+     * file we have to resort to other methods...
+     */
+
+    if (nii_ptr->nifti_type != 0 &&
+        (nii_ptr->sform_code != NIFTI_XFORM_UNKNOWN ||
+         nii_ptr->qform_code != NIFTI_XFORM_UNKNOWN)) {
+
+      make_identity_transform(&mnc_xform);
+
+      if (nii_ptr->sform_code != NIFTI_XFORM_UNKNOWN) {
+          if (!qflag) {
+              printf("Using s-form transform:\n");
+          }
+          for (i = 0; i < 4; i++) {
+              for (j = 0; j < 4; j++) {
+                  Transform_elem(mnc_xform, i, j) = nii_ptr->sto_xyz.m[i][j];
+                  if (!qflag) {
+                      printf("%8.4f, ", nii_ptr->sto_xyz.m[i][j]);
+                  }
+              }
+              if (!qflag) {
+                  printf("\n");
+              }
+          }
+      } else {
+          if (!qflag) {
+              printf("Using q-form transform:\n");
+          }
+          for (i = 0; i < 4; i++) {
+              for (j = 0; j < 4; j++) {
+                  Transform_elem(mnc_xform, i, j) = nii_ptr->qto_xyz.m[i][j];
+                  if (!qflag) {
+                      printf("%8.4f, ", nii_ptr->qto_xyz.m[i][j]);
+                  }
+              }
+              if (!qflag) {
+                  printf("\n");
+              }
+          }
+      }
+
+      create_linear_transform(&mnc_linear_xform, &mnc_xform);
+
+      /* Set up the spatial axis correspondence for the call to 
+       * convert_transform_to_starts_and_steps(). Try all orderings
+       * to see which one gives cosines=identity.
+       */
+
+      for( order = 0; order < 6; order++ ) {
+        switch (OrderList[order]) {
+          case DIMORDER_ZYX:
+            mnc_ordered_dim_names[DIM_X] = MIxspace;
+            mnc_ordered_dim_names[DIM_Y] = MIyspace;
+            mnc_ordered_dim_names[DIM_Z] = MIzspace;
+            mnc_spatial_axes[DIM_X] = DIM_X;
+            mnc_spatial_axes[DIM_Y] = DIM_Y;
+            mnc_spatial_axes[DIM_Z] = DIM_Z;
+            break;
+          case DIMORDER_ZXY:
+            mnc_ordered_dim_names[DIM_X] = MIyspace;
+            mnc_ordered_dim_names[DIM_Y] = MIxspace;
+            mnc_ordered_dim_names[DIM_Z] = MIzspace;
+            mnc_spatial_axes[DIM_X] = DIM_Y;
+            mnc_spatial_axes[DIM_Y] = DIM_X;
+            mnc_spatial_axes[DIM_Z] = DIM_Z;
+            break;
+          case DIMORDER_XYZ:
+            mnc_ordered_dim_names[DIM_X] = MIzspace;
+            mnc_ordered_dim_names[DIM_Y] = MIyspace;
+            mnc_ordered_dim_names[DIM_Z] = MIxspace;
+            mnc_spatial_axes[DIM_X] = DIM_Z;
+            mnc_spatial_axes[DIM_Y] = DIM_Y;
+            mnc_spatial_axes[DIM_Z] = DIM_X;
+            break;
+          case DIMORDER_XZY:
+            mnc_ordered_dim_names[DIM_X] = MIyspace;
+            mnc_ordered_dim_names[DIM_Y] = MIzspace;
+            mnc_ordered_dim_names[DIM_Z] = MIxspace;
+            mnc_spatial_axes[DIM_X] = DIM_Y;
+            mnc_spatial_axes[DIM_Y] = DIM_Z;
+            mnc_spatial_axes[DIM_Z] = DIM_X;
+            break;
+          case DIMORDER_YZX:
+            mnc_ordered_dim_names[DIM_X] = MIxspace;
+            mnc_ordered_dim_names[DIM_Y] = MIzspace;
+            mnc_ordered_dim_names[DIM_Z] = MIyspace;
+            mnc_spatial_axes[DIM_X] = DIM_X;
+            mnc_spatial_axes[DIM_Y] = DIM_Z;
+            mnc_spatial_axes[DIM_Z] = DIM_Y;
+            break;
+          case DIMORDER_YXZ:
+            mnc_ordered_dim_names[DIM_X] = MIzspace;
+            mnc_ordered_dim_names[DIM_Y] = MIxspace;
+            mnc_ordered_dim_names[DIM_Z] = MIyspace;
+            mnc_spatial_axes[DIM_X] = DIM_Z;
+            mnc_spatial_axes[DIM_Y] = DIM_X;
+            mnc_spatial_axes[DIM_Z] = DIM_Y;
+            break;
+        }
+
+        convert_transform_to_starts_and_steps(&mnc_linear_xform,
+                                              MAX_SPACE_DIMS,
+                                              NULL,
+                                              mnc_spatial_axes,
+                                              mnc_starts,
+                                              mnc_steps,
+                                              mnc_dircos);
+
+        /* Do we have a matrix with diagonal dominance? */
+        if( fabs( mnc_dircos[0][DIM_X] ) > fabs( mnc_dircos[0][DIM_Y] ) &&
+            fabs( mnc_dircos[0][DIM_X] ) > fabs( mnc_dircos[0][DIM_Z] ) &&
+            fabs( mnc_dircos[1][DIM_Y] ) > fabs( mnc_dircos[1][DIM_X] ) &&
+            fabs( mnc_dircos[1][DIM_Y] ) > fabs( mnc_dircos[1][DIM_Z] ) &&
+            fabs( mnc_dircos[2][DIM_Z] ) > fabs( mnc_dircos[2][DIM_X] ) &&
+            fabs( mnc_dircos[2][DIM_Z] ) > fabs( mnc_dircos[2][DIM_Y] ) ) {
+          if( mnc_dircos[0][DIM_X] < 0.0 ) flip[0] = 1;
+          if( mnc_dircos[1][DIM_Y] < 0.0 ) flip[1] = 1;
+          if( mnc_dircos[2][DIM_Z] < 0.0 ) flip[2] = 1;
+          break;
+        }
+      }
+    } else {
+      /* No official transform was found (possibly this is an Analyze 
+       * file).  Just use some reasonable defaults.
+       */
+      mnc_steps[mnc_spatial_axes[DIM_X]] = nii_ptr->dx;
+      mnc_steps[mnc_spatial_axes[DIM_Y]] = nii_ptr->dy;
+      mnc_steps[mnc_spatial_axes[DIM_Z]] = nii_ptr->dz;
+      mnc_starts[mnc_spatial_axes[DIM_X]] = -(nii_ptr->dx * nii_ptr->nx) / 2;
+      mnc_starts[mnc_spatial_axes[DIM_Y]] = -(nii_ptr->dy * nii_ptr->ny) / 2;
+      mnc_starts[mnc_spatial_axes[DIM_Z]] = -(nii_ptr->dz * nii_ptr->nz) / 2;
+
+      /* Unlike the starts and steps, the direction cosines do NOT change
+       * based upon the data orientation.
+       */
+      for (i = 0; i < MAX_SPACE_DIMS; i++) {
+          for (j = 0; j < MAX_SPACE_DIMS; j++) {
+              mnc_dircos[i][j] = (i == j) ? 1.0 : 0.0;
+          }
+      }
     }
 
     /* Open the MINC file.  It should not already exist.
@@ -511,83 +586,6 @@ main(int argc, char **argv)
     miattputstr(mnc_fd, mnc_iid, MIsigntype, 
                 (mnc_vsign) ? MI_SIGNED : MI_UNSIGNED);
 
-
-    /* Calculate the starts, steps, and direction cosines. This only 
-     * be done properly if the file is NIfTI-1 file.  If it is an Analyze
-     * file we have to resort to other methods...
-     */
-
-    if (nii_ptr->nifti_type != 0 &&
-        (nii_ptr->sform_code != NIFTI_XFORM_UNKNOWN ||
-         nii_ptr->qform_code != NIFTI_XFORM_UNKNOWN)) {
-
-         make_identity_transform(&mnc_xform);
-
-        if (nii_ptr->sform_code != NIFTI_XFORM_UNKNOWN) {
-            if (!qflag) {
-                printf("Using s-form transform:\n");
-            }
-            for (i = 0; i < 4; i++) {
-                for (j = 0; j < 4; j++) {
-                    Transform_elem(mnc_xform, i, j) = nii_ptr->sto_xyz.m[i][j];
-                    if (!qflag) {
-                        printf("%8.4f, ", nii_ptr->sto_xyz.m[i][j]);
-                    }
-                }
-                if (!qflag) {
-                    printf("\n");
-                }
-            }
-        }
-        else {
-            if (!qflag) {
-                printf("Using q-form transform:\n");
-            }
-            for (i = 0; i < 4; i++) {
-                for (j = 0; j < 4; j++) {
-                    Transform_elem(mnc_xform, i, j) = nii_ptr->qto_xyz.m[i][j];
-                    if (!qflag) {
-                        printf("%8.4f, ", nii_ptr->qto_xyz.m[i][j]);
-                    }
-                }
-                if (!qflag) {
-                    printf("\n");
-                }
-            }
-        }
-
-        create_linear_transform(&mnc_linear_xform, &mnc_xform);
-
-        convert_transform_to_starts_and_steps(&mnc_linear_xform,
-                                              MAX_SPACE_DIMS,
-                                              NULL,
-                                              mnc_spatial_axes,
-                                              mnc_starts,
-                                              mnc_steps,
-                                              mnc_dircos);
-
-    }
-    else {
-        /* No official transform was found (possibly this is an Analyze 
-         * file).  Just use some reasonable defaults.
-         */
-        mnc_steps[mnc_spatial_axes[DIM_X]] = nii_ptr->dx;
-        mnc_steps[mnc_spatial_axes[DIM_Y]] = nii_ptr->dy;
-        mnc_steps[mnc_spatial_axes[DIM_Z]] = nii_ptr->dz;
-        mnc_starts[mnc_spatial_axes[DIM_X]] = -(nii_ptr->dx * nii_ptr->nx) / 2;
-        mnc_starts[mnc_spatial_axes[DIM_Y]] = -(nii_ptr->dy * nii_ptr->ny) / 2;
-        mnc_starts[mnc_spatial_axes[DIM_Z]] = -(nii_ptr->dz * nii_ptr->nz) / 2;
-
-        /* Unlike the starts and steps, the direction cosines do NOT change
-         * based upon the data orientation.
-         */
-        for (i = 0; i < MAX_SPACE_DIMS; i++) {
-            for (j = 0; j < MAX_SPACE_DIMS; j++) {
-                mnc_dircos[i][j] = (i == j) ? 1.0 : 0.0;
-            }
-        }
-    }
-
     switch (nii_ptr->xyz_units) {
     case NIFTI_UNITS_METER:
         for (i = 0; i < MAX_SPACE_DIMS; i++) {
@@ -614,13 +612,14 @@ main(int argc, char **argv)
      */
     for (i = 0; i < MAX_SPACE_DIMS; i++) {
         if (!qflag) {
-            printf("%s start: %8.4f step: %8.4f cosines: %8.4f %8.4f %8.4f\n", 
+            printf("%s start: %8.4f step: %8.4f cosines: %8.4f %8.4f %8.4f flip: %d\n", 
                    mnc_spatial_names[i],
                    mnc_starts[i],
                    mnc_steps[i],
                    mnc_dircos[i][DIM_X],
                    mnc_dircos[i][DIM_Y],
-                   mnc_dircos[i][DIM_Z]);
+                   mnc_dircos[i][DIM_Z],
+                   flip[i]);
         }
         mnc_vid = ncvarid(mnc_fd, mnc_spatial_names[i]);
 
@@ -630,6 +629,9 @@ main(int argc, char **argv)
             miattputdbl(mnc_fd, mnc_vid, MIstart, 
                         mnc_starts[i]+((mnc_count[i]-1)*mnc_steps[i]));
             miattputdbl(mnc_fd, mnc_vid, MIstep, -mnc_steps[i]);
+            mnc_dircos[i][DIM_X] = -mnc_dircos[i][DIM_X];
+            mnc_dircos[i][DIM_Y] = -mnc_dircos[i][DIM_Y];
+            mnc_dircos[i][DIM_Z] = -mnc_dircos[i][DIM_Z];
         }
         else {
             miattputdbl(mnc_fd, mnc_vid, MIstart, mnc_starts[i]);

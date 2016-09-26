@@ -1,5 +1,5 @@
 .\"                                      Hey, EMACS: -*- nroff -*-
-.TH MINCDIFF 1 "$Date: 2004-05-20 21:52:08 $" "" "MINC User's Guide"
+.TH MINCDIFF 1 "$Date: 2004/05/20 21:52:08 $" "" "MINC User's Guide"
 .SH NAME
 mincdiff \- report differences between minc files
 .SH SYNOPSIS

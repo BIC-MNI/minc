@@ -1,7 +1,7 @@
 /*********************************************************************
  *   Copyright 1993, UCAR/Unidata
  *   See netcdf/COPYRIGHT file for copying and redistribution conditions.
- *   $Header: /private-cvsroot/minc/progs/mincdump/mincdump.h,v 1.1 2004-04-27 15:35:15 bert Exp $
+ *   $Header: /private-cvsroot/minc/progs/mincdump/mincdump.h,v 1.1 2004/04/27 15:35:15 bert Exp $
  *********************************************************************/
 
 

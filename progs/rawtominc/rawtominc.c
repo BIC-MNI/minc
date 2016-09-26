@@ -11,7 +11,7 @@
 @CREATED    : September 25, 1992 (Peter Neelin)
 @MODIFIED   : 
  * $Log: rawtominc.c,v $
- * Revision 6.29  2008-08-13 06:26:29  rotor
+ * Revision 6.29  2008/08/13 06:26:29  rotor
  *  * added Claudes (many) 64 bit fixes to dicom code and updates
  *  * 64 bit fix for rawtominc's use of ParseArgv
  *

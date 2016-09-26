@@ -19,7 +19,7 @@
 @CREATED    : December 2, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: nd_loop.h,v $
- * Revision 6.2  2004-10-15 13:47:13  bert
+ * Revision 6.2  2004/10/15 13:47:13  bert
  * Minor changes for Windows compatibility
  *
  * Revision 6.1  2002/01/14 21:28:26  neelin

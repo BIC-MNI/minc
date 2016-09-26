@@ -11,7 +11,7 @@
 @CREATED    : December 6, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: minclookup.c,v $
- * Revision 6.10  2008-01-17 02:33:02  rotor
+ * Revision 6.10  2008/01/17 02:33:02  rotor
  *  * removed all rcsids
  *  * removed a bunch of ^L's that somehow crept in
  *  * removed old (and outdated) BUGS file
@@ -879,7 +879,6 @@ static void do_lookup(void *caller_data, long num_voxels,
                       lookup_data->discrete, lookup_data->null_value,
                       &output_data[0][ivoxel*output_vector_length]);
    }
-
    return;
 }
 

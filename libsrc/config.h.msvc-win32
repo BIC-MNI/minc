@@ -2,7 +2,7 @@
  *
  * Author: Bert Vincent
  *
- * $Header: /private-cvsroot/minc/libsrc/config.h.msvc-win32,v 6.3 2005-07-18 22:19:01 bert Exp $
+ * $Header: /private-cvsroot/minc/libsrc/config.h.msvc-win32,v 6.3 2005/07/18 22:19:01 bert Exp $
  */
 
 #ifndef _CONFIG_H_

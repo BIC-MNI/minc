@@ -1,7 +1,7 @@
 /*********************************************************************
  *   Copyright 1993, UCAR/Unidata
  *   See netcdf/COPYRIGHT file for copying and redistribution conditions.
- *   $Header: /private-cvsroot/minc/progs/mincdump/vardata.c,v 1.5 2009-01-20 11:58:13 rotor Exp $
+ *   $Header: /private-cvsroot/minc/progs/mincdump/vardata.c,v 1.5 2009/01/20 11:58:13 rotor Exp $
  *********************************************************************/
 
 #if HAVE_CONFIG_H

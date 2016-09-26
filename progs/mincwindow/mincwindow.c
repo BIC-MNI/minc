@@ -10,7 +10,7 @@
 @CREATED    : January 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: mincwindow.c,v $
- * Revision 6.7  2008-01-17 02:33:06  rotor
+ * Revision 6.7  2008/01/17 02:33:06  rotor
  *  * removed all rcsids
  *  * removed a bunch of ^L's that somehow crept in
  *  * removed old (and outdated) BUGS file

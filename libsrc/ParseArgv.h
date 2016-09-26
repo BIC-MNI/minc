@@ -15,7 +15,7 @@
  *
  * This file has been modified to be used only for argv parsing without
  * reference to tk, tcl or X11. Base on tk.h from tk2.3
- * $Header: /private-cvsroot/minc/libsrc/ParseArgv.h,v 6.6 2004-10-15 13:44:52 bert Exp $ SPRITE (Berkeley)
+ * $Header: /private-cvsroot/minc/libsrc/ParseArgv.h,v 6.6 2004/10/15 13:44:52 bert Exp $ SPRITE (Berkeley)
  */
 
 #include "minc.h"
@@ -36,14 +36,14 @@
  */
 
 typedef struct {
-    char *key;		/* The key string that flags the option in the
+    const char *key;	/* The key string that flags the option in the
 			 * argv array. */
     int type;		/* Indicates option type;  see below. */
     char *src;		/* Value to be used in setting dst;  usage
 			 * depends on type. */
     char *dst;		/* Address of value to be modified;  usage
 			 * depends on type. */
-    char *help;		/* Documentation message describing this option. */
+    const char *help;	/* Documentation message describing this option. */
 } ArgvInfo;
 
 /*

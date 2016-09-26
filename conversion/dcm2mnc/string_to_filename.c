@@ -8,7 +8,7 @@
 @CREATED    : January 10, 1997 (Peter Neelin)
 @MODIFIED   : 
  * $Log: string_to_filename.c,v $
- * Revision 1.4  2008-01-17 02:33:01  rotor
+ * Revision 1.4  2008/01/17 02:33:01  rotor
  *  * removed all rcsids
  *  * removed a bunch of ^L's that somehow crept in
  *  * removed old (and outdated) BUGS file

@@ -6,7 +6,7 @@
 @CREATED    : November 24, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: extract_acr_nema.c,v $
- * Revision 6.6  2004-10-29 13:08:41  rotor
+ * Revision 6.6  2004/10/29 13:08:41  rotor
  *  * rewrote Makefile with no dependency on a minc distribution
  *  * removed all references to the abominable minc_def.h
  *  * I should autoconf this really, but this is old code that

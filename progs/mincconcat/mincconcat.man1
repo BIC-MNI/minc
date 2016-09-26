@@ -9,9 +9,9 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.man1,v 6.4 2005-07-15 17:38:08 bert Exp $
+.\" $Header: /private-cvsroot/minc/progs/mincconcat/mincconcat.man1,v 6.4 2005/07/15 17:38:08 bert Exp $
 .\"
-.TH MINCCONCAT 1 "$Date: 2005-07-15 17:38:08 $" "" "MINC User's Guide"
+.TH MINCCONCAT 1 "$Date: 2005/07/15 17:38:08 $" "" "MINC User's Guide"
 
 .SH NAME
 mincconcat - concatenate minc files along a specific dimension

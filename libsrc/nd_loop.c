@@ -6,7 +6,7 @@
 @CREATED    : March 10, 1994 (Peter Neelin)
 @MODIFIED   : 
  * $Log: nd_loop.c,v $
- * Revision 6.4  2008-01-17 02:33:02  rotor
+ * Revision 6.4  2008/01/17 02:33:02  rotor
  *  * removed all rcsids
  *  * removed a bunch of ^L's that somehow crept in
  *  * removed old (and outdated) BUGS file

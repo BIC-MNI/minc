@@ -1,14 +1,14 @@
 /*********************************************************************
  *   Copyright 1993, UCAR/Unidata
  *   See netcdf/COPYRIGHT file for copying and redistribution conditions.
- *   $Id: ncgentab.y,v 1.3 2008-01-13 06:49:41 stever Exp $
+ *   $Id: ncgentab.y,v 1.3 2008/01/13 06:49:41 stever Exp $
  *********************************************************************/
 
 /* yacc source for "ncgen", a netCDL parser and netCDF generator */
 
 %{
 #ifndef lint
-static char SccsId[] __attribute__ ((unused)) = "$Id: ncgentab.y,v 1.3 2008-01-13 06:49:41 stever Exp $";
+static char SccsId[] __attribute__ ((unused)) = "$Id: ncgentab.y,v 1.3 2008/01/13 06:49:41 stever Exp $";
 #endif
 #include        <string.h>
 #include	<stdlib.h>

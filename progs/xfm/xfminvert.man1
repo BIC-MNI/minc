@@ -1,5 +1,5 @@
 .\"                                      Hey, EMACS: -*- nroff -*-
-.TH XFMINVERT 1 "$Date: 2008-09-04 03:20:16 $" "" "MINC User's Guide"
+.TH XFMINVERT 1 "$Date: 2008/09/04 03:20:16 $" "" "MINC User's Guide"
 .SH NAME
 xfminvert \- invert an MNI transform file
 

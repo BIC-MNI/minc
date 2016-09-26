@@ -6,7 +6,7 @@
 @CREATED    : November 10, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: acr_nema.h,v $
- * Revision 6.3  2005-02-16 19:22:32  bert
+ * Revision 6.3  2005/02/16 19:22:32  bert
  * Autoconfiscation
  *
  * Revision 6.2  2004/10/29 13:08:41  rotor

@@ -6,7 +6,7 @@
 @CREATED    : November 9, 1993 (Peter Neelin)
 @MODIFIED   : 
  * $Log: file_io.h,v $
- * Revision 6.3  2005-03-04 00:08:08  bert
+ * Revision 6.3  2005/03/04 00:08:08  bert
  * Cleanup headers, mostly by getting rid of the infernal 'public' and using extern instead
  *
  * Revision 6.2  2000/05/17 20:17:48  neelin

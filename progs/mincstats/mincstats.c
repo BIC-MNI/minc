@@ -5,7 +5,7 @@
  * University of Queensland, Australia
  *
  * $Log: mincstats.c,v $
- * Revision 1.24  2007-12-11 12:43:01  rotor
+ * Revision 1.24  2007/12/11 12:43:01  rotor
  *  * added static to all global variables in main programs to avoid linking
  *       problems with libraries (compress in mincconvert and libz for example)
  *
@@ -479,6 +479,8 @@ simple_threshold(float *histogram, float *hist_centre, int hist_bins)
  * source.  The functions were extensively modified, however, by me
  * to generalize the functions for our purposes.  Any bugs are
  * therefore my responsibility (bert 2004-12-14).
+ * Modified by Claude Lepage (July 2015) to avoid division by zero
+ * in sigma_b_k expression when omega_k = 0 or sum. 
  * 
  * Copyright 1990, Blab, UiO
  * Image processing lab, Department of Informatics
@@ -515,65 +517,51 @@ otsu_threshold(float histo[], float hist_centre[], int hist_bins)
     double criterion;
     double expr_1;              /* Temporary for common subexpression */
     int i, k;                   /* Generic loop counters */
-    double *p = malloc(hist_bins * sizeof(double));
-    double omega_k;
+    long omega_k;
     double sigma_b_k;
     double sigma_T;
     double mu_T;
     double mu_k;
-    int sum;
+    long sum;
     int k_low, k_high;
-    double mu_0, mu_1, mu;
-
-    /* If memory allocation fails, abandon ship!!! */
-    if (p == NULL) {
-        return (0.0);
-    }
-
-    sum = 0;
-    for (i = 0; i < hist_bins; i++)
-        sum += histo[i];
-
-    for (i = 0; i < hist_bins; i++)
-        p[i] = histo[i] * 1.0 / sum;
-
-    mu_T = 0.0;
-    for (i = 0; i < hist_bins; i++)
-        mu_T += hist_centre[i] * p[i];
-
-    sigma_T = 0.0;
-    for (i = 0; i < hist_bins; i++)
-        sigma_T += (hist_centre[i] - mu_T) * (hist_centre[i] - mu_T) * p[i];
 
     /* Ignore outlying zero bins */
-    for (k_low = 0; (p[k_low] == 0) && (k_low < hist_bins - 1); k_low++)
-        ;
+    for (k_low = 0; (histo[k_low] <= 0.0) && (k_low < hist_bins-1); k_low++);
 
-    for (k_high = hist_bins - 1; (p[k_high] == 0) && (k_high > 0); k_high--)
-        ;
+    for (k_high = hist_bins-1; (histo[k_high] <= 0) && (k_high > 0); k_high--);
+
+    sum = 0L;
+    mu_T = 0.0;
+    sigma_T = 0.0;
+    for (i = k_low; i <= k_high; i++) {
+        sum += histo[i];
+        mu_T += hist_centre[i] * (double)histo[i];
+    }
+    mu_T /= (double)sum;
+
+    for (i = k_low; i <= k_high; i++) {
+        sigma_T += (hist_centre[i] - mu_T) * (hist_centre[i] - mu_T) * histo[i];
+    }
+    sigma_T /= (double)sum;
 
     criterion = 0.0;
-    threshold = hist_centre[hist_bins / 2];
-    mu_0 = hist_centre[hist_bins / 2 - 1];
-    mu_1 = hist_centre[hist_bins / 2 + 1];
+    threshold = hist_centre[(k_high - k_low + 1 ) / 2];
 
-    omega_k = 0.0;
+    omega_k = 0L;
     mu_k = 0.0;
     for (k = k_low; k <= k_high ; k++) {
-        omega_k += p[k];
-        mu_k += hist_centre[k] * p[k];
+        omega_k += (long)histo[k];
+        if( omega_k == 0L || omega_k >= sum ) continue;
 
-        expr_1 = (mu_T * omega_k - mu_k);
-        sigma_b_k = expr_1 * expr_1 / (omega_k * (1 - omega_k));
-        if (criterion < sigma_b_k / sigma_T) {
-            criterion = sigma_b_k / sigma_T;
+        mu_k += hist_centre[k] * histo[k];
+        expr_1 = mu_T * omega_k - mu_k;
+        sigma_b_k = expr_1 * expr_1 / ( omega_k * ( sum - omega_k ) );
+
+        if (criterion < sigma_b_k ) {
+            criterion = sigma_b_k ;
             threshold = hist_centre[k];
-            mu_0 = mu_k / omega_k;
-            mu_1 = (mu_T - mu_k) / (1.0 - omega_k);
         }
     }
-    mu = mu_T;
-    free(p);
     return threshold;
 }
 

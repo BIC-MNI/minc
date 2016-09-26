@@ -919,7 +919,7 @@ VIOAPI  void  output_alloc_to_file(
 #ifndef  NO_DEBUG_ALLOC
 
 VIOAPI  void  print_alloc_source_line(
-    STRING  filename,
+    const STRING  filename,
     int     line_number )
 {
     print_error( "    Source position: %s:%d\n", filename, line_number );

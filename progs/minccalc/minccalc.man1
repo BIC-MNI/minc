@@ -1,6 +1,6 @@
 .\"                                      Hey, EMACS: -*- nroff -*-
 .\" Copyright 2000 Andrew Janke
-.TH MINCCALC 1 "$Date: 2008-01-11 04:24:16 $" "" "MINC User's Guide"
+.TH MINCCALC 1 "$Date: 2008/01/11 04:24:16 $" "" "MINC User's Guide"
 
 .SH NAME
 minccalc - perform complex math operations on minc files

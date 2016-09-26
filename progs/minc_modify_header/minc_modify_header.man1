@@ -9,9 +9,9 @@
 .\" software for any purpose.  It is provided "as is" without
 .\" express or implied warranty.
 .\"
-.\" $Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.man1,v 6.4 2004-05-25 21:33:11 bert Exp $
+.\" $Header: /private-cvsroot/minc/progs/minc_modify_header/minc_modify_header.man1,v 6.4 2004/05/25 21:33:11 bert Exp $
 .\"
-.TH MINC_MODIFY_HEADER 1 "$Date: 2004-05-25 21:33:11 $" "" "MINC User's Guide"
+.TH MINC_MODIFY_HEADER 1 "$Date: 2004/05/25 21:33:11 $" "" "MINC User's Guide"
 
 .SH NAME
 minc_modify_header - modify the attributes in the header of a minc file

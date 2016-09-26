@@ -2,7 +2,7 @@
 /*********************************************************************
  *   Copyright 1993, UCAR/Unidata
  *   See netcdf/COPYRIGHT file for copying and redistribution conditions.
- *   $Id: ncgenyy.l,v 1.3 2005-06-22 21:02:11 bert Exp $
+ *   $Id: ncgenyy.l,v 1.3 2005/06/22 21:02:11 bert Exp $
  *********************************************************************/
 
 /* lex specification for tokens for ncgen */

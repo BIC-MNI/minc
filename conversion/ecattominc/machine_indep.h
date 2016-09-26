@@ -13,7 +13,7 @@ void get_long_value(const void *from, void *to);
 @CREATED    : January 8, 1993
 @MODIFIED   : 
  * $Log: machine_indep.h,v $
- * Revision 6.1  2005-01-19 19:46:28  bert
+ * Revision 6.1  2005/01/19 19:46:28  bert
  * Changes from Anthonin Reilhac
  *
  * Revision 6.2  1999/10/19 15:57:19  neelin
