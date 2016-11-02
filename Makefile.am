@@ -471,6 +471,7 @@ EXTRA_DIST += \
 endif
 
 libvolume_io2_la_LDFLAGS = -version-info 2:2:1
+libvolume_io2_la_LIBADD = libminc2.la
 libvolume_io2_la_SOURCES = \
 	volume_io/Geometry/colour.c \
 	volume_io/Geometry/colour_def.c \
